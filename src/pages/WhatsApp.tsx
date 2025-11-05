@@ -62,8 +62,14 @@ const WhatsApp = () => {
     setQrCode(null);
 
     try {
-      // Connect to WebSocket edge function
-      const wsUrl = `wss://euovvpwkwptwmnekaibm.supabase.co/functions/v1/whatsapp-qr`;
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Sessão não encontrada");
+      }
+
+      // Connect to WebSocket edge function with auth
+      const wsUrl = `wss://euovvpwkwptwmnekaibm.supabase.co/functions/v1/whatsapp-qr?authorization=${encodeURIComponent(`Bearer ${session.access_token}`)}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
