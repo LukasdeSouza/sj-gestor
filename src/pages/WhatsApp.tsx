@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { MessageCircle, CheckCircle2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface WhatsAppConnection {
   id: string;
@@ -15,9 +17,20 @@ interface WhatsAppConnection {
 
 const WhatsApp = () => {
   const [connection, setConnection] = useState<WhatsAppConnection | null>(null);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const wsRef = useRef<WebSocket | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchConnection();
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, []);
 
   const fetchConnection = async () => {
@@ -31,6 +44,112 @@ const WhatsApp = () => {
       .single();
 
     setConnection(data);
+  };
+
+  const connectWhatsApp = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsConnecting(true);
+    setWsStatus('connecting');
+    setQrCode(null);
+
+    try {
+      // Connect to WebSocket edge function
+      const wsUrl = `wss://euovvpwkwptwmnekaibm.supabase.co/functions/v1/whatsapp-qr`;
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+        setWsStatus('connected');
+        // Send user ID to initialize connection
+        ws.send(JSON.stringify({ type: 'init', userId: user.id }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("Received:", data);
+
+        if (data.type === 'qr') {
+          setQrCode(data.qr);
+          setIsConnecting(false);
+          toast({
+            title: "QR Code gerado",
+            description: "Escaneie o código com seu WhatsApp",
+          });
+        } else if (data.type === 'connected') {
+          setQrCode(null);
+          setIsConnecting(false);
+          fetchConnection();
+          toast({
+            title: "WhatsApp conectado!",
+            description: data.message,
+          });
+        } else if (data.type === 'error') {
+          setIsConnecting(false);
+          toast({
+            title: "Erro",
+            description: data.message,
+            variant: "destructive",
+          });
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        setIsConnecting(false);
+        setWsStatus('disconnected');
+        toast({
+          title: "Erro de conexão",
+          description: "Não foi possível conectar ao serviço",
+          variant: "destructive",
+        });
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket closed");
+        setWsStatus('disconnected');
+        setIsConnecting(false);
+      };
+
+    } catch (error) {
+      console.error("Error connecting:", error);
+      setIsConnecting(false);
+      setWsStatus('disconnected');
+      toast({
+        title: "Erro",
+        description: "Erro ao iniciar conexão",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const disconnectWhatsApp = async () => {
+    if (wsRef.current) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        wsRef.current.send(JSON.stringify({ type: 'disconnect', userId: user.id }));
+      }
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    
+    setQrCode(null);
+    setWsStatus('disconnected');
+    fetchConnection();
+    
+    toast({
+      title: "Desconectado",
+      description: "WhatsApp desconectado com sucesso",
+    });
   };
 
   return (
@@ -92,15 +211,61 @@ const WhatsApp = () => {
                 Escaneie o código para conectar o WhatsApp
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-center text-muted-foreground p-8">
-                  <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>Integração WhatsApp em desenvolvimento</p>
-                  <p className="text-sm mt-2">
-                    O QR Code será exibido aqui quando a integração Baileys estiver ativa
-                  </p>
-                </div>
+            <CardContent className="space-y-4">
+              <div className="aspect-square bg-muted rounded-lg flex items-center justify-center p-4">
+                {qrCode ? (
+                  <img src={qrCode} alt="WhatsApp QR Code" className="w-full h-full object-contain" />
+                ) : (
+                  <div className="text-center text-muted-foreground p-8">
+                    <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    {isConnecting ? (
+                      <>
+                        <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin" />
+                        <p>Gerando QR Code...</p>
+                      </>
+                    ) : (
+                      <>
+                        <p>Clique em "Conectar WhatsApp" para gerar o QR Code</p>
+                        <p className="text-sm mt-2">
+                          Você precisará escanear o código com seu WhatsApp
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                {!connection?.is_connected && wsStatus === 'disconnected' && (
+                  <Button 
+                    onClick={connectWhatsApp} 
+                    disabled={isConnecting}
+                    className="w-full"
+                  >
+                    {isConnecting ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Conectando...
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Conectar WhatsApp
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                {(connection?.is_connected || wsStatus === 'connected') && (
+                  <Button 
+                    onClick={disconnectWhatsApp}
+                    variant="destructive"
+                    className="w-full"
+                  >
+                    <Unplug className="w-4 h-4 mr-2" />
+                    Desconectar
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -109,8 +274,8 @@ const WhatsApp = () => {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            A integração com WhatsApp Business API (Baileys) requer configuração de edge functions
-            para gerenciar as conexões e envio de mensagens. Esta funcionalidade está em desenvolvimento.
+            A integração WhatsApp usa WebSockets para comunicação em tempo real. O QR Code é gerado
+            automaticamente e a conexão é estabelecida após escanear com seu WhatsApp.
           </AlertDescription>
         </Alert>
 
