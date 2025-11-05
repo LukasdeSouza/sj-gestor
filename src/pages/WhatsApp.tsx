@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { validateBrazilianPhone, formatPhoneNumber } from "@/lib/phoneValidation";
 
 interface WhatsAppConnection {
   id: string;
@@ -22,6 +23,7 @@ const WhatsApp = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
 
@@ -59,18 +61,24 @@ const WhatsApp = () => {
       return;
     }
 
+    // Validar telefone antes de conectar
+    if (!validateBrazilianPhone(phone)) {
+      setPhoneError("Telefone inválido. Use o formato: (11) 99999-9999");
+      toast({ 
+        title: "Telefone inválido", 
+        description: "Digite um número válido com DDD", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     setIsConnecting(true);
     setWsStatus('connecting');
     setQrCode(null);
+    setPhoneError(null);
 
-    // Validate phone number before connecting
-    const raw = phone.replace(/\D/g, '');
-    if (!raw) {
-      setIsConnecting(false);
-      toast({ title: "Informe o telefone", description: "Digite o número com DDD para conectar.", variant: "destructive" });
-      return;
-    }
-    const phoneNumber = raw.length === 11 ? `+55${raw}` : `+${raw}`;
+    const phoneNumber = phone.replace(/\D/g, '');
+    const formattedPhone = phoneNumber.length === 11 ? `+55${phoneNumber}` : `+${phoneNumber}`;
 
     try {
       // Get auth token
@@ -88,7 +96,7 @@ const WhatsApp = () => {
         console.log("WebSocket connected");
         setWsStatus('connected');
         // Send user ID to initialize connection
-        ws.send(JSON.stringify({ type: 'init', userId: user.id, phoneNumber }));
+        ws.send(JSON.stringify({ type: 'init', userId: user.id, phoneNumber: formattedPhone }));
       };
 
       ws.onmessage = (event) => {
@@ -254,11 +262,19 @@ const WhatsApp = () => {
               
               <div className="space-y-2">
                 <Input
-                  placeholder="Telefone com DDD (ex: 11999998888)"
+                  placeholder="(11) 99999-9999"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    setPhone(formatted);
+                    if (phoneError) setPhoneError(null);
+                  }}
                   inputMode="numeric"
+                  className={phoneError ? "border-destructive" : ""}
                 />
+                {phoneError && (
+                  <p className="text-sm text-destructive">{phoneError}</p>
+                )}
               </div>
 
               <div className="flex gap-2">

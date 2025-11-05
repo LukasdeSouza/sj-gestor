@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { validateBrazilianPhone, formatPhoneNumber } from "@/lib/phoneValidation";
 
 interface Client {
   id: string;
@@ -48,6 +49,8 @@ const Clients = () => {
     auto_billing: false,
     additional_info: "",
   });
+
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchClients();
@@ -88,6 +91,13 @@ const Clients = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar telefone
+    if (!validateBrazilianPhone(formData.phone)) {
+      setPhoneError("Telefone inválido. Use o formato: (11) 99999-9999");
+      return;
+    }
+    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -162,6 +172,24 @@ const Clients = () => {
       additional_info: "",
     });
     setEditingClient(null);
+    setPhoneError(null);
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhoneNumber(value);
+    setFormData({ ...formData, phone: formatted });
+    
+    // Limpa erro ao começar a digitar
+    if (phoneError) {
+      setPhoneError(null);
+    }
+    
+    // Valida se já tem caracteres suficientes
+    if (value.replace(/\D/g, '').length >= 10) {
+      if (!validateBrazilianPhone(formatted)) {
+        setPhoneError("Telefone inválido");
+      }
+    }
   };
 
   const filteredClients = clients.filter((client) =>
@@ -207,10 +235,14 @@ const Clients = () => {
                     <Input
                       id="phone"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
                       placeholder="(11) 99999-9999"
                       required
+                      className={phoneError ? "border-destructive" : ""}
                     />
+                    {phoneError && (
+                      <p className="text-sm text-destructive">{phoneError}</p>
+                    )}
                   </div>
                 </div>
 
