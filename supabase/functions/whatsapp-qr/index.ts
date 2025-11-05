@@ -29,6 +29,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   let userId: string | null = null;
+  let currentPhoneNumber: string | null = null;
 
   socket.onopen = () => {
     console.log("WebSocket connection opened");
@@ -45,10 +46,26 @@ serve(async (req) => {
 
       if (data.type === 'init') {
         userId = data.userId;
-        console.log("User ID received:", userId);
+        currentPhoneNumber = data.phoneNumber || null;
+        console.log("User ID received:", userId, "Phone:", currentPhoneNumber);
+
+        // Ensure a connection row exists with provided phone (not connected yet)
+        if (userId && currentPhoneNumber) {
+          const { error: upsertError } = await supabase
+            .from('whatsapp_connections')
+            .upsert({
+              user_id: userId,
+              phone_number: currentPhoneNumber,
+              is_connected: false,
+              last_connected_at: null
+            }, { onConflict: 'user_id' });
+
+          if (upsertError) {
+            console.error("Error upserting connection on init:", upsertError);
+          }
+        }
 
         // Simulate QR Code generation (In production, this would use Baileys)
-        // For now, we'll generate a mock QR code
         const qrCode = await generateMockQRCode();
         
         socket.send(JSON.stringify({
@@ -58,20 +75,17 @@ serve(async (req) => {
 
         // Simulate connection after 5 seconds (for demo purposes)
         setTimeout(async () => {
-          const phoneNumber = "+55" + Math.floor(Math.random() * 10000000000);
+          const phoneNumberToUse = currentPhoneNumber || ("+55" + Math.floor(Math.random() * 10000000000));
           
           // Update database with connection info
           if (userId) {
             const { error } = await supabase
               .from('whatsapp_connections')
-              .upsert({
-                user_id: userId,
-                phone_number: phoneNumber,
+              .update({
                 is_connected: true,
                 last_connected_at: new Date().toISOString()
-              }, {
-                onConflict: 'user_id'
-              });
+              })
+              .eq('user_id', userId);
 
             if (error) {
               console.error("Error updating connection:", error);
@@ -82,7 +96,7 @@ serve(async (req) => {
 
           socket.send(JSON.stringify({
             type: 'connected',
-            phoneNumber: phoneNumber,
+            phoneNumber: phoneNumberToUse,
             message: 'WhatsApp conectado com sucesso!'
           }));
         }, 5000);

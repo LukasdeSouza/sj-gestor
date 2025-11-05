@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +21,7 @@ const WhatsApp = () => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [phone, setPhone] = useState('');
   const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
 
@@ -41,7 +43,7 @@ const WhatsApp = () => {
       .from("whatsapp_connections")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     setConnection(data);
   };
@@ -61,6 +63,15 @@ const WhatsApp = () => {
     setWsStatus('connecting');
     setQrCode(null);
 
+    // Validate phone number before connecting
+    const raw = phone.replace(/\D/g, '');
+    if (!raw) {
+      setIsConnecting(false);
+      toast({ title: "Informe o telefone", description: "Digite o número com DDD para conectar.", variant: "destructive" });
+      return;
+    }
+    const phoneNumber = raw.length === 11 ? `+55${raw}` : `+${raw}`;
+
     try {
       // Get auth token
       const { data: { session } } = await supabase.auth.getSession();
@@ -77,7 +88,7 @@ const WhatsApp = () => {
         console.log("WebSocket connected");
         setWsStatus('connected');
         // Send user ID to initialize connection
-        ws.send(JSON.stringify({ type: 'init', userId: user.id }));
+        ws.send(JSON.stringify({ type: 'init', userId: user.id, phoneNumber }));
       };
 
       ws.onmessage = (event) => {
@@ -241,11 +252,20 @@ const WhatsApp = () => {
                 )}
               </div>
               
+              <div className="space-y-2">
+                <Input
+                  placeholder="Telefone com DDD (ex: 11999998888)"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  inputMode="numeric"
+                />
+              </div>
+
               <div className="flex gap-2">
                 {!connection?.is_connected && wsStatus === 'disconnected' && (
                   <Button 
                     onClick={connectWhatsApp} 
-                    disabled={isConnecting}
+                    disabled={isConnecting || !phone}
                     className="w-full"
                   >
                     {isConnecting ? (
