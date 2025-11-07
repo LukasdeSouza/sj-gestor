@@ -74,7 +74,7 @@ const Dashboard = () => {
 
         <Card className="shadow-soft">
           <CardHeader>
-            <CardTitle>Bem-vindo ao PayFlow!</CardTitle>
+            <CardTitle>Bem-vindo ao SJ Gestor!</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">

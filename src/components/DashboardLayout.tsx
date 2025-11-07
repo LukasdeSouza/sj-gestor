@@ -93,7 +93,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
             <Wallet className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-lg">PayFlow</span>
+          <span className="font-bold text-lg">SJ Gestor</span>
         </div>
         <Button
           variant="ghost"
@@ -116,7 +116,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <Wallet className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-bold text-xl">PayFlow</h1>
+              <h1 className="font-bold text-xl">SJ Gestor</h1>
               <p className="text-xs text-muted-foreground">Gestão de Cobranças</p>
             </div>
           </div>

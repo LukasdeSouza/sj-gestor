@@ -24,7 +24,7 @@ const Index = () => {
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
-            PayFlow
+            SJ Gestor
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
@@ -70,7 +70,7 @@ const Index = () => {
         {/* Benefits Section */}
         <div className="mt-24 max-w-3xl mx-auto">
           <div className="bg-card rounded-3xl p-8 md:p-12 shadow-medium">
-            <h2 className="text-3xl font-bold text-center mb-8">Por que escolher o PayFlow?</h2>
+            <h2 className="text-3xl font-bold text-center mb-8">Por que escolher o SJ Gestor?</h2>
             <div className="space-y-6">
               <div className="flex gap-4">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center font-bold">✓</div>
@@ -101,7 +101,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border mt-24 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© 2024 PayFlow. Sistema de gestão de cobranças.</p>
+          <p>© 2024 SJ Gestor. Sistema de gestão de cobranças.</p>
         </div>
       </footer>
     </div>
