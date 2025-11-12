@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Wallet,
+  FileText,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -81,6 +82,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Users, label: "Clientes", path: "/clients" },
     { icon: Package, label: "Produtos", path: "/products" },
+    { icon: FileText, label: "Cobranças", path: "/charges" },
     { icon: CreditCard, label: "Chaves PIX", path: "/pix-keys" },
     { icon: MessageSquare, label: "Templates", path: "/templates" },
     { icon: MessageCircle, label: "WhatsApp", path: "/whatsapp" },

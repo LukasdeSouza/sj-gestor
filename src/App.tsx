@@ -12,6 +12,7 @@ import Products from "./pages/Products";
 import PixKeys from "./pages/PixKeys";
 import Templates from "./pages/Templates";
 import WhatsApp from "./pages/WhatsApp";
+import Charges from "./pages/Charges";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/pix-keys" element={<PixKeys />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/whatsapp" element={<WhatsApp />} />
+            <Route path="/charges" element={<Charges />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
