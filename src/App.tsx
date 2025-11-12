@@ -13,6 +13,7 @@ import PixKeys from "./pages/PixKeys";
 import Templates from "./pages/Templates";
 import WhatsApp from "./pages/WhatsApp";
 import Charges from "./pages/Charges";
+import ReminderSettings from "./pages/ReminderSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/templates" element={<Templates />} />
             <Route path="/whatsapp" element={<WhatsApp />} />
             <Route path="/charges" element={<Charges />} />
+            <Route path="/reminder-settings" element={<ReminderSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

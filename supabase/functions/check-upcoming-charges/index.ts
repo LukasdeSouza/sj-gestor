@@ -20,53 +20,23 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get today's date and date 3 days from now
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const reminderDate = new Date(today);
-    reminderDate.setDate(reminderDate.getDate() + 3);
-    reminderDate.setHours(23, 59, 59, 999);
+    // Get all users with reminder settings enabled
+    const { data: usersWithSettings, error: settingsError } = await supabase
+      .from('reminder_settings')
+      .select('user_id, days_before_due')
+      .eq('enabled', true);
 
-    console.log("Checking charges between:", today.toISOString(), "and", reminderDate.toISOString());
-
-    // Find pending charges with due dates in the next 3 days
-    const { data: charges, error: chargesError } = await supabase
-      .from('charges')
-      .select(`
-        id,
-        user_id,
-        client_id,
-        product_id,
-        amount,
-        due_date,
-        status,
-        clients (
-          id,
-          name,
-          phone
-        ),
-        products (
-          id,
-          name
-        )
-      `)
-      .eq('status', 'pending')
-      .gte('due_date', today.toISOString().split('T')[0])
-      .lte('due_date', reminderDate.toISOString().split('T')[0]);
-
-    if (chargesError) {
-      console.error("Error fetching charges:", chargesError);
-      throw chargesError;
+    if (settingsError) {
+      console.error("Error fetching reminder settings:", settingsError);
+      throw settingsError;
     }
 
-    console.log(`Found ${charges?.length || 0} charges to process`);
-
-    if (!charges || charges.length === 0) {
+    if (!usersWithSettings || usersWithSettings.length === 0) {
+      console.log("No users with reminder settings enabled");
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Nenhuma cobrança pendente encontrada',
+          message: 'Nenhum usuário com lembretes habilitados',
           processed: 0
         }),
         { 
@@ -75,75 +45,130 @@ serve(async (req) => {
       );
     }
 
-    // Send reminders for each charge
-    const results = [];
-    for (const charge of charges) {
-      try {
-        // Check if reminder was already sent today
-        const { data: existingMessages } = await supabase
-          .from('messages')
-          .select('id')
-          .eq('client_id', charge.id)
-          .gte('sent_at', today.toISOString())
-          .maybeSingle();
+    console.log(`Found ${usersWithSettings.length} users with reminders enabled`);
 
-        if (existingMessages) {
-          console.log(`Reminder already sent today for charge ${charge.id}`);
-          continue;
-        }
+    const allResults = [];
 
-        // Send reminder through the send-whatsapp-reminder function
-        const reminderPayload = {
-          chargeId: charge.id,
-          clientPhone: charge.clients?.phone,
-          clientName: charge.clients?.name,
-          productName: charge.products?.name,
-          amount: charge.amount,
-          dueDate: charge.due_date,
-          userId: charge.user_id
-        };
+    // Process each user with their own settings
+    for (const userSettings of usersWithSettings) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const reminderDate = new Date(today);
+      reminderDate.setDate(reminderDate.getDate() + userSettings.days_before_due);
+      reminderDate.setHours(23, 59, 59, 999);
 
-        console.log("Calling send-whatsapp-reminder with:", reminderPayload);
+      console.log(`Checking charges for user ${userSettings.user_id} between:`, today.toISOString(), "and", reminderDate.toISOString());
 
-        const reminderResponse = await supabase.functions.invoke('send-whatsapp-reminder', {
-          body: reminderPayload
-        });
+      // Find pending charges for this user
+      const { data: charges, error: chargesError } = await supabase
+        .from('charges')
+        .select(`
+          id,
+          user_id,
+          client_id,
+          product_id,
+          amount,
+          due_date,
+          status,
+          clients (
+            id,
+            name,
+            phone
+          ),
+          products (
+            id,
+            name
+          )
+        `)
+        .eq('user_id', userSettings.user_id)
+        .eq('status', 'pending')
+        .gte('due_date', today.toISOString().split('T')[0])
+        .lte('due_date', reminderDate.toISOString().split('T')[0]);
 
-        if (reminderResponse.error) {
-          console.error(`Error sending reminder for charge ${charge.id}:`, reminderResponse.error);
-          results.push({ 
+      if (chargesError) {
+        console.error("Error fetching charges for user:", userSettings.user_id, chargesError);
+        continue;
+      }
+
+      console.log(`Found ${charges?.length || 0} charges for user ${userSettings.user_id}`);
+
+      if (!charges || charges.length === 0) {
+        continue;
+      }
+
+      // Send reminders for each charge
+      for (const charge of charges) {
+        try {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          // Check if reminder was already sent today
+          const { data: existingMessages } = await supabase
+            .from('messages')
+            .select('id')
+            .eq('client_id', charge.id)
+            .gte('sent_at', today.toISOString())
+            .maybeSingle();
+
+          if (existingMessages) {
+            console.log(`Reminder already sent today for charge ${charge.id}`);
+            continue;
+          }
+
+          // Send reminder through the send-whatsapp-reminder function
+          const reminderPayload = {
+            chargeId: charge.id,
+            clientPhone: charge.clients?.phone,
+            clientName: charge.clients?.name,
+            productName: charge.products?.name,
+            amount: charge.amount,
+            dueDate: charge.due_date,
+            userId: charge.user_id
+          };
+
+          console.log("Calling send-whatsapp-reminder with:", reminderPayload);
+
+          const reminderResponse = await supabase.functions.invoke('send-whatsapp-reminder', {
+            body: reminderPayload
+          });
+
+          if (reminderResponse.error) {
+            console.error(`Error sending reminder for charge ${charge.id}:`, reminderResponse.error);
+            allResults.push({ 
+              chargeId: charge.id, 
+              success: false, 
+              error: reminderResponse.error 
+            });
+          } else {
+            console.log(`Reminder sent successfully for charge ${charge.id}`);
+            allResults.push({ 
+              chargeId: charge.id, 
+              success: true 
+            });
+          }
+
+        } catch (error) {
+          console.error(`Error processing charge ${charge.id}:`, error);
+          allResults.push({ 
             chargeId: charge.id, 
             success: false, 
-            error: reminderResponse.error 
-          });
-        } else {
-          console.log(`Reminder sent successfully for charge ${charge.id}`);
-          results.push({ 
-            chargeId: charge.id, 
-            success: true 
+            error: error instanceof Error ? error.message : 'Unknown error' 
           });
         }
-
-      } catch (error) {
-        console.error(`Error processing charge ${charge.id}:`, error);
-        results.push({ 
-          chargeId: charge.id, 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        });
       }
     }
 
-    const successCount = results.filter(r => r.success).length;
-    console.log(`Processed ${results.length} charges, ${successCount} successful`);
+    const successCount = allResults.filter(r => r.success).length;
+    console.log(`Processed ${allResults.length} charges total, ${successCount} successful`);
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: `Processadas ${results.length} cobranças`,
-        processed: results.length,
+        message: `Processadas ${allResults.length} cobranças`,
+        processed: allResults.length,
         successful: successCount,
-        results
+        results: allResults
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
