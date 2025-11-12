@@ -97,7 +97,7 @@ const Auth = () => {
               <Wallet className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold">PayFlow</CardTitle>
+          <CardTitle className="text-3xl font-bold">SJ Gestor</CardTitle>
           <CardDescription>
             Sistema de gestão de cobranças com WhatsApp
           </CardDescription>
