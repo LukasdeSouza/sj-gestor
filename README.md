@@ -1,73 +1,158 @@
-# Welcome to your Lovable project
+# SJ Gestor
 
-## Project info
+A modern billing collection management system with WhatsApp integration, built for Brazilian businesses. Automate your billing reminders and manage clients, products, and PIX payment keys all in one place.
 
-**URL**: https://lovable.dev/projects/d5889d8c-8fea-4b14-8dd2-6127440bb411
+## Features
 
-## How can I edit this code?
+- **Client Management** - Add, edit, and organize clients with phone validation, due dates, and automatic billing preferences
+- **Product/Service Catalog** - Create and manage your products and services with pricing
+- **PIX Key Management** - Store multiple PIX keys (CPF, CNPJ, Email, Phone, Random) for payment collection
+- **Message Templates** - Create customizable message templates with variables ({nome}, {valor}, {vencimento})
+- **WhatsApp Integration** - Connect your WhatsApp account via QR code and send automated billing reminders
+- **Dashboard** - Overview of your business with statistics and quick access to key features
+- **Multi-tenant** - Secure user authentication with isolated data per user
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+**Frontend:**
+- React 18.3.1 with TypeScript
+- Vite 5.4.19 - Build tool and dev server
+- React Router DOM 6.30.1 - Client-side routing
+- TanStack React Query 5.83.0 - Server state management
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d5889d8c-8fea-4b14-8dd2-6127440bb411) and start prompting.
+**UI Framework:**
+- shadcn/ui - Component library built on Radix UI
+- Tailwind CSS 3.4.17 - Utility-first CSS
+- Lucide React - Icon library
 
-Changes made via Lovable will be committed automatically to this repo.
+**Form Management:**
+- React Hook Form 7.61.1 - Form state management
+- Zod 4.1.12 - Schema validation
 
-**Use your preferred IDE**
+**Backend:**
+- Supabase - Backend-as-a-Service
+  - PostgreSQL database
+  - Authentication
+  - Edge Functions (Deno-based)
+  - Real-time subscriptions
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Prerequisites
 
-Follow these steps:
+- Node.js (recommended: install with [nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
+- npm, yarn, or bun package manager
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+### Installation
+
+1. Clone the repository:
+```bash
 git clone <YOUR_GIT_URL>
+cd agendapix
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Install dependencies:
+```bash
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Set up environment variables:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Create a `.env` file in the root directory with the following variables:
+```env
+VITE_SUPABASE_PROJECT_ID="your-project-id"
+VITE_SUPABASE_PUBLISHABLE_KEY="your-publishable-key"
+VITE_SUPABASE_URL="https://your-project-id.supabase.co"
+```
+
+4. Start the development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Available Scripts
 
-**Use GitHub Codespaces**
+- `npm run dev` - Start development server (port 8080)
+- `npm run build` - Build for production
+- `npm run build:dev` - Build in development mode
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project Structure
 
-## What technologies are used for this project?
+```
+agendapix/
+├── src/
+│   ├── assets/              # Images and static assets
+│   ├── components/
+│   │   ├── ui/             # shadcn/ui components
+│   │   ├── DashboardLayout.tsx  # Main layout with sidebar
+│   │   └── NavLink.tsx     # Custom navigation link
+│   ├── hooks/              # Custom React hooks
+│   ├── integrations/
+│   │   └── supabase/       # Supabase client and types
+│   ├── lib/                # Utility functions
+│   ├── pages/              # Route pages
+│   ├── App.tsx             # Main app component with routes
+│   └── main.tsx            # Application entry point
+├── supabase/
+│   ├── functions/
+│   │   └── whatsapp-qr/    # WebSocket edge function for QR codes
+│   └── migrations/         # Database migrations
+├── public/                 # Static public assets
+└── index.html              # HTML template
+```
 
-This project is built with:
+## Database Schema
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The application uses Supabase with the following tables:
 
-## How can I deploy this project?
+- **clients** - Client records with phone, email, product_id, due_date, auto_billing
+- **products** - Product/service catalog with name, value, description
+- **pix_keys** - PIX payment keys (cpf, cnpj, email, phone, random)
+- **message_templates** - Reusable message templates with variables
+- **messages** - Message log with status and delivery tracking
+- **profiles** - User profiles (full_name)
+- **whatsapp_connections** - WhatsApp connection status per user
 
-Simply open [Lovable](https://lovable.dev/projects/d5889d8c-8fea-4b14-8dd2-6127440bb411) and click on Share -> Publish.
+## Key Features
 
-## Can I connect a custom domain to my Lovable project?
+### Phone Validation
+Custom Brazilian phone number validation with automatic formatting and E.164 normalization.
 
-Yes, you can!
+### WhatsApp Integration
+Real-time WhatsApp QR code generation via WebSocket using Supabase Edge Functions. Connect your WhatsApp account and send automated billing reminders to clients.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Multi-tenant Architecture
+Each user has isolated data with secure authentication through Supabase. All tables use `user_id` foreign keys for data separation.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Responsive Design
+Mobile-first design with a sidebar that collapses on mobile devices for optimal user experience on any screen size.
+
+## Development
+
+This project was built with [Lovable](https://lovable.dev) and can be edited in multiple ways:
+
+- **Lovable Platform**: Visit your [Lovable Project](https://lovable.dev/projects/d5889d8c-8fea-4b14-8dd2-6127440bb411) to edit via prompts
+- **Local IDE**: Clone the repo and push changes
+- **GitHub Codespaces**: Launch a cloud development environment
+- **Direct GitHub edits**: Edit files directly in the GitHub interface
+
+## Deployment
+
+To deploy this application:
+
+1. **Via Lovable**: Open [Lovable](https://lovable.dev/projects/d5889d8c-8fea-4b14-8dd2-6127440bb411) and click Share → Publish
+2. **Custom Domain**: Navigate to Project > Settings > Domains to connect your custom domain
+
+Read more: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## License
+
+[Add your license here]
+
+## Contributing
+
+[Add contribution guidelines here]

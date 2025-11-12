@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Wallet, Users, MessageCircle, CreditCard, BarChart3, Zap } from "lucide-react";
+import SJGestor from '../assets/sj-gestor-removebg.png'
 
 const Index = () => {
   const navigate = useNavigate();
@@ -17,31 +18,25 @@ const Index = () => {
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center space-y-8 max-w-4xl mx-auto">
-          <div className="flex justify-center mb-8">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-strong">
-              <Wallet className="w-10 h-10 md:w-12 md:h-12 text-primary-foreground" />
-            </div>
+          <div className="flex justify-center">
+            <img src={SJGestor} alt="" />
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
-            SJ Gestor
-          </h1>
-          
           <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
             Sistema completo de gestão de cobranças com integração WhatsApp
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={() => navigate("/auth")}
               className="w-full sm:w-auto text-lg px-8 shadow-medium hover:shadow-strong transition-shadow"
             >
               <Zap className="w-5 h-5 mr-2" />
               Começar Agora
             </Button>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="outline"
               onClick={() => navigate("/auth")}
               className="w-full sm:w-auto text-lg px-8"
@@ -101,7 +96,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border mt-24 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© 2024 SJ Gestor. Sistema de gestão de cobranças.</p>
+          <p>© 2025 SJ Gestor. Desenvolvido por <a className="underline font-semibold" href="https://codetechsoftware.com.br/br">Codetech Software.</a></p>
         </div>
       </footer>
     </div>

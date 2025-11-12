@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Wallet } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import SJGestor from '../assets/sj-gestor-removebg.png'
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -92,12 +93,13 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-accent/20 to-background p-4">
       <Card className="w-full max-w-md shadow-strong">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-medium">
-              <Wallet className="w-8 h-8 text-primary-foreground" />
-            </div>
+          <div className="flex justify-center -mb-12">
+            {/* <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-medium"> */}
+              {/* <Wallet className="w-8 h-8 text-primary-foreground" /> */}
+              <img src={SJGestor} alt="" height={220} width={220} />
+            {/* </div> */}
           </div>
-          <CardTitle className="text-3xl font-bold">SJ Gestor</CardTitle>
+          {/* <CardTitle className="text-3xl font-bold">SJ Gestor</CardTitle> */}
           <CardDescription>
             Sistema de gestão de cobranças com WhatsApp
           </CardDescription>
