@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   LayoutDashboard,
   Users,
@@ -95,13 +96,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
           <span className="font-bold text-lg">SJ Gestor</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X /> : <Menu />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X /> : <Menu />}
+          </Button>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -111,13 +115,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         } lg:translate-x-0`}
       >
         <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-medium">
-              <Wallet className="w-6 h-6 text-primary-foreground" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-medium">
+                <Wallet className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-bold text-xl">SJ Gestor</h1>
+                <p className="text-xs text-muted-foreground">Gestão de Cobranças</p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-xl">SJ Gestor</h1>
-              <p className="text-xs text-muted-foreground">Gestão de Cobranças</p>
+            <div className="hidden lg:block">
+              <ThemeToggle />
             </div>
           </div>
         </div>
