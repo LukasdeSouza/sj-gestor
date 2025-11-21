@@ -1,4 +1,4 @@
-# SJ Gestor
+# SJ Gestor - VERSÃO VERCEL
 
 A modern billing collection management system with WhatsApp integration, built for Brazilian businesses. Automate your billing reminders and manage clients, products, and PIX payment keys all in one place.
 
