@@ -84,7 +84,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: Users, label: "Clientes", path: "/clients" },
     { icon: Package, label: "Produtos", path: "/products" },
     { icon: FileText, label: "Cobranças", path: "/charges" },
-    { icon: Bell, label: "Lembretes", path: "/reminder-settings" },
+    // { icon: Bell, label: "Lembretes", path: "/reminder-settings" },
     { icon: CreditCard, label: "Chaves PIX", path: "/pix-keys" },
     { icon: MessageSquare, label: "Templates", path: "/templates" },
     { icon: MessageCircle, label: "WhatsApp", path: "/whatsapp" },
