@@ -88,7 +88,7 @@ export default function PixPaymentModal({
           </div>
 
           {/* Chave PIX */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <p className="text-sm font-medium">Chave PIX</p>
             <div className="bg-muted p-3 rounded-lg">
               <p className="text-sm font-mono break-all">{pixKey}</p>
@@ -111,20 +111,20 @@ export default function PixPaymentModal({
                 </>
               )}
             </Button>
-          </div>
+          </div> */}
 
           {/* Titular */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <p className="text-sm font-medium">Titular da Conta</p>
             <div className="bg-muted p-3 rounded-lg">
               <p className="text-sm">{accountHolder}</p>
             </div>
-          </div>
+          </div> */}
 
           {/* Instruções */}
           <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
             <p className="text-xs text-blue-900 dark:text-blue-100">
-              <strong>Próximo passo:</strong> Após fazer o pagamento, você será solicitado a enviar o comprovante para confirmação.
+              <strong>IMPORTANTE:</strong> Após fazer o pagamento, você será solicitado a enviar o comprovante para confirmação.
             </p>
           </div>
 
