@@ -1,11 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "buildCommand": "npm install -g tsx",
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "dist/src/api/index.js"
+      "dest": "api/index.ts"
     }
   ]
 }
