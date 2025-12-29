@@ -1,3 +1,4 @@
-import app from "../src/app";
+// @ts-ignore
+import app from "../dist/src/app.js";
 
 export default app;
