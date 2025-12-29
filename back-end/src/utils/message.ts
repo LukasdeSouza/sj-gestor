@@ -23,6 +23,6 @@ export const getMessage = (message: WAMessage) => {
         message.message?.extendedTextMessage?.text,
     };
   } catch (error) {
-    logger.error(error);
+    logger.error(String(error));
   }
 };

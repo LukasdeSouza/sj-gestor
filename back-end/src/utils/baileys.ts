@@ -24,11 +24,9 @@ export const createWhatsAppSession = async (
     version,
     auth: state,
     printQRInTerminal: false,
-    // Adicione esta configuração de logger
-    logger: logger.child({ class: "baileys" }, {
-      // Defina o nível de log desejado. 'silent' desativa todos os logs.
-      level: "silent", 
-    }),
+    logger: {
+      level: "silent" as any,
+    } as any,
   });
 
   let resolved = false;
