@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch server.ts",
     "seed": "tsx src/seeds/seed.ts",
-    "build": "tsc",
+    "build": "tsc && node scripts/fix-imports.js",
     "start": "node dist/server.js",
     "test": "NODE_ENV=test NODE_NO_WARNINGS=1 NODE_OPTIONS=--experimental-vm-modules jest --runInBand --config=jest.config.cjs"
   },

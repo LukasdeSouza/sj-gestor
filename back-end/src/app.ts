@@ -1,4 +1,4 @@
-import setupSwagger from "./docs/config/index";
+// import setupSwagger from "./docs/config/index";
 import express, { Express } from "express";
 import routes from "./routes/index";
 import cors from "cors";
@@ -14,7 +14,7 @@ app.use(cors({
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 // Swagger UI (OpenAPI)
-setupSwagger(app);
+// setupSwagger(app);
 
 // Rotas da API
 routes(app);
