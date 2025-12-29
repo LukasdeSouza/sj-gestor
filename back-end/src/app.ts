@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 setupSwagger(app);
 
 // Rotas da API
-app.use("/", routes);
+routes(app);
 // routes(app);
 
 app.get("/", (req, res) => {
