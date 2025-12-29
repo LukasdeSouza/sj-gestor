@@ -1,0 +1,42 @@
+model Client {
+  id    String  @id @unique(map: "client_id_UNIQUE") @default(uuid()) @db.Uuid
+  name  String  @db.VarChar(256)
+  phone String  @db.VarChar(11)
+  email String? @db.VarChar(80)
+
+  user_id String @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  payments ClientPayment[]
+
+  due_at DateTime?
+
+  additional_info String?      @db.VarChar(552)
+
+  product_id String  @db.Uuid
+  product    Product @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  template_id String   @db.Uuid
+  template    Template @relation(fields: [template_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  key_id String @db.Uuid
+  key    PixKey @relation(fields: [key_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  last_reminder_due_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClientPayment {
+  id        String @id @default(uuid()) @db.Uuid
+  client_id String @db.Uuid
+  client    Client @relation(fields: [client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  paid_at   DateTime @default(now())
+  amount    Decimal? @db.Decimal(12, 2)
+  note      String?  @db.VarChar(552)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

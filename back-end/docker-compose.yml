@@ -1,0 +1,22 @@
+services:
+  banco-postgresql-sj-gestor:
+    image: postgres:13
+    restart: unless-stopped
+    container_name: banco-sj-gestor
+    environment:
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: banco-sj-gestor
+      POSTGRES_USER: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - volume-sql-sj:/var/lib/postgresql/data
+    networks:
+      - app-sj-gestor
+
+volumes:
+  volume-sql-sj:
+
+networks:
+  app-sj-gestor:
+    driver: bridge

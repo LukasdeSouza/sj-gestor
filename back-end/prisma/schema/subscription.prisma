@@ -1,0 +1,59 @@
+enum PlanId {
+  FREE
+  PRO_100
+  PRO_UNLIMITED
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROOF_UPLOADED
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+model Subscription {
+  id               String             @id @unique(map: "subscription_id_UNIQUE") @default(uuid()) @db.Uuid
+  user_id          String             @db.Uuid
+  plan_id          PlanId
+  status           SubscriptionStatus @default(PENDING)
+  
+  // Stripe fields dedicados
+  stripe_customer_id       String?     @db.VarChar(100)
+  stripe_subscription_id   String?     @db.VarChar(100)
+  stripe_payment_intent_id String?     @db.VarChar(100)
+  
+  // Mercado Pago fields (existing)
+  mp_preference_id String?            @db.VarChar(100)
+  mp_payment_id    String?            @db.VarChar(100)
+  
+  // PIX Payment fields (NEW)
+  payment_status        PaymentStatus?     @default(PENDING)
+  pix_qr_code           String?            @db.Text
+  proof_url             String?            @db.VarChar(500)
+  proof_uploaded_at     DateTime?
+  approved_at           DateTime?
+  approved_by_admin_id  String?            @db.Uuid
+  rejected_at           DateTime?
+  canceled_at           DateTime?
+  
+  activatedAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  approved_by_admin     User?              @relation("ApprovedPayments", fields: [approved_by_admin_id], references: [id], onDelete: SetNull)
+
+  @@unique([user_id])
+  @@index([user_id])
+  @@index([user_id, payment_status])
+  @@index([payment_status])
+  @@index([stripe_customer_id])
+  @@index([stripe_subscription_id])
+}

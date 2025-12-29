@@ -1,0 +1,14 @@
+model PixKey {
+  id        String  @id @unique(map: "pix_key_id_UNIQUE") @default(uuid()) @db.Uuid
+  key_type  String  @db.VarChar(256) 
+  key_value String  @db.VarChar(256) @unique
+  label     String? @db.VarChar(256) 
+
+  user_id String @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  clients Client[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

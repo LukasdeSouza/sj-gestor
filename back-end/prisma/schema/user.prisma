@@ -1,0 +1,22 @@
+model User {
+  id       String @id @unique(map: "usuario_id_UNIQUE") @default(uuid()) @db.Uuid
+  name     String @db.VarChar(100)
+  email    String @unique(map: "usuario_email_UNIQUE") @db.VarChar(80)
+  password String @db.VarChar(80)
+
+  groupId String? @db.Uuid
+  group   Group?  @relation(fields: [groupId], references: [id])
+
+  pix_keys            PixKey[]
+  products            Product[]
+  templates           Template[]
+  clients             Client[]
+  whatsapp_connection WhatsAppConnection?
+  subscription        Subscription?
+  approved_payments   Subscription[]     @relation("ApprovedPayments")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([groupId])
+}

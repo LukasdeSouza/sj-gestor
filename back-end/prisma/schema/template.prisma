@@ -1,0 +1,13 @@
+model Template {
+  id      String @id @unique(map: "template_id_UNIQUE") @default(uuid()) @db.Uuid
+  name    String @db.VarChar(255)
+  content String @db.Text
+
+  user_id String @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  clients Client[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
