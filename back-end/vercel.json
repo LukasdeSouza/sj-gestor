@@ -2,14 +2,7 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "env": {
-    "NODE_OPTIONS": "--experimental-specifier-resolution=node"
-  },
-  "functions": {
-    "api/index.ts": {
-      "runtime": "@vercel/node@3.0.0"
-    }
-  },
+  "nodeVersion": "20.x",
   "routes": [
     {
       "src": "/(.*)",
