@@ -6,45 +6,40 @@ import bodyParser from "body-parser";
 
 const app: Express = express();
 
-app.use(bodyParser.json())
+// app.use(bodyParser.json())
 app.use(cors({
   origin: process.env.FRONTEND_URL || "*",
   credentials: true,
 }));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 // Middleware condicional para Stripe webhook (raw body)
-app.use((req: any, res, next) => {
-  if (typeof req.originalUrl === "string" && req.originalUrl.includes("/stripe/webhook")) {
-    let data = Buffer.alloc(0);
-    req.on("data", (chunk: Buffer) => {
-      data = Buffer.concat([data, chunk]);
-    });
-    req.on("end", () => {
-      req.rawBody = data;
-      next();
-    });
-  } else {
-    express.json({ limit: "10mb" })(req, res, next);
-  }
-});
+// app.use((req: any, res, next) => {
+//   if (typeof req.originalUrl === "string" && req.originalUrl.includes("/stripe/webhook")) {
+//     let data = Buffer.alloc(0);
+//     req.on("data", (chunk: Buffer) => {
+//       data = Buffer.concat([data, chunk]);
+//     });
+//     req.on("end", () => {
+//       req.rawBody = data;
+//       next();
+//     });
+//   } else {
+//     express.json({ limit: "10mb" })(req, res, next);
+//   }
+// });
 
-app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 // Swagger UI (OpenAPI)
 setupSwagger(app);
 
 // Rotas da API
-routes(app);
 // routes(app);
 
 app.get("/", (req, res) => {
   res.send("API Gestão de Cobranças - SJ GESTOR");
 });
-
-// Health check endpoint para Vercel
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
-});
+// routes(app);
 
 // 404 handler
 app.use((req, res) => {
