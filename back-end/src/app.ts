@@ -2,10 +2,11 @@ import setupSwagger from "./docs/config/index";
 import express, { Express } from "express";
 import routes from "./routes/index";
 import cors from "cors";
+import bodyParser from "body-parser";
 
 const app: Express = express();
 
-// Middleware de segurança e CORS
+app.use(bodyParser.json())
 app.use(cors({
   origin: process.env.FRONTEND_URL || "*",
   credentials: true,
@@ -29,16 +30,21 @@ app.use((req: any, res, next) => {
 
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
-// Health check endpoint para Vercel
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
-});
-
 // Swagger UI (OpenAPI)
 setupSwagger(app);
 
 // Rotas da API
-routes(app);
+app.use("/", routes);
+// routes(app);
+
+app.get("/", (req, res) => {
+  res.send("API Gestão de Cobranças - SJ GESTOR");
+});
+
+// Health check endpoint para Vercel
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 // 404 handler
 app.use((req, res) => {
@@ -50,13 +56,28 @@ app.use((req, res) => {
 });
 
 // Error handler global
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error("Erro não tratado:", err);
+app.use((err: any, req:any, res:any, next: any) => {
+  console.error('Erro não tratado:', err);
   res.status(err.status || 500).json({
-    error: true,
-    message: err.message || "Erro interno do servidor",
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack })
+    error: err.message || 'Erro interno do servidor',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
 
+// Handler para rotas não encontradas
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
+});
+
+// Export para Vercel (serverless)
 export default app;
+
+const isVercel = process.env.VERCEL === '1';
+if (!isVercel) {
+  const PORT = process.env.PORT || 3020;
+  app.listen(PORT, () => {
+    console.log(
+      `API PARA GESTÃO DE COBRANÇAS SJ-GESTOR :${PORT}`
+    );
+  });
+}
