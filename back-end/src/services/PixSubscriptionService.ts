@@ -66,31 +66,25 @@ export class PixSubscriptionService {
    */
   static async uploadProof(subscriptionId: string, userId: string, proofUrl: string) {
     try {
-      logger.debug('Uploading proof', { subscriptionId, userId });
+      logger.debug('Uploading proof', { subscriptionId });
 
       // Get subscription
       const subscription = await SubscriptionRepository.findPixById(subscriptionId);
       if (!subscription) {
-        logger.warn('Subscription not found', { subscriptionId, userId });
+        logger.warn('Subscription not found', { subscriptionId });
         throw new NotFoundError('Pagamento não encontrado', 404, { subscriptionId });
-      }
-
-      // Verify ownership
-      if (subscription.user_id !== userId) {
-        logger.warn('Unauthorized proof upload attempt', { subscriptionId, userId, ownerId: subscription.user_id });
-        throw new UnauthorizedError('Acesso negado', 403, { subscriptionId });
       }
 
       // Verify status
       if (subscription.payment_status === PaymentStatus.APPROVED) {
-        logger.warn('Proof upload on approved payment', { subscriptionId, userId });
+        logger.warn('Proof upload on approved payment', { subscriptionId });
         throw new InvalidStateError('Pagamento já foi aprovado', 409, { subscriptionId });
       }
 
       // Update proof
       await SubscriptionRepository.updatePixProof(subscriptionId, proofUrl);
 
-      logger.info('Proof uploaded successfully', { subscriptionId, userId });
+      logger.info('Proof uploaded successfully', { subscriptionId });
     } catch (error) {
       if (
         error instanceof PixSubscriptionError ||
@@ -100,8 +94,8 @@ export class PixSubscriptionService {
       ) {
         throw error;
       }
-      logger.error('Error uploading proof', error, { subscriptionId, userId });
-      throw new PixSubscriptionError('Erro ao enviar comprovante', 500, { subscriptionId, userId });
+      logger.error('Error uploading proof', error, { subscriptionId });
+      throw new PixSubscriptionError('Erro ao enviar comprovante', 500, { subscriptionId });
     }
   }
 

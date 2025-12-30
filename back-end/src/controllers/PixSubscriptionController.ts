@@ -51,12 +51,6 @@ export class PixSubscriptionController {
    */
   static async uploadProof(req: Request, res: Response) {
     try {
-      const userId = (req as any).decodedToken?.id as string | undefined;
-      if (!userId) {
-        logger.warn('Unauthorized uploadProof attempt');
-        return res.status(401).json({ error: true, message: 'Não autenticado' });
-      }
-
       const { id: subscriptionId } = req.params;
       const file = req.file;
 
@@ -64,7 +58,7 @@ export class PixSubscriptionController {
       try {
         validateProofFile(file);
       } catch (err: any) {
-        logger.warn('Invalid file upload', { userId, subscriptionId, error: err.message });
+        logger.warn('Invalid file upload', { subscriptionId, error: err.message });
         return res.status(400).json({ error: true, message: err.message });
       }
 
@@ -72,7 +66,7 @@ export class PixSubscriptionController {
       const proofUrl = await uploadProofToStorage(file!, subscriptionId);
 
       // Update proof in database
-      await PixSubscriptionService.uploadProof(subscriptionId, userId, proofUrl);
+      await PixSubscriptionService.uploadProof(subscriptionId, '', proofUrl);
 
       return res.json({ error: false, message: 'Comprovante enviado com sucesso', data: { proofUrl } });
     } catch (err: any) {
