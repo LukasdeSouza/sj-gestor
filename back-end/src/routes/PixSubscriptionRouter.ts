@@ -33,7 +33,7 @@ const upload = multer({
 
 // User routes
 router.post('/payments/pix/select-plan', AuthMiddleware, PixSubscriptionController.selectPlan);
-router.post('/payments/:id/upload-proof', AuthMiddleware, upload.single('proof'), PixSubscriptionController.uploadProof);
+router.post('/payments/:id/upload-proof', upload.single('proof'), PixSubscriptionController.uploadProof);
 router.get('/payments/me', AuthMiddleware, PixSubscriptionController.getSubscription);
 router.get('/payments/:id', AuthMiddleware, PixSubscriptionController.getSubscription);
 router.put('/payments/:id/cancel', AuthMiddleware, PixSubscriptionController.cancelSubscription);
