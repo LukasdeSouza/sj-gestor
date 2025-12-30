@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Eye, Download, Check, X } from 'lucide-react';
-import { useState } from 'react';
+import { Eye, Check, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { approvePayment, rejectPayment } from '@/api/models/payments';
 import { toast } from 'react-toastify';
@@ -34,7 +33,6 @@ export default function AdminPaymentModal({
   payment,
 }: AdminPaymentModalProps) {
   const queryClient = useQueryClient();
-  const [selectedProof, setSelectedProof] = useState<string | null>(null);
 
   const { mutate: approve, isPending: isApproving } = useMutation({
     mutationFn: async () => {
@@ -190,7 +188,7 @@ export default function AdminPaymentModal({
                 <h3 className="font-semibold">Comprovante</h3>
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedProof(payment.proofUrl)}
+                  onClick={() => window.open(payment.proofUrl, '_blank')}
                   className="w-full"
                 >
                   <Eye className="w-4 h-4 mr-2" />
@@ -228,39 +226,6 @@ export default function AdminPaymentModal({
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Proof Preview Modal */}
-      {selectedProof && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-950 rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Comprovante de Pagamento</h2>
-              <button
-                onClick={() => setSelectedProof(null)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </button>
-            </div>
-            {selectedProof.endsWith('.pdf') ? (
-              <div className="bg-muted p-4 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-4">Arquivo PDF</p>
-                <a
-                  href={selectedProof}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-600"
-                >
-                  <Download className="w-4 h-4" />
-                  Baixar PDF
-                </a>
-              </div>
-            ) : (
-              <img src={selectedProof} alt="Comprovante" className="w-full rounded-lg" />
-            )}
-          </div>
-        </div>
-      )}
     </>
   );
 }
