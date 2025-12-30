@@ -2,6 +2,7 @@ import { SubscriptionRepository } from '../repositories/SubscriptionRepository';
 import { PlanId, PaymentStatus } from '@prisma/client';
 import { findPlanById } from '../config/plans';
 import { logger } from '../utils/logger';
+import QRCode from 'qrcode';
 import {
   PixSubscriptionError,
   UnauthorizedError,
@@ -24,15 +25,18 @@ export class PixSubscriptionService {
         throw new PixSubscriptionError('Plano inválido', 400, { planId });
       }
 
-      // Get PIX QR Code from environment
-      const pixQrCode = process.env.PIX_QR_CODE;
-      if (!pixQrCode) {
+      // Get PIX QR Code URL from environment
+      const pixQrCodeUrl = process.env.PIX_QR_CODE;
+      if (!pixQrCodeUrl) {
         logger.error('PIX QR Code not configured', 'Missing PIX_QR_CODE env var');
         throw new PixSubscriptionError('QR Code PIX não configurado', 500);
       }
 
+      // Generate QR code image from URL
+      const pixQrCode = await QRCode.toDataURL(pixQrCodeUrl);
+
       // Create or update payment record
-      const subscription = await SubscriptionRepository.createPixPayment(userId, planId, pixQrCode);
+      const subscription = await SubscriptionRepository.createPixPayment(userId, planId, pixQrCodeUrl);
 
       logger.info('Plan selected successfully', {
         userId,

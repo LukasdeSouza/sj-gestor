@@ -1,4 +1,6 @@
 import { fetchUseQuery, ApiErrorQuery } from '@/api/services/fetchUseQuery';
+import { TOKEN_COOKIE_KEY } from '@/constants/auth';
+import Cookies from 'js-cookie';
 
 export type PaymentStatus = 'PENDING' | 'PROOF_UPLOADED' | 'APPROVED' | 'REJECTED' | 'CANCELED';
 
@@ -63,11 +65,13 @@ export async function uploadPaymentProof(
   const formData = new FormData();
   formData.append('proof', file);
 
+  const token = Cookies.get(TOKEN_COOKIE_KEY);
+
   const response = await fetch(`/payments/${paymentId}/upload-proof`, {
     method: 'POST',
     body: formData,
     headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 
