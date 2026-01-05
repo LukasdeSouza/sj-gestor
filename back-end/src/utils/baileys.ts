@@ -1,4 +1,4 @@
-import makeWASocket, { useMultiFileAuthState, WASocket, fetchLatestWaWebVersion, DisconnectReason } from "baileys";
+import makeWASocket, { WASocket, fetchLatestWaWebVersion, DisconnectReason, AuthenticationState, SignalAuthState } from "baileys";
 import whatsappRepository from "../repositories/whatsappRepository";
 import MessageHandler from "./handlerMessage";
 import { getMessage } from "./message";
@@ -6,10 +6,59 @@ import { WAMessage } from "baileys";
 import { Boom } from "@hapi/boom";
 import { logger } from "./logger";
 import QRCode from "qrcode";
-import fs from "fs";
 import { eventsEmitter } from "./events";
+import { proto } from "baileys";
 
 export const sessions: Record<string, WASocket> = {};
+
+// In-memory auth state storage
+const authStates: Record<string, AuthenticationState> = {};
+
+// Create in-memory auth state
+const useMemoryAuthState = (sessionId: string): { state: AuthenticationState; saveCreds: () => Promise<void> } => {
+  if (!authStates[sessionId]) {
+    authStates[sessionId] = {
+      creds: {
+        noiseKey: undefined,
+        signedIdentityKey: undefined,
+        signedPreKey: undefined,
+        registrationId: undefined,
+        advSecretKey: undefined,
+        nextPreKeyId: undefined,
+        firstUnuploadedPreKeyId: undefined,
+        accountSettings: undefined,
+        me: undefined,
+        signalIdentities: [],
+        myAppStateKeyId: undefined,
+        lastAccountSyncTimestamp: undefined,
+        platform: "android",
+      },
+      keys: {
+        get: (type: string, jids: string[]) => {
+          const keys: Record<string, any> = {};
+          for (const jid of jids) {
+            const key = `${type}.${jid}`;
+            keys[jid] = authStates[sessionId].keys[key];
+          }
+          return keys;
+        },
+        set: (data: any) => {
+          for (const [key, value] of Object.entries(data)) {
+            authStates[sessionId].keys[key] = value;
+          }
+        },
+      },
+    } as any;
+  }
+
+  return {
+    state: authStates[sessionId],
+    saveCreds: async () => {
+      // Optionally save to database here
+      logger.debug('Credentials updated for session', { sessionId });
+    },
+  };
+};
 
 export const createWhatsAppSession = async (
   sessionId: string,
@@ -17,7 +66,7 @@ export const createWhatsAppSession = async (
   onReady: () => void
 ): Promise<WASocket> => {
 
-  const { state, saveCreds } = await useMultiFileAuthState(`./auth/${sessionId}`);
+  const { state, saveCreds } = useMemoryAuthState(sessionId);
   const { version } = await fetchLatestWaWebVersion({});
 
   const sock = makeWASocket({
@@ -34,43 +83,35 @@ export const createWhatsAppSession = async (
   sock.ev.on("connection.update", async (update: any) => {
     const { connection, lastDisconnect, qr } = update;
 
-    // logger.info(`Socket Update: ${connection || ""}`);
-
     // 📌 QR gerado
     if (qr) {
       onQr(qr);
       const qrImage = await QRCode.toDataURL(qr);
       eventsEmitter.emit(sessionId, {
-        status: "qr", // Exemplo de status
-        qr: qrImage, // Envie a imagem base64
-        is_connected: false, // Confirma que ainda não está conectado
+        status: "qr",
+        qr: qrImage,
+        is_connected: false,
       });
     }
 
     // 📌 Conectado
     if (connection === "open" && !resolved) {
-      resolved = true; // marca primeiro para evitar duplicidade
+      resolved = true;
 
       await whatsappRepository.markAsConnected(sessionId);
 
-      // emite evento para SSE atualizar front
       eventsEmitter.emit(sessionId, {
         is_connected: true,
         sessionId
       });
 
-      onReady(); // agora o front sabe que está conectado
-
-      // logger.info("Bot Conectado");
+      onReady();
     }
 
     // 📌 Desconectado
     if (connection === "close") {
-
       const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-      // logger.error("Conexão fechada. Código:", statusCode);
 
-      // ❌ Logout real no WhatsApp (usuário desconectou do celular)
       if (statusCode === DisconnectReason.loggedOut || statusCode === 401) {
         await whatsappRepository.markAsDisconnected(sessionId);
 
@@ -78,14 +119,11 @@ export const createWhatsAppSession = async (
           is_connected: false
         });
 
-        fs.rmSync(`./auth/${sessionId}`, { recursive: true, force: true });
-
+        delete authStates[sessionId];
         delete sessions[String(sessionId)];
-        return; // Não tenta reconectar
+        return;
       }
 
-      // 🔄 Qualquer outro motivo → reconectar com retry
-      // logger.warn("Tentando reconectar em 5s...");
       setTimeout(() => {
         createWhatsAppSession(sessionId, onQr, onReady);
       }, 5000);
@@ -101,15 +139,12 @@ export const createWhatsAppSession = async (
 
       if (isGroup || isStatus) return;
 
-      // @ts-ignore
-      const formattedMessage: FormattedMessage | undefined =
-        getMessage(message);
+      const formattedMessage: any = getMessage(message);
       if (formattedMessage !== undefined) {
         MessageHandler(sock, formattedMessage);
       }
     }
   });
-
 
   sock.ev.on("creds.update", saveCreds);
   sessions[String(sessionId)] = sock;
