@@ -38,13 +38,13 @@ const useMemoryAuthState = (sessionId: string): { state: AuthenticationState; sa
           const keys: Record<string, any> = {};
           for (const jid of jids) {
             const key = `${type}.${jid}`;
-            keys[jid] = authStates[sessionId].keys[key];
+            keys[jid] = (authStates[sessionId].keys as any)[key];
           }
           return keys;
         },
         set: (data: any) => {
           for (const [key, value] of Object.entries(data)) {
-            authStates[sessionId].keys[key] = value;
+            (authStates[sessionId].keys as any)[key] = value;
           }
         },
       },
@@ -54,7 +54,6 @@ const useMemoryAuthState = (sessionId: string): { state: AuthenticationState; sa
   return {
     state: authStates[sessionId],
     saveCreds: async () => {
-      // Optionally save to database here
       logger.debug('Credentials updated for session', { sessionId });
     },
   };
