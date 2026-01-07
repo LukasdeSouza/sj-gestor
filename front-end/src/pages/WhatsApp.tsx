@@ -15,7 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import Cookies from "js-cookie";
 import z from "zod";
+import { TOKEN_COOKIE_KEY } from "@/constants/auth";
 
 interface WhatsAppConnection {
   id: string;
@@ -30,15 +32,17 @@ export default function WhatsApp() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [sseError, setSseError] = useState<string | null>(null);
 
-  const { data, isLoading, refetch } = useQuery<undefined>({
+  const { data, isLoading, refetch } = useQuery<WhatsAppConnection>({
     queryKey: ["connectionWhatsApp"],
     queryFn: async () => {
-      const result = await fetchUseQuery<undefined, undefined>({
+      const result = await fetchUseQuery<undefined, WhatsAppConnection>({
         route: "/connect",
         method: "GET",
       });
-      setSseSessionId(result.id);
-      setConnection(result);
+      if (result) {
+        setSseSessionId(result.id);
+        setConnection(result);
+      }
       return result;
     },
     retry: 2,
@@ -113,46 +117,89 @@ export default function WhatsApp() {
   });
 
   useEffect(() => {
-
     if (!connection?.id) return;
 
     console.log("🔌 Iniciando SSE para sessionId:", connection?.id);
     setSseError(null);
 
-    const events = new EventSource(
-      `${import.meta.env.VITE_PUBLIC_API_URL}/events/${connection.id}`,
-      { withCredentials: true }
-    );
+    const token = Cookies.get(TOKEN_COOKIE_KEY);
+    if (!token) {
+      setSseError("Token não encontrado. Faça login novamente.");
+      return;
+    }
 
-    events.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    const connectSSE = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_PUBLIC_API_URL}/events/${connection.id}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'text/event-stream',
+            },
+          }
+        );
 
-      console.log("DADOS RECEBIDOS DO SSE: ", data)
-
-      setConnection(prevConnection => {
-        if (prevConnection) {
-          return {
-            ...prevConnection,
-            ...data
-          };
+        if (!response.ok) {
+          console.error('❌ SSE response error:', response.status, response.statusText);
+          setSseError(`Erro ao conectar: ${response.status} ${response.statusText}`);
+          return;
         }
-        return data;
-      });
 
-      if (data?.is_connected) {
-        setQrCode(null);
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          setSseError("Erro ao ler stream do servidor.");
+          return;
+        }
+
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            console.log("🔌 SSE stream finalizado");
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                console.log("DADOS RECEBIDOS DO SSE: ", data);
+
+                setConnection(prevConnection => {
+                  if (prevConnection) {
+                    return {
+                      ...prevConnection,
+                      ...data
+                    };
+                  }
+                  return data;
+                });
+
+                if (data?.is_connected) {
+                  setQrCode(null);
+                }
+              } catch (e) {
+                console.error("❌ Erro ao parsear SSE data:", e);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ SSE fetch error:", error);
+        setSseError("Erro ao conectar ao servidor. Verifique sua conexão.");
       }
     };
-
-    events.onerror = (error) => {
-      console.error("❌ SSE error:", error);
-      setSseError("Erro ao conectar ao servidor. Verifique sua conexão.");
-      events.close();
-    };
+    connectSSE();
 
     return () => {
       console.log("🔌 SSE desconectado");
-      events.close();
     };
   }, [sseSessionId]);
 
