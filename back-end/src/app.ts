@@ -44,13 +44,3 @@ app.use((req, res) => {
 
 // Export para Vercel (serverless)
 export default app;
-
-const isVercel = process.env.VERCEL === '1';
-if (!isVercel) {
-  const PORT = process.env.PORT || 3020;
-  app.listen(PORT, () => {
-    console.log(
-      `API PARA GESTÃO DE COBRANÇAS SJ-GESTOR :${PORT}`
-    );
-  });
-}

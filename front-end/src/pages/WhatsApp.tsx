@@ -28,6 +28,7 @@ export default function WhatsApp() {
   const [connection, setConnection] = useState<WhatsAppConnection | null>(null);
   const [sseSessionId, setSseSessionId] = useState<string | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [sseError, setSseError] = useState<string | null>(null);
 
   const { data, isLoading, refetch } = useQuery<undefined>({
     queryKey: ["connectionWhatsApp"],
@@ -116,6 +117,7 @@ export default function WhatsApp() {
     if (!connection?.id) return;
 
     console.log("🔌 Iniciando SSE para sessionId:", connection?.id);
+    setSseError(null);
 
     const events = new EventSource(
       `${import.meta.env.VITE_PUBLIC_API_URL}/events/${connection.id}`,
@@ -142,8 +144,10 @@ export default function WhatsApp() {
       }
     };
 
-    events.onerror = () => {
-      console.log("❌ SSE error");
+    events.onerror = (error) => {
+      console.error("❌ SSE error:", error);
+      setSseError("Erro ao conectar ao servidor. Verifique sua conexão.");
+      events.close();
     };
 
     return () => {
@@ -163,6 +167,12 @@ export default function WhatsApp() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
+          {sseError && (
+            <Alert variant="destructive" className="md:col-span-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{sseError}</AlertDescription>
+            </Alert>
+          )}
           <Card className="shadow-soft">
             <CardHeader>
               <div className="flex items-center justify-between">
