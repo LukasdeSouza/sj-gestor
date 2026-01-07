@@ -159,6 +159,14 @@ export default function LoginAuth() {
                   <ButtonLoading type="submit" className="w-full" isLoading={loginLoading}>
                     Entrar
                   </ButtonLoading>
+                  <div className="text-center">
+                    <a
+                      href="/forgot-password"
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      Esqueceu sua senha?
+                    </a>
+                  </div>
                 </form>
               </Form>
             </TabsContent>

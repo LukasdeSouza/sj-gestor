@@ -22,6 +22,8 @@ import Users from "./pages/Users";
 import Index from "./pages/Index";
 import Plans from "./pages/Plans";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/assinatura/sucesso" element={<SubscriptionSuccess />} />
@@ -49,7 +53,7 @@ const App = () => (
             <Route path="/whatsapp" element={<WhatsApp />} />
             <Route path="/account" element={<Account />} />
             <Route path="/users" element={<Users />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
