@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SJ Gestor</title>
+    <script>
+      // SPA fallback para DO Static Sites: preserva a rota original
+      (function() {
+        try {
+          var path = window.location.pathname || '/';
+          var search = window.location.search || '';
+          var hash = window.location.hash || '';
+          var full = path + search + hash;
+          sessionStorage.setItem('SPA_FALLBACK_PATH', full);
+        } catch (e) {}
+        // Redireciona para a raiz; index.html restaura a rota
+        window.location.replace('/');
+      })();
+    </script>
+  </head>
+  <body></body>
+  </html>
