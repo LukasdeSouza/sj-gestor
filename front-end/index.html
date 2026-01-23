@@ -20,6 +20,20 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // Se vier de 404.html, restaura a rota original do SPA
+      (function() {
+        try {
+          var stored = sessionStorage.getItem('SPA_FALLBACK_PATH');
+          if (stored && typeof stored === 'string' && stored !== '/') {
+            sessionStorage.removeItem('SPA_FALLBACK_PATH');
+            if (window.location.pathname === '/') {
+              window.history.replaceState(null, '', stored);
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
