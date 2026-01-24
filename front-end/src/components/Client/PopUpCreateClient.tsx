@@ -84,7 +84,7 @@ export function PopupCreateClient({ onSuccess }: Props) {
     },
 
     onSuccess: async () => {
-      toast.success("Usuário criado com sucesso!");
+      toast.success("Cliente cadastrado com sucesso!");
       setOpen(false);
       onSuccess();
     },
