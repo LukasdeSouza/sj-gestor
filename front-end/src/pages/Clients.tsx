@@ -42,10 +42,17 @@ export default function Clients() {
   const { data: dataClients, isLoading: isloadingClients, isFetching, refetch } = useQuery<ClientsResponse>({
     queryKey: ["listClients", parsedUser.id, debouncedSearch, page, limit],
     queryFn: async () => {
-      return await fetchUseQuery<{ user_id: string; name?: string; page: number; limit: number }, ClientsResponse>({
+      const isPhoneSearch = /[\d\(\)\-\s\+]/.test(debouncedSearch);
+      
+      return await fetchUseQuery<{ user_id: string; name?: string; phone?: string; page: number; limit: number }, ClientsResponse>({
         route: "/clients",
         method: "GET",
-        data: { user_id: parsedUser.id, name: debouncedSearch || undefined, page, limit },
+        data: { 
+          user_id: parsedUser.id, 
+          ...(debouncedSearch ? (isPhoneSearch ? { phone: debouncedSearch } : { name: debouncedSearch }) : {}),
+          page, 
+          limit 
+        },
       });
     },
     retry: 2,
@@ -135,7 +142,7 @@ export default function Clients() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar clientes..."
+                  placeholder="Buscar por nome ou telefone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"

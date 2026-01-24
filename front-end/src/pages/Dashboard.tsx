@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SkeletonInformation from "@/components/Skeletons/SkeletonInformation";
-import { Users, Package, CreditCard, MessageSquare, Activity, TrendingUp, Wallet } from "lucide-react";
+import { Users, Package, CreditCard, MessageSquare, Activity, TrendingUp, Wallet, DollarSign, Calendar } from "lucide-react";
 import { MessageTemplatesResponse } from "@/api/models/messageTemplate";
 import { fetchUseQuery } from "@/api/services/fetchUseQuery";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -134,6 +134,22 @@ export default function Dashboard() {
       value: summary?.totals?.templates ?? dataMessageTemplates?.resultados ?? 0,
       icon: MessageSquare,
       color: "from-secondary to-secondary/80"
+    },
+    {
+      title: "Cobranças Hoje",
+      value: summary?.dueTodayEligible ?? 0,
+      subtitle: "Clientes com vencimento hoje",
+      icon: Calendar,
+      color: "from-orange-500 to-orange-600"
+    },
+    {
+      title: "Recebido Hoje",
+      value: summary?.payments?.today?.total ? 
+        summary.payments.today.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 
+        'R$ 0,00',
+      subtitle: `${summary?.payments?.today?.count ?? 0} pagamentos`,
+      icon: DollarSign,
+      color: "from-green-500 to-green-600"
     }
   ];
 
@@ -151,7 +167,7 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {statCards.map((stat) => (
             <Card key={stat.title} className="overflow-hidden shadow-soft hover:shadow-medium transition-shadow">
               <CardHeader className="pb-3">
@@ -166,9 +182,9 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{stat.value}</div>
-                {stat?.subtitle && (
+                {stat.subtitle && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    {stat?.subtitle}
+                    {stat.subtitle}
                   </p>
                 )}
               </CardContent>
@@ -214,7 +230,27 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5" /> Recebido este mês
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {isSummaryError ? '-' : (
+                  summary?.payments?.month?.total ? 
+                    summary.payments.month.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 
+                    'R$ 0,00'
+                )}
+              </div>
+              <p className="text-muted-foreground text-sm mt-1">
+                {isSummaryError ? 'Erro ao carregar' : `${summary?.payments?.month?.count ?? 0} pagamentos registrados`}
+              </p>
+            </CardContent>
+          </Card>
+
           <Card className="shadow-soft">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
