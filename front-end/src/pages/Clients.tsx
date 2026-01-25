@@ -16,7 +16,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { formatPhoneNumber } from "@/utils/mask";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search } from "lucide-react";
+import { Trash2, Search, CheckCircle2, Clock } from "lucide-react";
 import { AuthUser } from "@/api/models/auth";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
@@ -43,15 +43,15 @@ export default function Clients() {
     queryKey: ["listClients", parsedUser.id, debouncedSearch, page, limit],
     queryFn: async () => {
       const isPhoneSearch = /[\d\(\)\-\s\+]/.test(debouncedSearch);
-      
+
       return await fetchUseQuery<{ user_id: string; name?: string; phone?: string; page: number; limit: number }, ClientsResponse>({
         route: "/clients",
         method: "GET",
-        data: { 
-          user_id: parsedUser.id, 
+        data: {
+          user_id: parsedUser.id,
           ...(debouncedSearch ? (isPhoneSearch ? { phone: debouncedSearch } : { name: debouncedSearch }) : {}),
-          page, 
-          limit 
+          page,
+          limit
         },
       });
     },
@@ -157,6 +157,7 @@ export default function Clients() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Vencimento</TableHead>
+                  <TableHead>Status Cobrança</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -171,6 +172,21 @@ export default function Clients() {
                     <TableCell>{formatPhoneNumber(client.phone)}</TableCell>
                     <TableCell>
                       {client.due_at ? new Date(client.due_at as any).toLocaleString("pt-BR") : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {client.last_reminder_due_at ? (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span className="text-xs text-green-600">
+                            {new Date(client.last_reminder_due_at as any).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-amber-600" />
+                          <span className="text-xs text-amber-600">Pendente</span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                       <PopUpRegisterPayment id={client.id} onSuccess={() => { refetchPayments(); refetch(); }} />
@@ -239,6 +255,22 @@ export default function Clients() {
                   <div>
                     <p className="text-xs text-muted-foreground">Vencimento</p>
                     <p className="font-medium">{selectedClient.due_at ? new Date(selectedClient.due_at as any).toLocaleString('pt-BR') : '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Status da Cobrança</p>
+                    {selectedClient.last_reminder_due_at ? (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-600">
+                          Enviada em {new Date(selectedClient.last_reminder_due_at as any).toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-amber-600" />
+                        <span className="text-sm font-medium text-amber-600">Pendente</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

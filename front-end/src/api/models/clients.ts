@@ -26,6 +26,7 @@ export interface Client extends CreateClientData {
   product?: Product;
   template?: MessageTemplate;
   key?: PixKey;
+  last_reminder_due_at?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
