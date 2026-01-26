@@ -146,7 +146,7 @@ export default function ComboboxDebounce<T>({
               // Se o valor selecionado é maior que 1 mostra apenas a quantidade e não o valor selecionado 
               <div className="max-h-5 flex flex-wrap gap-2">
                 {selecionado.length > 1 ? (
-                  <div className="flex items-center pl-2 pr-5 py-1 bg-secondary rounded">
+                  <div className="flex items-center pl-2 pr-5 py-1 bg-muted rounded">
                     <span className="font-semibold text-sm">
                       {selecionado.length} itens selecionados
                     </span>
@@ -155,7 +155,7 @@ export default function ComboboxDebounce<T>({
                   selecionado.map((item) => (
                     <div
                       key={selectedField(item)}
-                      className="flex items-center pl-2 pr-5 py-1 bg-secondary rounded"
+                      className="flex items-center pl-2 pr-5 py-1 bg-muted rounded"
                     >
                       <span className="font-bold text-base">
                         {selectedField(item)}
@@ -178,7 +178,7 @@ export default function ComboboxDebounce<T>({
             ) : selecionado && !Array.isArray(selecionado) ? (
               <div
                 className={cn(
-                  "flex items-center pl-2 pr-5 py-1 bg-secondary rounded",
+                  "flex items-center pl-2 pr-5 py-1 bg-muted rounded",
                   removeOneOption && "cursor-pointer hover:bg-muted"
                 )}
                 role={removeOneOption ? "button" : undefined}
