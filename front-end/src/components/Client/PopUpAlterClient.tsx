@@ -137,9 +137,9 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome <span className="text-red-600">*</span></FormLabel>
+                      <FormLabel className="font-bold">Nome <span className="text-red-600">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="name" {...field} />
+                        <Input className="font-bold" placeholder="name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -151,9 +151,10 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telefone <span className="text-red-600">*</span></FormLabel>
+                      <FormLabel className="font-bold">Telefone <span className="text-red-600">*</span></FormLabel>
                       <FormControl>
                         <Input
+                          className="font-bold"
                           placeholder="(69) 9XXXX-XXXX"
                           {...field}
                           value={mascaraTelefone(field.value)}
@@ -179,9 +180,10 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="font-bold">Email</FormLabel>
                     <FormControl>
                       <Input
+                        className="font-bold"
                         placeholder="email@exemplo.com"
                         {...field}
                         value={field.value || ""}
@@ -202,7 +204,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                   name="product_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel htmlFor="cobrancas">
+                      <FormLabel htmlFor="cobrancas" className="font-bold">
                         Produto <span className="text-red-600">*</span>
                       </FormLabel>
                       <FormControl>
@@ -237,7 +239,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                   name="template_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel htmlFor="template">
+                      <FormLabel htmlFor="template" className="font-bold">
                         Template <span className="text-red-600">*</span>
                       </FormLabel>
                       <FormControl>
@@ -274,7 +276,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                   name="key_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel htmlFor="key">
+                      <FormLabel htmlFor="key" className="font-bold">
                         Chave PIX <span className="text-red-600">*</span>
                       </FormLabel>
                       <FormControl>
@@ -309,7 +311,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                   name="due_at"
                   render={({ field }) => (
                     <FormItem >
-                      <FormLabel>Data cobrança <span className="text-red-600">*</span></FormLabel>
+                      <FormLabel className="font-bold">Data cobrança <span className="text-red-600">*</span></FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -327,6 +329,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                         </PopoverTrigger>
                         <PopoverContent align="start" className="w-auto p-0">
                           <Calendar
+                            className="font-bold"
                             mode="single"
                             selected={field.value}
                             onSelect={(date) => {
@@ -356,9 +359,9 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                 name="additional_info"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Informações adicionais</FormLabel>
+                    <FormLabel className="font-bold">Informações adicionais</FormLabel>
                     <FormControl>
-                      <Textarea rows={3} placeholder="Observações importantes..." {...field}
+                      <Textarea className="font-bold" rows={3} placeholder="Observações importantes..." {...field}
                         onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)} />
                     </FormControl>
                     <FormMessage />

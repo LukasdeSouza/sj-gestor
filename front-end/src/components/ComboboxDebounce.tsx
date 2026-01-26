@@ -146,7 +146,7 @@ export default function ComboboxDebounce<T>({
               // Se o valor selecionado é maior que 1 mostra apenas a quantidade e não o valor selecionado 
               <div className="max-h-5 flex flex-wrap gap-2">
                 {selecionado.length > 1 ? (
-                  <div className="flex items-center pl-2 pr-5 py-1 bg-gray-900 rounded">
+                  <div className="flex items-center pl-2 pr-5 py-1 bg-secondary rounded">
                     <span className="font-semibold text-sm">
                       {selecionado.length} itens selecionados
                     </span>
@@ -155,9 +155,9 @@ export default function ComboboxDebounce<T>({
                   selecionado.map((item) => (
                     <div
                       key={selectedField(item)}
-                      className="flex items-center pl-2 pr-5 py-1 bg-gray-900 rounded"
+                      className="flex items-center pl-2 pr-5 py-1 bg-secondary rounded"
                     >
-                      <span className="font-semibold text-sm">
+                      <span className="font-bold text-base">
                         {selectedField(item)}
                       </span>
                       <span
@@ -169,7 +169,7 @@ export default function ComboboxDebounce<T>({
                           removeOption(item);
                         }}
                       >
-                        <X className="hover:text-white" />
+                        <X className="hover:text-accent-foreground" />
                       </span>
                     </div>
                   ))
@@ -178,8 +178,8 @@ export default function ComboboxDebounce<T>({
             ) : selecionado && !Array.isArray(selecionado) ? (
               <div
                 className={cn(
-                  "flex items-center pl-2 pr-5 py-1 bg-gray-900 rounded",
-                  removeOneOption && "cursor-pointer hover:bg-slate-300"
+                  "flex items-center pl-2 pr-5 py-1 bg-secondary rounded",
+                  removeOneOption && "cursor-pointer hover:bg-muted"
                 )}
                 role={removeOneOption ? "button" : undefined}
                 tabIndex={removeOneOption ? 0 : undefined}
@@ -189,7 +189,7 @@ export default function ComboboxDebounce<T>({
                   removeOption(selecionado);
                 }}
               >
-                <span className="font-semibold text-sm">
+                <span className="font-bold text-base">
                   {visualizacao && visualizacao.trim() !== ""
                     ? visualizacao
                     : selectedField(selecionado)}
@@ -205,7 +205,7 @@ export default function ComboboxDebounce<T>({
                       removeOption(selecionado);
                     }}
                   >
-                    <X className="ml-2 h-4 w-4 hover:text-white" />
+                    <X className="ml-2 h-4 w-4 hover:text-accent-foreground" />
                   </span>
                 )}
               </div>
