@@ -215,7 +215,7 @@ export default function WhatsApp() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {sseError && (
-            <Alert variant="destructive" className="md:col-span-2">
+            <Alert variant="destructive" className="md:col-span-2 hidden">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{sseError}</AlertDescription>
             </Alert>
