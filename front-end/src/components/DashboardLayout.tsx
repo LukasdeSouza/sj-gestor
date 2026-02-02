@@ -114,7 +114,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <NavLink
               key={item.path}
               to={item.path}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors font-bold"
               activeClassName="bg-accent text-accent-foreground font-medium"
               onClick={() => setSidebarOpen(false)}
             >
