@@ -4,6 +4,7 @@ import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import SubscriptionPending from "./pages/SubscriptionPending";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import MaintenanceBanner from "@/components/MaintenanceBanner";
 import SubscriptionError from "./pages/SubscriptionError";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -32,6 +33,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
         <Toaster />
+        <MaintenanceBanner />
         <Sonner />
         <ToastContainer />
         <BrowserRouter>

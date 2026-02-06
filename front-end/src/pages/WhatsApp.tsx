@@ -9,7 +9,7 @@ import { WhatsAppSchema } from "@/schemas/WhatsAppSchema";
 import { TOKEN_COOKIE_KEY } from "@/constants/auth";
 import ButtonLoading from "@/components/ButtonLoading";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { mascaraTelefone } from "@/utils/mask";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ interface WhatsAppConnection {
 }
 
 export default function WhatsApp() {
+  const queryClient = useQueryClient();
   const [connection, setConnection] = useState<WhatsAppConnection | null>(null);
   const [sseSessionId, setSseSessionId] = useState<string | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
@@ -107,6 +108,7 @@ export default function WhatsApp() {
       toast.success("WhatsApp desconectado com sucesso!");
       setConnection(null);
       setQrCode(null);
+      queryClient.invalidateQueries({ queryKey: ["connectionWhatsApp"] });
     },
 
     onError: (error: ApiErrorQuery) => {
@@ -215,7 +217,7 @@ export default function WhatsApp() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {sseError && (
-            <Alert variant="destructive" className="md:col-span-2 hidden">
+            <Alert variant="destructive" className="md:col-span-2">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{sseError}</AlertDescription>
             </Alert>
