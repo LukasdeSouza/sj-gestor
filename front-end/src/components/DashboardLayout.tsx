@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package, CreditCard, MessageSquare, MessageCircle, LogOut, Menu, X, Wallet, FileText, Bell, BadgeDollarSign, Settings, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, Users, Package, CreditCard, MessageSquare, MessageCircle, LogOut, Menu, X, Wallet, FileText, Bell, BadgeDollarSign, Settings, User as UserIcon, HelpCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { TOKEN_COOKIE_KEY, USER_COOKIE_KEY } from "@/constants/auth";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
@@ -61,6 +61,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: MessageCircle, label: "WhatsApp", path: "/whatsapp" },
     ...(parsedUser?.group?.name === 'ADMIN' ? [{ icon: UserIcon, label: "Usuários", path: "/users" }] : []),
     ...(parsedUser?.group?.name === 'USUARIO_CLIENTE' ? [{ icon: Wallet, label: "Pagamentos", path: "/payments" }] : []),
+    { icon: HelpCircle, label: "Ajuda & Suporte", path: "/help" },
     // { icon: CreditCard, label: "Planos", path: "/plans" },
     // { icon: Settings, label: "Conta", path: "/account" },
   ];
@@ -101,6 +102,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <div>
                 <h1 className="font-bold text-xl">SJ Gestor</h1>
                 <p className="text-xs text-muted-foreground">Gestão de Cobranças</p>
+                <small className="text-[8px] text-muted-foreground">versão 1.0.15</small>
               </div>
             </div>
             <div className="hidden lg:block">

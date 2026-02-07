@@ -25,6 +25,7 @@ import Plans from "./pages/Plans";
 import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Help from "./pages/Help";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +34,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
         <Toaster />
-        <MaintenanceBanner />
+        <MaintenanceBanner/>
         <Sonner />
         <ToastContainer />
         <BrowserRouter>
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/whatsapp" element={<WhatsApp />} />
             <Route path="/account" element={<Account />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/help" element={<Help />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

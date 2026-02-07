@@ -145,7 +145,7 @@ export default function Dashboard() {
     {
       title: "Recebido Hoje",
       value: summary?.payments?.today?.total ? 
-        summary.payments.today.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 
+        Number(summary.payments.today.total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 
         'R$ 0,00',
       subtitle: `${summary?.payments?.today?.count ?? 0} pagamentos`,
       icon: DollarSign,
@@ -241,7 +241,7 @@ export default function Dashboard() {
               <div className="text-3xl font-bold">
                 {isSummaryError ? '-' : (
                   summary?.payments?.month?.total ? 
-                    summary.payments.month.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 
+                    Number(summary.payments.month.total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 
                     'R$ 0,00'
                 )}
               </div>
