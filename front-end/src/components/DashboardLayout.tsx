@@ -159,7 +159,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Main content */}
       <main className="lg:ml-64 pt-16 lg:pt-0">
-        <SubscriptionBanner />
+        {/* <SubscriptionBanner /> */}
         <div className="p-6 lg:p-8">{children}</div>
       </main>
     </div>
