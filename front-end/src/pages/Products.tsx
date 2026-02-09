@@ -15,6 +15,7 @@ import { Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AuthUser } from "@/api/models/auth";
 import { toast } from "react-toastify";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Cookies from "js-cookie";
 
 export default function Products() {
@@ -28,6 +29,17 @@ export default function Products() {
 
   const user = Cookies.get("user");
   const parsedUser: AuthUser = user ? JSON.parse(user) : null;
+
+  const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
+    queryKey: ["subscription", "me"],
+    queryFn: async () => await fetchUseQuery<undefined, { 
+      plan_id: string; 
+      status: string; 
+      pix_qr_code?: string;
+      approved_at?: string;
+    }>({ route: "/subscription/me", method: "GET" }),
+    retry: 0,
+  });
 
   const { data: dataProducts, isLoading: isloadingProducts, isFetching, refetch } = useQuery<ProductsResponse>({
     queryKey: ["listProducts", parsedUser.id, debouncedSearch, page, limit],
@@ -44,6 +56,19 @@ export default function Products() {
   });
   const totalPages = useMemo(() => dataProducts?.totalPaginas ?? 1, [dataProducts]);
   const currentPage = useMemo(() => dataProducts?.pagina ?? page, [dataProducts, page]);
+
+  const isPixSubscription = !!subscription?.pix_qr_code;
+  const isApproved = !!subscription?.approved_at;
+  const isPlanEffective = subscription?.status === 'ACTIVE' && (!isPixSubscription || isApproved);
+  const effectivePlanId = isPlanEffective ? subscription?.plan_id : 'FREE';
+  
+  const productLimit = effectivePlanId === 'FREE' ? 5 : Infinity;
+  const currentProductsCount = dataProducts?.resultados || 0;
+  const canAddProduct = currentProductsCount < productLimit;
+
+  const limitMessage = !isApproved && isPixSubscription && subscription?.status === 'ACTIVE'
+    ? "Seu plano aguarda aprovação do pagamento para liberar mais produtos." 
+    : "Limite de produtos atingido. Faça um upgrade para adicionar mais.";
 
   const { mutate: dataDelete, isPending: isloadingDataDelete } = useMutation({
     mutationFn: async (id: string) => {
@@ -64,7 +89,7 @@ export default function Products() {
     }
   });
 
-  if (isloadingProducts) {
+  if (isloadingProducts || isLoadingSubscription) {
     return <SkeletonInformation />
   }
 
@@ -76,9 +101,24 @@ export default function Products() {
             <h1 className="text-3xl font-bold">Produtos</h1>
             <p className="text-muted-foreground">Gerencie seus produtos e serviços</p>
           </div>
-          <PopupCreateProduct
-            onSuccess={() => refetch()}
-          />
+          {canAddProduct ? (
+            <PopupCreateProduct
+              onSuccess={() => refetch()}
+            />
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0}>
+                  <Button variant="outline" className="opacity-50 cursor-not-allowed" onClick={() => toast.error(limitMessage)}>
+                    Novo Produto
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs text-center">{limitMessage}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
 
         <Card className="shadow-soft">

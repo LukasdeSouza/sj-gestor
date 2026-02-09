@@ -343,12 +343,12 @@ export default function Help() {
     }] : []),
     ...(isAdmin ? [{
       id: "users",
-      label: "Usuários",
+      label: "Usuários & Gerenciamento",
       icon: User,
       content: (
         <Card>
           <CardHeader>
-            <CardTitle>Gestão de Usuários</CardTitle>
+            <CardTitle>Gestão de Usuários & Pagamentos</CardTitle>
             <CardDescription>Administração do sistema</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -93,7 +93,7 @@ export default function Users() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Gerenciamento</h1>
+            <h1 className="text-3xl font-bold">Usuários & Gerenciamento</h1>
             <p className="text-muted-foreground">Visualize usuários e pagamentos do sistema</p>
           </div>
 

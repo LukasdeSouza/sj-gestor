@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
+import QRCode from "react-qr-code";
 
 interface PixPaymentModalProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ export default function PixPaymentModal({
   };
 
   const handleCopyQrCode = () => {
-    navigator.clipboard.writeText(pixQrCode);
+    navigator.clipboard.writeText("00020126430014br.gov.bcb.pix0121sjgestor116@gmail.com5204000053039865802BR592458.919.759 SAMANTHA MELG6009Sao Paulo62240520daqr30494131325710576304165B");
     setCopiedQrCode(true);
     setTimeout(() => setCopiedQrCode(false), 2000);
   };
@@ -61,11 +62,22 @@ export default function PixPaymentModal({
           {/* QR Code */}
           <div className="space-y-2">
             <p className="text-sm font-medium">QR Code PIX</p>
-            <div className="bg-white p-4 rounded-lg border flex items-center justify-center min-h-[200px]">
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-2">Escaneie com seu banco</p>
-                <p className="text-xs font-mono break-all text-muted-foreground">{pixQrCode.substring(0, 50)}...</p>
-              </div>
+            <div className="bg-white p-4 rounded-lg border flex flex-col items-center justify-center min-h-[200px]">
+              {pixQrCode.startsWith("data:image") ? (
+                <img
+                  src={pixQrCode}
+                  alt="QR Code PIX"
+                  className="w-full h-auto max-w-[200px]"
+                />
+              ) : (
+                <QRCode
+                  value={pixQrCode}
+                  size={200}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  viewBox={`0 0 256 256`}
+                />
+              )}
+              <p className="text-xs text-muted-foreground mt-4">Escaneie com seu banco</p>
             </div>
             <Button
               variant="outline"

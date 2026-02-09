@@ -72,7 +72,7 @@ export function PopUpCreateUser({ onSuccess }: Props) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
-          Nova Template
+          Criar Usuário
         </Button>
       </DialogTrigger>
 

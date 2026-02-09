@@ -105,7 +105,7 @@ export default function WhatsApp() {
     },
 
     onSuccess: () => {
-      toast.success("WhatsApp desconectado com sucesso!");
+      toast.success("WhatsApp desconectado com sucesso! AGUARDE 5 MINUTOS PARA FAZER A CONEXÃO NOVAMENTE.");
       setConnection(null);
       setQrCode(null);
       queryClient.invalidateQueries({ queryKey: ["connectionWhatsApp"] });
@@ -240,6 +240,8 @@ export default function WhatsApp() {
               </div>
               <CardDescription>
                 Situação atual da integração com WhatsApp
+                <br />
+                <small className="underline">obs: se aparecer em seu Whatsapp na parte de Dispositivos Conectados a mensagem "Sincronizando..." aguarde a conclusão para que o status seja atualizado no sistema</small>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -277,12 +279,17 @@ export default function WhatsApp() {
                   <img src={qrCode} alt="WhatsApp QR Code" className="w-full h-full object-contain" />
                 ) : (
                   <div className="text-center text-muted-foreground p-8">
-                    <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50 text-green-600" />
                     {isPending ? (
                       <>
                         <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin" />
                         <p>Gerando QR Code...</p>
                       </>
+                    ) : connection?.is_connected ? (
+                      <div className="flex flex-row items-center gap-2">
+                        <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-green-600" />
+                          <p>Whatsapp conectado com sucesso!</p>
+                        </div>
                     ) : (
                       <>
                         <p>Clique em "Conectar WhatsApp" para gerar o QR Code</p>
@@ -301,6 +308,7 @@ export default function WhatsApp() {
                   <FormField
                     control={formWhatsapp.control}
                     name="phone_number"
+                    disabled={connection?.is_connected}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Telefone <span className="text-red-600">*</span></FormLabel>

@@ -39,6 +39,17 @@ export default function Clients() {
   const user = Cookies.get("user");
   const parsedUser: AuthUser = user ? JSON.parse(user) : null;
 
+  const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
+    queryKey: ["subscription", "me"],
+    queryFn: async () => await fetchUseQuery<undefined, { 
+      plan_id: string; 
+      status: string; 
+      pix_qr_code?: string;
+      approved_at?: string;
+    }>({ route: "/subscription/me", method: "GET" }),
+    retry: 0,
+  });
+
   const { data: dataClients, isLoading: isloadingClients, isFetching, refetch } = useQuery<ClientsResponse>({
     queryKey: ["listClients", parsedUser.id, debouncedSearch, page, limit],
     queryFn: async () => {
@@ -62,6 +73,15 @@ export default function Clients() {
 
   const totalPages = useMemo(() => dataClients?.totalPaginas ?? 1, [dataClients]);
   const currentPage = useMemo(() => dataClients?.pagina ?? page, [dataClients, page]);
+
+  const isPixSubscription = !!subscription?.pix_qr_code;
+  const isApproved = !!subscription?.approved_at;
+  const isPlanEffective = subscription?.status === 'ACTIVE' && (!isPixSubscription || isApproved);
+  const effectivePlanId = isPlanEffective ? subscription?.plan_id : 'FREE';
+  
+  const clientLimit = effectivePlanId === 'PRO_UNLIMITED' ? Infinity : (effectivePlanId === 'PRO_100' ? 100 : 5);
+  const currentClientsCount = dataClients?.resultados || 0;
+  const canAddClient = currentClientsCount < clientLimit;
 
   // Pagamentos do cliente selecionado
   type ClientPaymentsResponse = {
@@ -119,7 +139,7 @@ export default function Clients() {
     }
   });
 
-  if (isloadingClients) {
+  if (isloadingClients || isLoadingSubscription) {
     return <SkeletonInformation />
   }
 
@@ -131,9 +151,19 @@ export default function Clients() {
             <h1 className="text-3xl font-bold">Clientes</h1>
             <p className="text-muted-foreground">Gerencie seus clientes</p>
           </div>
-          <PopupCreateClient
-            onSuccess={() => refetch()}
-          />
+          {canAddClient ? (
+            <PopupCreateClient
+              onSuccess={() => refetch()}
+            />
+          ) : (
+            <Button onClick={() => toast.error(
+              !isApproved && isPixSubscription && subscription?.status === 'ACTIVE'
+                ? "Seu plano aguarda aprovação do pagamento para liberar mais clientes." 
+                : "Limite de clientes atingido. Faça um upgrade para adicionar mais."
+            )}>
+              Novo Cliente
+            </Button>
+          )}
         </div>
 
         <Card className="shadow-soft">
