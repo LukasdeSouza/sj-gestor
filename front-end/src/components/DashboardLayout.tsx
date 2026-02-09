@@ -2,7 +2,7 @@ import { LayoutDashboard, Users, Package, CreditCard, MessageSquare, MessageCirc
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { TOKEN_COOKIE_KEY, USER_COOKIE_KEY } from "@/constants/auth";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
-import SubscriptionBanner from "@/components/SubscriptionBanner";
+// import SubscriptionBanner from "@/components/SubscriptionBanner";
 import { fetchUseQuery } from "@/api/services/fetchUseQuery";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";

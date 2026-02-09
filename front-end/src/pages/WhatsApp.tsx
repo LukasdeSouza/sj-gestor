@@ -216,12 +216,12 @@ export default function WhatsApp() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {sseError && (
+          {/* {sseError && (
             <Alert variant="destructive" className="md:col-span-2">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{sseError}</AlertDescription>
             </Alert>
-          )}
+          )} */}
           <Card className="shadow-soft">
             <CardHeader>
               <div className="flex items-center justify-between">
