@@ -311,10 +311,10 @@ export default function WhatsApp() {
                     disabled={connection?.is_connected}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Telefone <span className="text-red-600">*</span></FormLabel>
+                        <FormLabel>Telefone <span className="text-red-600">* (sem traços ou espaço, somente o número do telefone com 9 antes)</span></FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Digite o telefone"
+                            placeholder="Digite o telefone sem traços ou espaço, somente os números"
                             {...field}
                             value={mascaraTelefone(field.value)}
                             onChange={(e) => field.onChange(e.target.value.replace(/\D/g, ''))} // Limpa para enviar

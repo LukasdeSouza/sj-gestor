@@ -16,7 +16,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { formatPhoneNumber } from "@/utils/mask";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, CheckCircle2, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Search, CheckCircle2, Clock, X } from "lucide-react";
 import { AuthUser } from "@/api/models/auth";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
@@ -29,7 +30,14 @@ export default function Clients() {
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [paymentsPage, setPaymentsPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>(undefined); // Para ordenação alfabética
+  const [dueDateOrder, setDueDateOrder] = useState<"asc" | "desc" | undefined>(undefined); // Para ordenação por data de vencimento
+  const [showOverdue, setShowOverdue] = useState(false); // Para filtrar clientes inadimplentes
   const paymentsLimit = 10;
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
+
+  const hasActiveFilters = !!sortOrder || !!dueDateOrder || showOverdue || !!searchTerm;
 
   // Sempre que o termo de busca mudar, volte para a primeira página
   useEffect(() => {
@@ -69,7 +77,36 @@ export default function Clients() {
     retry: 2,
     refetchOnWindowFocus: false,
     enabled: !!parsedUser.id,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
+
+  const filteredClients = useMemo(() => {
+    if (!dataClients?.clients) return [];
+    
+    let result = [...dataClients.clients];
+
+    // Filtro de inadimplentes (vencidos)
+    if (showOverdue) {
+      const now = new Date();
+      result = result.filter(client => client.due_at && new Date(client.due_at) < now);
+    }
+
+    // Ordenação
+    if (sortOrder) {
+      result.sort((a, b) => {
+        return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+      });
+    } else if (dueDateOrder) {
+      result.sort((a, b) => {
+        const dateA = a.due_at ? new Date(a.due_at).getTime() : 0;
+        const dateB = b.due_at ? new Date(b.due_at).getTime() : 0;
+        return dueDateOrder === "asc" ? dateA - dateB : dateB - dateA;
+      });
+    }
+
+    return result;
+  }, [dataClients, showOverdue, sortOrder, dueDateOrder]);
 
   const totalPages = useMemo(() => dataClients?.totalPaginas ?? 1, [dataClients]);
   const currentPage = useMemo(() => dataClients?.pagina ?? page, [dataClients, page]);
@@ -112,6 +149,7 @@ export default function Clients() {
     onSuccess: async () => {
       toast.success("Deletado com sucesso!");
       refetch();
+      setDeleteConfirmationOpen(false);
     },
     onError: (error: ApiErrorQuery) => {
       if (Array.isArray(error.errors)) {
@@ -178,6 +216,52 @@ export default function Clients() {
                   className="pl-10"
                 />
               </div>
+
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                  setDueDateOrder(undefined);
+                  setShowOverdue(false);
+                }}
+                >
+                  Ordem Alfabética: {sortOrder === "asc" ? "A-Z" : sortOrder === "desc" ? "Z-A" : "Padrão"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  setDueDateOrder(dueDateOrder === "desc" ? "asc" : "desc");
+                  setSortOrder(undefined);
+                  setShowOverdue(false);
+                }}
+                >
+                  Vencimento: {dueDateOrder === "desc" ? "Recente" : dueDateOrder === "asc" ? "Antigo" : "Padrão"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowOverdue(!showOverdue);
+                    setSortOrder(undefined);
+                    setDueDateOrder(undefined);
+                  }}
+                >
+                  Inadimplentes: {showOverdue ? "Sim" : "Não"}
+                </Button>
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSortOrder(undefined);
+                      setDueDateOrder(undefined);
+                      setShowOverdue(false);
+                      setSearchTerm("");
+                    }}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Limpar
+                  </Button>
+                )}
+              </div>
+
             </div>
           </CardHeader>
           <CardContent>
@@ -192,17 +276,28 @@ export default function Clients() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dataClients?.clients?.map((client) => (
-                  <TableRow
-                    key={client.id}
-                    className="hover:bg-accent/40 cursor-pointer"
-                    onClick={() => { setSelectedClient(client); setViewOpen(true); setPaymentsPage(1); }}
-                  >
-                    <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>{formatPhoneNumber(client.phone)}</TableCell>
-                    <TableCell>
-                      {client.due_at ? new Date(client.due_at as any).toLocaleString("pt-BR") : "-"}
-                    </TableCell>
+                {filteredClients.map((client) => {
+                  const isOverdue = client.due_at && new Date(client.due_at) < new Date();
+                  return (
+                    <TableRow
+                      key={client.id}
+                      className="hover:bg-accent/40 cursor-pointer"
+                      onClick={() => { setSelectedClient(client); setViewOpen(true); setPaymentsPage(1); }}
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {client.name}
+                          {isOverdue && (
+                            <Badge variant="destructive" className="text-[10px] h-5 px-1.5">
+                              Vencido {Math.floor((new Date().getTime() - new Date(client.due_at).getTime()) / (1000 * 3600 * 24))} dias
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatPhoneNumber(client.phone)}</TableCell>
+                      <TableCell>
+                        {client.due_at ? new Date(client.due_at as any).toLocaleString("pt-BR") : "-"}
+                      </TableCell>
                     <TableCell>
                       {client.last_reminder_due_at ? (
                         <div className="flex items-center gap-2">
@@ -227,13 +322,17 @@ export default function Clients() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => mutateDelete(client.id)}
+                        onClick={() => {
+                          setClientToDelete(client.id);
+                          setDeleteConfirmationOpen(true);
+                        }}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
@@ -360,6 +459,26 @@ export default function Clients() {
 
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Confirmação de Exclusão */}
+        <Dialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirmar exclusão</DialogTitle>
+            </DialogHeader>
+            <div className="py-3">
+              <p className="text-sm text-muted-foreground">
+                Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita e removerá todos os dados associados.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setDeleteConfirmationOpen(false)}>Cancelar</Button>
+              <Button variant="destructive" onClick={() => clientToDelete && mutateDelete(clientToDelete)} disabled={isloadingmutateDelete}>
+                {isloadingmutateDelete ? "Excluindo..." : "Excluir"}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
