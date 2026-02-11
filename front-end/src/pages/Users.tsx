@@ -17,14 +17,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-toastify";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listAllPayments, PaymentStatus } from "@/api/models/payments";
 import AdminPaymentModal from "@/components/Payments/AdminPaymentModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 500);
+  const [page, setPage] = useState(1);
+  const limit = 10;
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState("users");
@@ -32,17 +36,25 @@ export default function Users() {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<PaymentStatus | undefined>();
 
-  const { data: dataUsers, isLoading: isloadingUsers, refetch } = useQuery<UsersResponse>({
-    queryKey: ["listUsers"],
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { data: dataUsers, isLoading: isloadingUsers, refetch, isFetching } = useQuery<UsersResponse>({
+    queryKey: ["listUsers", page, limit, debouncedSearch],
     queryFn: async () => {
-      return await fetchUseQuery<undefined, UsersResponse>({
+      return await fetchUseQuery<{ page: number; limit: number; name?: string }, UsersResponse>({
         route: `/users`,
         method: "GET",
+        data: { page, limit, name: debouncedSearch || undefined },
       });
     },
     retry: 2,
     refetchOnWindowFocus: false,
   });
+
+  const totalPages = useMemo(() => dataUsers?.totalPaginas ?? 1, [dataUsers]);
+  const currentPage = useMemo(() => dataUsers?.pagina ?? page, [dataUsers, page]);
 
   const { data: payments, isLoading: isLoadingPayments } = useQuery({
     queryKey: ["admin", "payments", paymentStatusFilter],
@@ -55,14 +67,6 @@ export default function Users() {
     },
     retry: 0,
     enabled: activeTab === "payments",
-  });
-
-  const filteredUsers = dataUsers?.users?.filter((user) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      user.name.toLowerCase().includes(searchLower) ||
-      user.email.toLowerCase().includes(searchLower)
-    );
   });
 
   const { mutate: mutateDelete, isPending: isloadingDataDelete } = useMutation({
@@ -138,7 +142,7 @@ export default function Users() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers?.map((user) => (
+                    {dataUsers?.users?.map((user) => (
                       <TableRow
                         key={user.id}
                         className="hover:bg-accent/40"
@@ -174,11 +178,32 @@ export default function Users() {
                     ))}
                   </TableBody>
                 </Table>
-                {filteredUsers && filteredUsers.length === 0 && (
+                {dataUsers?.users && dataUsers.users.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     Nenhum usuário encontrado
                   </div>
                 )}
+                <div className="flex items-center justify-between pt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Página {currentPage} de {totalPages}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1 || isFetching}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage >= totalPages || isFetching}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
