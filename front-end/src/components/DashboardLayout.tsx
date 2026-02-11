@@ -102,7 +102,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <div>
                 <h1 className="font-bold text-xl">SJ Gestor</h1>
                 <p className="text-xs text-muted-foreground">Gestão de Cobranças</p>
-                <small className="text-[8px] text-muted-foreground">versão 1.0.16</small>
+                <small className="text-[8px] text-muted-foreground">versão 1.0.17</small>
               </div>
             </div>
             <div className="hidden lg:block">
