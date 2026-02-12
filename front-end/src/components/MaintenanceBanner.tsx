@@ -7,7 +7,7 @@ interface MaintenanceBannerProps {
 }
 
 export default function MaintenanceBanner({
-    message = "O sistema está passando por uma manutenção programada. Provavelmente será necessário reconectar o Whatsapp na aba Whatsapp, confira se a conexão está ativa.",
+    message = "O sistema está passando por uma manutenção programada. Provavelmente será necessário reconectar o Whatsapp pelo QRCode, confira se a conexão está ativa.",
     isActive = false,
 }: MaintenanceBannerProps) {
     const [isVisible, setIsVisible] = useState(isActive);
