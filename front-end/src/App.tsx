@@ -34,7 +34,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
         <Toaster />
-        <MaintenanceBanner isActive={true}/>
+        <MaintenanceBanner isActive={false}/>
         <Sonner />
         <ToastContainer />
         <BrowserRouter>
