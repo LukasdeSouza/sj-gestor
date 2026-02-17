@@ -19,6 +19,8 @@ export interface CreateClientData {
   product_id: string;
   template_id: string;
   key_id: string;
+  observacoes1: string | null;
+  observacoes2: string | null;
 }
 
 export interface Client extends CreateClientData {

@@ -17,7 +17,7 @@ import { formatPhoneNumber } from "@/utils/mask";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Search, CheckCircle2, Clock, X } from "lucide-react";
+import { Trash2, Search, CheckCircle2, Clock, X, InfoIcon } from "lucide-react";
 import { AuthUser } from "@/api/models/auth";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
@@ -49,9 +49,9 @@ export default function Clients() {
 
   const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
     queryKey: ["subscription", "me"],
-    queryFn: async () => await fetchUseQuery<undefined, { 
-      plan_id: string; 
-      status: string; 
+    queryFn: async () => await fetchUseQuery<undefined, {
+      plan_id: string;
+      status: string;
       pix_qr_code?: string;
       approved_at?: string;
     }>({ route: "/subscription/me", method: "GET" }),
@@ -83,7 +83,7 @@ export default function Clients() {
 
   const filteredClients = useMemo(() => {
     if (!dataClients?.clients) return [];
-    
+
     let result = [...dataClients.clients];
 
     // Filtro de inadimplentes (vencidos)
@@ -115,7 +115,7 @@ export default function Clients() {
   const isApproved = !!subscription?.approved_at;
   const isPlanEffective = subscription?.status === 'ACTIVE' && (!isPixSubscription || isApproved);
   const effectivePlanId = isPlanEffective ? subscription?.plan_id : 'FREE';
-  
+
   const clientLimit = effectivePlanId === 'PRO_UNLIMITED' ? Infinity : (effectivePlanId === 'PRO_100' ? 100 : 5);
   const currentClientsCount = dataClients?.resultados || 0;
   const canAddClient = currentClientsCount < clientLimit;
@@ -196,7 +196,7 @@ export default function Clients() {
           ) : (
             <Button onClick={() => toast.error(
               !isApproved && isPixSubscription && subscription?.status === 'ACTIVE'
-                ? "Seu plano aguarda aprovação do pagamento para liberar mais clientes." 
+                ? "Seu plano aguarda aprovação do pagamento para liberar mais clientes."
                 : "Limite de clientes atingido. Faça um upgrade para adicionar mais."
             )}>
               Novo Cliente
@@ -298,39 +298,39 @@ export default function Clients() {
                       <TableCell>
                         {client.due_at ? new Date(client.due_at as any).toLocaleString("pt-BR") : "-"}
                       </TableCell>
-                    <TableCell>
-                      {client.last_reminder_due_at ? (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          <span className="text-xs text-green-600">
-                            {new Date(client.last_reminder_due_at as any).toLocaleString("pt-BR")}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-amber-600" />
-                          <span className="text-xs text-amber-600">Pendente</span>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                      <PopUpRegisterPayment id={client.id} onSuccess={() => { refetchPayments(); refetch(); }} />
-                      <PopupAlterClient
-                        id={client.id}
-                        onSuccess={() => refetch()}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setClientToDelete(client.id);
-                          setDeleteConfirmationOpen(true);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                      <TableCell>
+                        {client.last_reminder_due_at ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            <span className="text-xs text-green-600">
+                              {new Date(client.last_reminder_due_at as any).toLocaleString("pt-BR")}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-amber-600" />
+                            <span className="text-xs text-amber-600">Pendente</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                        <PopUpRegisterPayment id={client.id} onSuccess={() => { refetchPayments(); refetch(); }} />
+                        <PopupAlterClient
+                          id={client.id}
+                          onSuccess={() => refetch()}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setClientToDelete(client.id);
+                            setDeleteConfirmationOpen(true);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
               </TableBody>
@@ -398,6 +398,24 @@ export default function Clients() {
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-amber-600" />
                         <span className="text-sm font-medium text-amber-600">Pendente</span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Observações do Cliente da Cobrança</p>
+                    {selectedClient.observacoes1 ? (
+                      <div className="flex items-center gap-2">
+                        <InfoIcon className="w-4 h-4 text-grey-600" />
+                        <span className="text-sm font-medium text-grey-600">
+                          OB1 - {selectedClient.observacoes1}
+                          <br />
+                          OB2 - {selectedClient.observacoes2}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <InfoIcon className="w-4 h-4 text-amber-600" />
+                        <span className="text-sm font-medium text-amber-600">Sem observações para este cliente</span>
                       </div>
                     )}
                   </div>

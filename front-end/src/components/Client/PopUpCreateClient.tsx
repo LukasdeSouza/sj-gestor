@@ -52,7 +52,9 @@ export function PopupCreateClient({ onSuccess }: Props) {
       user_id: parsedUser?.id,
       product_id: "",
       template_id: "",
-      key_id: ""
+      key_id: "",
+      observacoes1: "",
+      observacoes2: ""
     }
   });
 
@@ -337,14 +339,32 @@ export function PopupCreateClient({ onSuccess }: Props) {
 
             <FormField
               control={formClient.control}
-              name="additional_info"
+              name="observacoes1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Informações adicionais</FormLabel>
+                  <FormLabel>Observacoes Campo 1 (Opcional)</FormLabel>
                   <FormControl>
                     <Textarea
                       rows={3}
-                      placeholder="Observações importantes..."
+                      placeholder="Observações relacionadas a este cliente..."
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={formClient.control}
+              name="observacoes2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observacoes Campo 2 (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={3}
+                      placeholder="Observações relacionadas a este cliente..."
                       {...field}
                       onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)}
                     />

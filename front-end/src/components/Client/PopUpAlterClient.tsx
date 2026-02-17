@@ -59,7 +59,9 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
       additional_info: undefined,
       product_id: "",
       template_id: "",
-      key_id: ""
+      key_id: "",
+      observacoes1: "",
+      observacoes2: ""
     }
   });
 
@@ -77,6 +79,8 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
         template_id: data?.template_id ?? "",
         key_id: data?.key_id ?? "",
         user_id: data?.user_id,
+        observacoes1: data?.observacoes1 ?? "",
+        observacoes2: data?.observacoes2 ?? ""
       });
       setProductValue(data?.product ? { ...data.product } : null);
       setTemplateValue(data?.template ? { ...data.template } : null);
@@ -354,7 +358,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                 />
               </div>
 
-              <FormField
+              {/* <FormField
                 control={formClient.control}
                 name="additional_info"
                 render={({ field }) => (
@@ -363,6 +367,42 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                     <FormControl>
                       <Textarea className="font-bold" rows={3} placeholder="Observações importantes..." {...field}
                         onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              /> */}
+              <FormField
+                control={formClient.control}
+                name="observacoes1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observacoes Campo 1 (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        rows={3}
+                        placeholder="Observações relacionadas a este cliente..."
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formClient.control}
+                name="observacoes2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observacoes Campo 2 (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        rows={3}
+                        placeholder="Observações relacionadas a este cliente..."
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
