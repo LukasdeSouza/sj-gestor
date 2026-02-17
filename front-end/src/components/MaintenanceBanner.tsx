@@ -7,8 +7,8 @@ interface MaintenanceBannerProps {
 }
 
 export default function MaintenanceBanner({
-    message = "Manutenção preventiva para conferencia de disparos duplicados em mensagens de Whatsapp.",
-    // message = "O sistema está passando por uma manutenção programada. Provavelmente será necessário reconectar o Whatsapp pelo QRCode, confira se a conexão está ativa.",
+    // message = "Manutenção preventiva para conferencia de disparos duplicados em mensagens de Whatsapp.",
+    message = "O sistema está passando por uma manutenção programada. Provavelmente será necessário reconectar o Whatsapp pelo QRCode, confira se a sua conexão está ativa.",
     isActive = false,
 }: MaintenanceBannerProps) {
     const [isVisible, setIsVisible] = useState(isActive);
@@ -16,7 +16,7 @@ export default function MaintenanceBanner({
     if (!isVisible) return null;
 
     return (
-        <div className="relative w-full bg-yellow-600 text-white px-4 py-3 shadow-md z-50">
+        <div className="relative w-full bg-red-600 text-white px-4 py-3 shadow-md z-50">
             <div className="container mx-auto flex items-center justify-center gap-3">
                 <AlertTriangle className="h-5 w-5 shrink-0" />
                 <p className="text-sm font-medium text-center">{message}</p>
