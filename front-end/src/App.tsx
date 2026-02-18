@@ -26,6 +26,7 @@ import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Help from "./pages/Help";
+import UpdatesBanner from "./components/UpdatesBanner";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,16 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <MaintenanceBanner isActive={true}/>
+        <UpdatesBanner
+          isActive={true} 
+          version="1.0.18"
+          updates={[
+            { title: "Cobrança Duplicada", description: "Ajuste de disparo de mensagem duplicada em cobranças agendadas corrigido nesta versão" },
+            { title: "Paginação em Pagamentos (Usuário ADMIN)", description: "Agora é possível navegar entre as páginas na aba de pagamentos dos usuários." },
+            { title: "Filtro de Data (Usuário ADMIN)", description: "Adicionado filtro por período na listagem de pagamentos para facilitar a conferência." },
+            { title: "Melhorias de Performance", description: "Otimização no carregamento da lista de pagamentos." }
+          ]}
+        />
         <Sonner />
         <ToastContainer />
         <BrowserRouter>
