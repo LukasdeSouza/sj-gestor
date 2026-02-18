@@ -43,7 +43,7 @@ export default function UpdatesBanner({
   return (
     <>
       {/* Banner Azul para Atualizações */}
-      <div className="relative w-full bg-blue-600 dark:bg-blue-700 text-white px-4 py-3 shadow-md z-40">
+      <div className="relative w-full bg-[#9957db] dark:bg-purple-700 text-white px-4 py-3 shadow-md z-40">
         <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
           <div className="flex items-center gap-2">
             <Info className="h-5 w-5 shrink-0" />
