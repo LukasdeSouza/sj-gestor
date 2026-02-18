@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Mail, Shield, User as UserIcon, CalendarClock, Hash, Search, Trash2, Eye } from "lucide-react";
+import { Mail, Shield, User as UserIcon, CalendarClock, Hash, Search, Trash2, Eye, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SkeletonInformation from "@/components/Skeletons/SkeletonInformation";
@@ -35,10 +35,18 @@ export default function Users() {
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<PaymentStatus | undefined>();
+  const [paymentsPage, setPaymentsPage] = useState(1);
+  const paymentsLimit = 10;
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch]);
+
+  useEffect(() => {
+    setPaymentsPage(1);
+  }, [paymentStatusFilter, startDate, endDate]);
 
   const { data: dataUsers, isLoading: isloadingUsers, refetch, isFetching } = useQuery<UsersResponse>({
     queryKey: ["listUsers", page, limit, debouncedSearch],
@@ -56,18 +64,41 @@ export default function Users() {
   const totalPages = useMemo(() => dataUsers?.totalPaginas ?? 1, [dataUsers]);
   const currentPage = useMemo(() => dataUsers?.pagina ?? page, [dataUsers, page]);
 
-  const { data: payments, isLoading: isLoadingPayments } = useQuery({
-    queryKey: ["admin", "payments", paymentStatusFilter],
+  const { data: dataPayments, isLoading: isLoadingPayments } = useQuery({
+    queryKey: ["admin", "payments", paymentStatusFilter, paymentsPage],
     queryFn: async () => {
       try {
-        return await listAllPayments({ status: paymentStatusFilter });
+        return await listAllPayments({ status: paymentStatusFilter, limit: 1000 });
       } catch {
         return [];
       }
     },
+    select: (data) => {
+      let filteredData = data;
+
+      if (startDate) {
+        const start = new Date(`${startDate}T00:00:00`);
+        filteredData = filteredData.filter((item: any) => new Date(item.createdAt) >= start);
+      }
+
+      if (endDate) {
+        const end = new Date(`${endDate}T23:59:59`);
+        filteredData = filteredData.filter((item: any) => new Date(item.createdAt) <= end);
+      }
+
+      const start = (paymentsPage - 1) * paymentsLimit;
+      const end = start + paymentsLimit;
+      return {
+        payments: filteredData.slice(start, end),
+        totalPaginas: Math.ceil(filteredData.length / paymentsLimit) || 1,
+        pagina: paymentsPage,
+      };
+    },
     retry: 0,
     enabled: activeTab === "payments",
   });
+
+  const totalPaymentsPages = useMemo(() => dataPayments?.totalPaginas ?? 1, [dataPayments]);
 
   const { mutate: mutateDelete, isPending: isloadingDataDelete } = useMutation({
     mutationFn: async (id: string) => {
@@ -212,8 +243,8 @@ export default function Users() {
           <TabsContent value="payments" className="space-y-4">
             <Card className="shadow-soft">
               <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="flex gap-2">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex gap-2 flex-wrap">
                     <Button
                       variant={paymentStatusFilter === undefined ? "default" : "outline"}
                       size="sm"
@@ -243,6 +274,26 @@ export default function Users() {
                       Aprovados
                     </Button>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-auto"
+                    />
+                    <span className="text-muted-foreground">-</span>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-auto"
+                    />
+                    {(startDate || endDate) && (
+                      <Button variant="ghost" size="icon" onClick={() => { setStartDate(""); setEndDate(""); }}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -262,7 +313,7 @@ export default function Users() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {payments?.map((payment) => (
+                      {dataPayments?.payments?.map((payment: any) => (
                         <TableRow key={payment.id} className="hover:bg-accent/40">
                           <TableCell className="font-medium">{payment.userName}</TableCell>
                           <TableCell>{payment.userEmail}</TableCell>
@@ -313,11 +364,32 @@ export default function Users() {
                     </TableBody>
                   </Table>
                 )}
-                {!isLoadingPayments && payments && payments.length === 0 && (
+                {!isLoadingPayments && dataPayments?.payments && dataPayments.payments.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     Nenhum pagamento encontrado
                   </div>
                 )}
+                <div className="flex items-center justify-between pt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Página {paymentsPage} de {totalPaymentsPages}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setPaymentsPage((p) => Math.max(1, p - 1))}
+                      disabled={paymentsPage <= 1 || isLoadingPayments}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setPaymentsPage((p) => Math.min(totalPaymentsPages, p + 1))}
+                      disabled={paymentsPage >= totalPaymentsPages || isLoadingPayments}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
