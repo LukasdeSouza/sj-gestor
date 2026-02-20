@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SkeletonInformation from "@/components/Skeletons/SkeletonInformation";
-import { Users, Package, CreditCard, MessageSquare, Activity, TrendingUp, Wallet, DollarSign, Calendar, BarChart3, PieChart as PieChartIcon } from "lucide-react";
+import { Users, Package, CreditCard, MessageSquare, Activity, TrendingUp, Wallet, DollarSign, Calendar, BarChart3, PieChart as PieChartIcon, Smartphone } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MessageTemplatesResponse } from "@/api/models/messageTemplate";
 import { fetchUseQuery } from "@/api/services/fetchUseQuery";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -172,6 +173,13 @@ export default function Dashboard() {
             Visão geral do seu sistema de cobranças
           </p>
         </div>
+
+        <Alert className="bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800">
+          <Smartphone className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+          <AlertDescription className="text-orange-800 dark:text-orange-400">
+            <strong>Importante:</strong> Mantenha seu celular conectado à internet no dia dos disparos para garantir o envio das cobranças e evitar erros.
+          </AlertDescription>
+        </Alert>
 
         <Card className="shadow-soft">
           <CardHeader>

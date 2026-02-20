@@ -40,7 +40,7 @@ const App = () => (
         <Toaster />
         <MaintenanceBanner isActive={true}/>
         <UpdatesBanner
-          isActive={true} 
+          isActive={false} 
           version="1.0.19"
           updates={[
             { title: "Conferência em Desconexão Automática", description: "Fizemos a validação de desconexões automáticas que aconteciam com alguns números para correção" },
