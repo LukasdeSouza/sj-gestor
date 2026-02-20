@@ -1,6 +1,6 @@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug } from "lucide-react";
+import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug, Smartphone } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ApiErrorQuery, fetchUseQuery } from "@/api/services/fetchUseQuery";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
@@ -397,6 +397,13 @@ export default function WhatsApp() {
           <AlertDescription>
             A integração WhatsApp usa WebSockets para comunicação em tempo real. O QR Code é gerado
             automaticamente e a conexão é estabelecida após escanear com seu WhatsApp.
+          </AlertDescription>
+        </Alert>
+
+        <Alert className="bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800">
+          <Smartphone className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+          <AlertDescription className="text-orange-800 dark:text-orange-400">
+            <strong>Importante:</strong> Mantenha seu celular conectado à internet no dia dos disparos para garantir o envio das cobranças e evitar erros.
           </AlertDescription>
         </Alert>
 
