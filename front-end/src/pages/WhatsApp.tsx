@@ -474,7 +474,7 @@ export default function WhatsApp() {
               <div className="p-3 bg-muted rounded-md border">
                 <p className="text-xs text-muted-foreground mb-1">Número informado:</p>
                 <p className="text-lg font-semibold tracking-wide">
-                  {mascaraTelefone(formDataToConnect.phone_number) ?? '-'}
+                  {formDataToConnect?.phone_number ? mascaraTelefone(formDataToConnect?.phone_number) : '-'}
                 </p>
               </div>
               
