@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SkeletonInformation from "@/components/Skeletons/SkeletonInformation";
-import { Users, Package, CreditCard, MessageSquare, Activity, TrendingUp, Wallet, DollarSign, Calendar, BarChart3, PieChart as PieChartIcon, Smartphone } from "lucide-react";
+import { Users, Package, CreditCard, MessageSquare, Activity, TrendingUp, Wallet, DollarSign, Calendar, BarChart3, PieChart as PieChartIcon, Smartphone, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MessageTemplatesResponse } from "@/api/models/messageTemplate";
 import { fetchUseQuery } from "@/api/services/fetchUseQuery";
@@ -13,10 +13,12 @@ import { AuthUser } from "@/api/models/auth";
 import Cookies from "js-cookie";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, Legend } from "recharts";
+import { useState } from "react";
 
 export default function Dashboard() {
   // Bloqueia acesso quando assinatura não está ativa
   useSubscriptionGuard({ protect: true });
+  const [showMobileAlert, setShowMobileAlert] = useState(true);
 
   const user = Cookies.get("user");
   const parsedUser: AuthUser = user ? JSON.parse(user) : null;
@@ -174,12 +176,20 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <Alert className="bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800">
-          <Smartphone className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-          <AlertDescription className="text-orange-800 dark:text-orange-400">
-            <strong>Importante:</strong> Mantenha seu celular conectado à internet no dia dos disparos para garantir o envio das cobranças e evitar erros.
-          </AlertDescription>
-        </Alert>
+        {showMobileAlert && (
+          <Alert className="bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800 relative">
+            <Smartphone className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertDescription className="text-orange-800 dark:text-orange-400 pr-8">
+              <strong>Importante:</strong> Mantenha seu celular conectado à internet no dia dos disparos para garantir o envio das cobranças e evitar erros.
+            </AlertDescription>
+            <button 
+              onClick={() => setShowMobileAlert(false)}
+              className="absolute right-4 top-4 text-orange-600 dark:text-orange-400 hover:opacity-75"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </Alert>
+        )}
 
         <Card className="shadow-soft">
           <CardHeader>
