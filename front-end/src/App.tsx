@@ -27,6 +27,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Help from "./pages/Help";
 import UpdatesBanner from "./components/UpdatesBanner";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+// import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
+        <ErrorBoundary>
         <Toaster />
         <MaintenanceBanner isActive={false}/>
         <UpdatesBanner
@@ -73,6 +76,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </ErrorBoundary>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

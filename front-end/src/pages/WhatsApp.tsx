@@ -471,17 +471,10 @@ export default function WhatsApp() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
-              <div className="p-3 bg-muted rounded-md border">
-                <p className="text-xs text-muted-foreground mb-1">Número informado:</p>
-                <p className="text-lg font-semibold tracking-wide">
-                  {formDataToConnect?.phone_number ? mascaraTelefone(formDataToConnect?.phone_number) : '-'}
-                </p>
-              </div>
-              
               <ul className="list-disc list-inside text-sm space-y-2 text-muted-foreground">
-                <li>Confira se o número acima está correto.</li>
-                <li>Após escanear o QR Code, aguarde a <strong>sincronização</strong> do WhatsApp com o sistema (leva em média 1 minuto).</li>
-                <li>Se tiver problemas com a conexão, consulte a central de <Link to="/help" className="font-bold text-primary hover:underline">Ajuda & Suporte</Link> no menu lateral ou entre em contato com o Suporte.</li>
+                <li>1 - Confira se o número de whatsapp está correto</li>
+                <li>2 - Após escanear o QR Code, aguarde a <strong>sincronização</strong> do WhatsApp com o sistema (leva em média 1 minuto).</li>
+                <li>3 - Se tiver problemas com a conexão, consulte a central de <Link to="/help" className="font-bold text-primary hover:underline">Ajuda & Suporte</Link> no menu lateral ou entre em contato com o Suporte.</li>
               </ul>
             </div>
             <DialogFooter>
