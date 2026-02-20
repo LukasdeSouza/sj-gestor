@@ -8,7 +8,7 @@ interface MaintenanceBannerProps {
 
 export default function MaintenanceBanner({
     // message = "Manutenção preventiva para conferencia de disparos duplicados em mensagens de Whatsapp.",
-    message = "O sistema está passando por uma manutenção programada. será necessário reconectar o Whatsapp novamente pelo QRCode, confira se a sua conexão está ativa.",
+    message = "O sistema passou por uma manutenção preventiva. Será necessário reconectar o Whatsapp novamente pelo QRCode, confira se a sua conexão está ativa.",
     isActive = false,
 }: MaintenanceBannerProps) {
     const [isVisible, setIsVisible] = useState(isActive);
