@@ -72,7 +72,7 @@ export default function Dashboard() {
     enabled: !!parsedUser.id,
   });
 
-  const { data: summary, isError: isSummaryError } = useQuery<any>({
+  const { data: summary, isError: isSummaryError, isLoading: isLoadingSummary } = useQuery<any>({
     queryKey: ["dashboardSummary", parsedUser.id],
     queryFn: async () => {
       return await fetchUseQuery<{ user_id: string }, any>({
@@ -159,7 +159,7 @@ export default function Dashboard() {
 
   const hasBillingTypeData = totalClients > 0;
 
-  if (isloadingClients || isloadingProducts || isloadingPixKeys || isloadingMessageTemplates) {
+  if (isloadingClients || isloadingProducts || isloadingPixKeys || isloadingMessageTemplates || isLoadingSummary) {
     return <SkeletonInformation />
   }
 

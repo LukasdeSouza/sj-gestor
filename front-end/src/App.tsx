@@ -35,15 +35,16 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
         <Toaster />
-        <MaintenanceBanner isActive={true}/>
+        <MaintenanceBanner isActive={false}/>
         <UpdatesBanner
-          isActive={true} 
-          version="1.0.18"
+          isActive={false} 
+          version="1.0.19"
           updates={[
-            { title: "Cobrança Duplicada", description: "Ajuste de disparo de mensagem duplicada em cobranças agendadas corrigido nesta versão" },
-            { title: "Paginação em Pagamentos (Usuário ADMIN)", description: "Agora é possível navegar entre as páginas na aba de pagamentos dos usuários." },
-            { title: "Filtro de Data (Usuário ADMIN)", description: "Adicionado filtro por período na listagem de pagamentos para facilitar a conferência." },
-            { title: "Melhorias de Performance", description: "Otimização no carregamento da lista de pagamentos." }
+            { title: "Conferência em Desconexão Automática", description: "Fizemos a validação de desconexões automáticas que aconteciam com alguns números para correção" },
+            { title: "Erro ao mostrar 'Cobranças de Hoje'", description: "Estamos cientes quanto a este erro e faremos a atualização dia 20/02 no período da noite, provavelmente sendo necessário reconectar whatsapp novamente via QRCode"},
+            { title: "Confirmação ao Desconectar Whatsapp", description: "Foi adicionado modal para confirmação de Desconexão de Whatsapp para segurança do usuário"},
+            { title: "Confirmação ao Conectar Whatsapp", description: "Foi adicionado modal para confirmação de conexão de Whatsapp para segurança do usuário"},            
+            { title: "Carregando em Dashboard", description: "Adição de loader e loading de carregamento na tela de Dashboard"}
           ]}
         />
         <Sonner />

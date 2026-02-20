@@ -59,7 +59,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: CreditCard, label: "Chaves PIX", path: "/pix-keys" },
     { icon: MessageSquare, label: "Templates", path: "/templates" },
     { icon: MessageCircle, label: "WhatsApp", path: "/whatsapp" },
-    ...(parsedUser?.group?.name === 'ADMIN' ? [{ icon: UserIcon, label: "Usuários & Gerenciamento", path: "/users" }] : []),
+    ...(parsedUser?.group?.name === 'ADMIN' ? [{ icon: UserIcon, label: "Usuários & Comprovantes", path: "/users" }] : []),
     ...(parsedUser?.group?.name === 'USUARIO_CLIENTE' ? [{ icon: Wallet, label: "Pagamentos", path: "/payments" }] : []),
     { icon: HelpCircle, label: "Ajuda & Suporte", path: "/help" },
     // { icon: CreditCard, label: "Planos", path: "/plans" },
@@ -102,7 +102,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <div>
                 <h1 className="font-bold text-xl">SJ Gestor</h1>
                 <p className="text-xs text-muted-foreground">Gestão de Cobranças</p>
-                <small className="text-[8px] text-muted-foreground">versão 1.0.18</small>
+                <small className="text-[8px] text-muted-foreground">versão 1.0.19</small>
               </div>
             </div>
             <div className="hidden lg:block">

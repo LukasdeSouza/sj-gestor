@@ -343,7 +343,7 @@ export default function Help() {
     }] : []),
     ...(isAdmin ? [{
       id: "users",
-      label: "Usuários & Gerenciamento",
+      label: "Usuários & Comprovantes",
       icon: User,
       content: (
         <Card>

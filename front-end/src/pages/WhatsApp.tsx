@@ -1,6 +1,7 @@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ApiErrorQuery, fetchUseQuery } from "@/api/services/fetchUseQuery";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -12,10 +13,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { mascaraTelefone } from "@/utils/mask";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 import Cookies from "js-cookie";
 import z from "zod";
 
@@ -32,8 +35,11 @@ export default function WhatsApp() {
   const [sseSessionId, setSseSessionId] = useState<string | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [sseError, setSseError] = useState<string | null>(null);
+  const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
+  const [connectModalOpen, setConnectModalOpen] = useState(false);
+  const [formDataToConnect, setFormDataToConnect] = useState<z.infer<typeof WhatsAppSchema.create> | null>(null);
 
-  const { data, isLoading, refetch } = useQuery<WhatsAppConnection>({
+  const { data, isLoading, refetch, isFetching } = useQuery<WhatsAppConnection>({
     queryKey: ["connectionWhatsApp"],
     queryFn: async () => {
       const result = await fetchUseQuery<undefined, WhatsAppConnection>({
@@ -108,6 +114,7 @@ export default function WhatsApp() {
       toast.success("WhatsApp desconectado com sucesso! AGUARDE 5 MINUTOS PARA FAZER A CONEXÃO NOVAMENTE.");
       setConnection(null);
       setQrCode(null);
+      setDisconnectModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["connectionWhatsApp"] });
     },
 
@@ -117,6 +124,18 @@ export default function WhatsApp() {
       }
     }
   });
+
+  const handleConnectClick = (data: z.infer<typeof schema>) => {
+    setFormDataToConnect(data);
+    setConnectModalOpen(true);
+  };
+
+  const confirmConnect = () => {
+    if (formDataToConnect) {
+      mutate(formDataToConnect);
+      setConnectModalOpen(false);
+    }
+  };
 
   useEffect(() => {
     if (!connection?.id) return;
@@ -225,7 +244,18 @@ export default function WhatsApp() {
           <Card className="shadow-soft">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Status da Conexão</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle>Status da Conexão</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => refetch()}
+                    title="Atualizar status"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
+                  </Button>
+                </div>
                 {connection?.is_connected ? (
                   <Badge className="bg-secondary">
                     <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -274,7 +304,7 @@ export default function WhatsApp() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="aspect-square bg-muted rounded-lg flex items-center justify-center p-4">
+              <div className={`aspect-square ${connection?.is_connected ? 'bg-green-300' : 'bg-muted'} rounded-lg flex items-center justify-center p-4`}>
                 {qrCode ? (
                   <img src={qrCode} alt="WhatsApp QR Code" className="w-full h-full object-contain" />
                 ) : (
@@ -338,7 +368,7 @@ export default function WhatsApp() {
                   <ButtonLoading
                     className="w-full"
                     isLoading={isPending}
-                    onClick={formWhatsapp.handleSubmit((data) => mutate(data))}
+                    onClick={formWhatsapp.handleSubmit(handleConnectClick)}
                   >
                     <MessageCircle className="w-4 h-4 mr-2" />
                     Conectar WhatsApp
@@ -350,7 +380,7 @@ export default function WhatsApp() {
                     className="w-full"
                     variant="destructive"
                     isLoading={isPedingDisconnect}
-                    onClick={() => mutateDisconnect()}
+                    onClick={() => setDisconnectModalOpen(true)}
                   >
                     <Unplug className="w-4 h-4 mr-2" />
                     Desconectar
@@ -414,6 +444,54 @@ export default function WhatsApp() {
             </div>
           </CardContent>
         </Card>
+
+        <Dialog open={disconnectModalOpen} onOpenChange={setDisconnectModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Desconectar WhatsApp</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja desconectar? Você precisará escanear o QR Code novamente para reconectar mas deve aguardar pelo menos 5 MINUTOS para fazer a conexão novamente.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDisconnectModalOpen(false)}>Cancelar</Button>
+              <ButtonLoading variant="destructive" isLoading={isPedingDisconnect} onClick={() => mutateDisconnect()}>
+                Confirmar
+              </ButtonLoading>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={connectModalOpen} onOpenChange={setConnectModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar Conexão</DialogTitle>
+              <DialogDescription>
+                Verifique as informações antes de prosseguir.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="p-3 bg-muted rounded-md border">
+                <p className="text-xs text-muted-foreground mb-1">Número informado:</p>
+                <p className="text-lg font-semibold tracking-wide">
+                  {mascaraTelefone(formDataToConnect.phone_number) ?? '-'}
+                </p>
+              </div>
+              
+              <ul className="list-disc list-inside text-sm space-y-2 text-muted-foreground">
+                <li>Confira se o número acima está correto.</li>
+                <li>Após escanear o QR Code, aguarde a <strong>sincronização</strong> do WhatsApp com o sistema (leva em média 1 minuto).</li>
+                <li>Se tiver problemas com a conexão, consulte a central de <Link to="/help" className="font-bold text-primary hover:underline">Ajuda & Suporte</Link> no menu lateral ou entre em contato com o Suporte.</li>
+              </ul>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConnectModalOpen(false)}>Cancelar</Button>
+              <Button onClick={confirmConnect}>
+                Confirmar e Gerar QR Code
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
