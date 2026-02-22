@@ -1,6 +1,6 @@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug, Smartphone } from "lucide-react";
+import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug, Smartphone, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ApiErrorQuery, fetchUseQuery } from "@/api/services/fetchUseQuery";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
@@ -21,6 +21,7 @@ import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import Cookies from "js-cookie";
 import z from "zod";
+import confetti from "canvas-confetti";
 
 interface WhatsAppConnection {
   id: string;
@@ -74,12 +75,10 @@ export default function WhatsApp() {
     },
 
     onSuccess: async (response: any) => {
-      // Verifica se o backend retornou QR e se retornou os dados de conexão em 'data'
       const connectionData = response.data || response;
 
       if (response?.qr) {
         setQrCode(response.qr);
-        // Garante que apenas os dados da conexão (sem o QR) sejam passados para setConnection
         setConnection({
           id: connectionData.id,
           phone_number: connectionData.phone_number,
@@ -136,6 +135,47 @@ export default function WhatsApp() {
       setConnectModalOpen(false);
     }
   };
+
+  const playSuccessSound = () => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime); // Nota C5
+      osc.frequency.exponentialRampToValueAtTime(1046.5, ctx.currentTime + 0.1); // Sobe para C6 (efeito "Ding")
+      
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (connection?.is_connected) {
+      if (qrCode) {
+        playSuccessSound();
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          zIndex: 9999, // Garante que apareça acima de qualquer modal/overlay
+        });
+      }
+      setQrCode(null);
+    }
+  }, [connection?.is_connected, qrCode]);
 
   useEffect(() => {
     if (!connection?.id) return;
@@ -235,12 +275,6 @@ export default function WhatsApp() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {/* {sseError && (
-            <Alert variant="destructive" className="md:col-span-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{sseError}</AlertDescription>
-            </Alert>
-          )} */}
           <Card className="shadow-soft">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -271,7 +305,9 @@ export default function WhatsApp() {
               <CardDescription>
                 Situação atual da integração com WhatsApp
                 <br />
-                <small className="underline">obs: se aparecer em seu Whatsapp na parte de Dispositivos Conectados a mensagem "Sincronizando..." aguarde a conclusão para que o status seja atualizado no sistema</small>
+                <small className="underline bg-purple-300">
+                  obs: se aparecer em seu Whatsapp na parte de Dispositivos Conectados a mensagem "Sincronizando..." aguarde a conclusão para que o status seja atualizado no sistema
+                </small>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -306,7 +342,13 @@ export default function WhatsApp() {
             <CardContent className="space-y-4">
               <div className={`aspect-square ${connection?.is_connected ? 'bg-green-300' : 'bg-muted'} rounded-lg flex items-center justify-center p-4`}>
                 {qrCode ? (
-                  <img src={qrCode} alt="WhatsApp QR Code" className="w-full h-full object-contain" />
+                  <div className="flex flex-col items-center gap-2">
+                    <img src={qrCode} alt="WhatsApp QR Code" className="w-full h-full object-contain" />
+                    <div className="flex flex-col items-center justify-center text-center space-y-2">
+                      <Smartphone className="w-12 h-12 text-primary animate-pulse" />
+                      <p className="text-sm text-muted-foreground">QR Code aberto na janela...</p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="text-center text-muted-foreground p-8">
                     <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50 text-green-600" />
@@ -318,8 +360,8 @@ export default function WhatsApp() {
                     ) : connection?.is_connected ? (
                       <div className="flex flex-row items-center gap-2">
                         <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-green-600" />
-                          <p>Whatsapp conectado com sucesso!</p>
-                        </div>
+                        <p>Whatsapp conectado com sucesso!</p>
+                      </div>
                     ) : (
                       <>
                         <p>Clique em "Conectar WhatsApp" para gerar o QR Code</p>
@@ -488,6 +530,35 @@ export default function WhatsApp() {
               <Button variant="outline" onClick={() => setConnectModalOpen(false)}>Cancelar</Button>
               <Button onClick={confirmConnect}>
                 Confirmar e Gerar QR Code
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!qrCode} onOpenChange={() => { }}>
+          <DialogContent className="sm:max-w-md [&>button]:hidden" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle>Conectar WhatsApp</DialogTitle>
+              <DialogDescription>
+                Escaneie o QR Code abaixo com o seu WhatsApp para conectar.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col items-center justify-center py-6 space-y-4">
+              {qrCode && <img src={qrCode} alt="QR Code" className="w-64 h-64 object-contain border rounded-lg" />}
+
+              <div className="flex flex-col items-center gap-2 text-muted-foreground text-center">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <p>Aguardando leitura e sincronização...</p>
+                </div>
+                <p className="text-xs text-orange-600 font-bold max-w-[80%]">
+                  Não feche esta janela ou desconecte seu aparelho durante a sincronização.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setQrCode(null)} className="w-full">
+                Cancelar
               </Button>
             </DialogFooter>
           </DialogContent>
