@@ -38,6 +38,7 @@ export default function WhatsApp() {
   const [sseError, setSseError] = useState<string | null>(null);
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const [connectModalOpen, setConnectModalOpen] = useState(false);
+  const [syncConfirmationOpen, setSyncConfirmationOpen] = useState(false);
   const [formDataToConnect, setFormDataToConnect] = useState<z.infer<typeof WhatsAppSchema.create> | null>(null);
 
   const { data, isLoading, refetch, isFetching } = useQuery<WhatsAppConnection>({
@@ -549,16 +550,50 @@ export default function WhatsApp() {
               <div className="flex flex-col items-center gap-2 text-muted-foreground text-center">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <p>Aguardando leitura e sincronização...</p>
+                  <p>Faça a Leitura do QRCode e aguarde a sincronização...</p>
                 </div>
-                <p className="text-xs text-orange-600 font-bold max-w-[80%]">
+                <p className="text-xs text-primary font-bold max-w-[80%]">
                   Não feche esta janela ou desconecte seu aparelho durante a sincronização.
                 </p>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setQrCode(null)} className="w-full">
-                Cancelar
+              <Button variant="outline" onClick={() => setSyncConfirmationOpen(true)} className="w-full">
+                Sincronização Concluída
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={syncConfirmationOpen} onOpenChange={setSyncConfirmationOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirme a Sincronização</DialogTitle>
+              <DialogDescription>
+                Verifique o status no seu WhatsApp antes de continuar.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                No seu celular, vá em <strong>Aparelhos Conectados</strong>. O status deve ter mudado de <span className="text-orange-600 font-bold">"Sincronizando..."</span> para <span className="text-green-600 font-bold">"Ativo"</span> ou mostrar o horário da última sessão.
+              </p>
+              <Alert variant="destructive" className="bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800">
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <AlertDescription className="text-red-800 dark:text-red-400 text-xs">
+                  Se ainda estiver "Sincronizando", <strong>aguarde!</strong> Esse processo pode levar até 1 minuto. Se você confirmar antes, a conexão não funcionará corretamente.
+                </AlertDescription>
+              </Alert>
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setSyncConfirmationOpen(false)}>
+                Ainda está sincronizando
+              </Button>
+              <Button onClick={() => {
+                setSyncConfirmationOpen(false);
+                setQrCode(null);
+                window.location.reload();
+              }}>
+                Sim, já concluiu
               </Button>
             </DialogFooter>
           </DialogContent>
