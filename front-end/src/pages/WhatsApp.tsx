@@ -369,6 +369,7 @@ export default function WhatsApp() {
                         <p className="text-sm mt-2">
                           Você precisará escanear o código com seu WhatsApp
                         </p>
+                        <p className="text-lg mt-2">obs: se já tiver escaneado o QRCode uma vez, tente recarregar a tela para confirmar se a conexão foi estabelecida</p>
                       </>
                     )}
                   </div>
