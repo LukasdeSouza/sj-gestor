@@ -38,9 +38,9 @@ const App = () => (
       <TooltipProvider>
         <ErrorBoundary>
         <Toaster />
-        <MaintenanceBanner isActive={true}/>
+        <MaintenanceBanner isActive={false}/>
         <UpdatesBanner
-          isActive={false} 
+          isActive={true} 
           version="1.0.19"
           updates={[
             { title: "Conferência em Desconexão Automática", description: "Fizemos a validação de desconexões automáticas que aconteciam com alguns números para correção" },
