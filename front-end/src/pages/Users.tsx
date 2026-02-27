@@ -49,22 +49,28 @@ export default function Users() {
   }, [paymentStatusFilter, startDate, endDate]);
 
   const { data: dataUsers, isLoading: isloadingUsers, refetch, isFetching } = useQuery<UsersResponse>({
-    queryKey: ["listUsers", page, limit, debouncedSearch],
+    queryKey: ["listUsers", page, limit],
     queryFn: async () => {
-      const searchData = debouncedSearch
-        ? debouncedSearch.includes("@")
-          ? { email: debouncedSearch }
-          : { name: debouncedSearch }
-        : {};
-      return await fetchUseQuery<{ page: number; limit: number; name?: string; email?: string }, UsersResponse>({
+      return await fetchUseQuery<{ page: number; limit: number }, UsersResponse>({
         route: `/users`,
         method: "GET",
-        data: { page, limit, ...searchData },
+        data: { page, limit },
       });
     },
     retry: 2,
     refetchOnWindowFocus: false,
   });
+
+  const filteredUsers = useMemo(() => {
+    if (!dataUsers?.users) return [];
+    if (!debouncedSearch) return dataUsers.users;
+
+    const lowerSearch = debouncedSearch.toLowerCase();
+    return dataUsers.users.filter((user) => 
+      user.name.toLowerCase().includes(lowerSearch) || 
+      user.email.toLowerCase().includes(lowerSearch)
+    );
+  }, [dataUsers, debouncedSearch]);
 
   const totalPages = useMemo(() => dataUsers?.totalPaginas ?? 1, [dataUsers]);
   const currentPage = useMemo(() => dataUsers?.pagina ?? page, [dataUsers, page]);
@@ -178,7 +184,7 @@ export default function Users() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {dataUsers?.users?.map((user) => (
+                    {filteredUsers.map((user) => (
                       <TableRow
                         key={user.id}
                         className="hover:bg-accent/40"
@@ -214,7 +220,7 @@ export default function Users() {
                     ))}
                   </TableBody>
                 </Table>
-                {dataUsers?.users && dataUsers.users.length === 0 && (
+                {dataUsers?.users && filteredUsers.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     Nenhum usuário encontrado
                   </div>
