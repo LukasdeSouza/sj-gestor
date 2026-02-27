@@ -51,10 +51,15 @@ export default function Users() {
   const { data: dataUsers, isLoading: isloadingUsers, refetch, isFetching } = useQuery<UsersResponse>({
     queryKey: ["listUsers", page, limit, debouncedSearch],
     queryFn: async () => {
-      return await fetchUseQuery<{ page: number; limit: number; name?: string }, UsersResponse>({
+      const searchData = debouncedSearch
+        ? debouncedSearch.includes("@")
+          ? { email: debouncedSearch }
+          : { name: debouncedSearch }
+        : {};
+      return await fetchUseQuery<{ page: number; limit: number; name?: string; email?: string }, UsersResponse>({
         route: `/users`,
         method: "GET",
-        data: { page, limit, name: debouncedSearch || undefined },
+        data: { page, limit, ...searchData },
       });
     },
     retry: 2,
