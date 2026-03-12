@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This feature enables SJ Gestor users to subscribe to plans using PIX payments. Users select a plan, receive a static PIX QR Code, make the payment, upload proof of payment, and the subscription is activated. This runs **in parallel with existing Stripe integration** - Stripe code remains unchanged and fully functional.
+This feature enables Cobr users to subscribe to plans using PIX payments. Users select a plan, receive a static PIX QR Code, make the payment, upload proof of payment, and the subscription is activated. This runs **in parallel with existing Stripe integration** - Stripe code remains unchanged and fully functional.
 
 ## Glossary
 
@@ -12,7 +12,7 @@ This feature enables SJ Gestor users to subscribe to plans using PIX payments. U
 - **Subscription**: User's plan activation record
 - **Subscription Status**: Current state (PENDING, PROOF_UPLOADED, ACTIVE, CANCELED)
 - **Admin**: User with permission to approve/reject payments
-- **User**: SJ Gestor account holder subscribing to a plan
+- **User**: Cobr account holder subscribing to a plan
 
 ## Requirements
 

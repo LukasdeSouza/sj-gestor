@@ -1,42 +1,144 @@
+/* App.css - Estilos globais do Cobr */
+
+/* Reset e base */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Utilitários da paleta Cobr */
+.bg-cobr-gradient {
+  background: linear-gradient(135deg, #00C896, #00D4A0);
 }
 
-@keyframes logo-spin {
+.bg-dark-gradient {
+  background: linear-gradient(135deg, #1A1A2E, #0F1117);
+}
+
+.text-cobr-gradient {
+  background: linear-gradient(135deg, #00C896, #00D4A0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animações suaves */
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(10px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00C896;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00B085;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1A1A2E;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #00C896;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #00D4A0;
+}
+
+/* Focus styles com a paleta Cobr */
+.focus-cobr:focus {
+  outline: 2px solid #00C896;
+  outline-offset: 2px;
+}
+
+/* Hover effects com a paleta Cobr */
+.hover-lift {
+  transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 200, 150, 0.2);
+}
+
+/* Loading spinner com cor Cobr */
+@keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+.spinner-cobr {
+  animation: spin 1s linear infinite;
+  border: 3px solid #E6FBF4;
+  border-top: 3px solid #00C896;
+  border-radius: 50%;
+}
+
+/* Utilities para status */
+.status-success {
+  color: #00C896;
+  background-color: #E6FBF4;
+}
+
+.status-pending {
+  color: #856404;
+  background-color: #FFF3CD;
+}
+
+.status-error {
+  color: #dc3545;
+  background-color: #f8d7da;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
 }

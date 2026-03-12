@@ -83,15 +83,15 @@ export default function TemplatesUnified() {
           {/* Templates por Nicho */}
           <div className="mb-12">
             <div className="flex items-center gap-2 mb-6">
-              <Sparkles className="w-6 h-6 text-blue-600" />
+              <Sparkles className="w-6 h-6 text-cobr-600" />
               <h2 className="text-2xl font-bold text-gray-900">Templates Prontos por Nicho</h2>
             </div>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-blue-800 mb-3">
+            <div className="bg-cobr-50 border border-cobr-200 rounded-lg p-4 mb-6">
+              <p className="text-cobr-800 mb-3">
                 Templates profissionais já configurados com:
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-blue-700">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-cobr-700">
                 <div>⏰ Pré-vencimento (D-3)</div>
                 <div>📅 No vencimento (D0)</div>
                 <div>⚠️ Pós-vencimento (D+3)</div>
@@ -169,11 +169,11 @@ export default function TemplatesUnified() {
               <h2 className="text-2xl font-bold text-gray-900">Templates Personalizados</h2>
             </div>
             
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <p className="text-green-800 mb-3">
+            <div className="bg-cobr-50 border border-cobr-200 rounded-lg p-4 mb-6">
+              <p className="text-cobr-800 mb-3">
                 Crie seus próprios templates com mensagens totalmente customizadas.
               </p>
-              <div className="flex items-center gap-2 text-green-700">
+              <div className="flex items-center gap-2 text-cobr-700">
                 <Settings className="w-4 h-4" />
                 <span className="text-sm">
                   Controle total sobre o conteúdo e variáveis
@@ -185,7 +185,7 @@ export default function TemplatesUnified() {
               <Button 
                 onClick={handleCreateCustom}
                 size="lg"
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-cobr-600 hover:bg-cobr-700"
               >
                 <Settings className="w-5 h-5 mr-2" />
                 Criar Template Personalizado

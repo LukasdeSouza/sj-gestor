@@ -193,7 +193,7 @@ export default function Dashboard() {
 
         <Card className="shadow-soft">
           <CardHeader>
-            <CardTitle>Bem-vindo ao SJ Gestor!</CardTitle>
+            <CardTitle>Bem-vindo ao Cobr!</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">

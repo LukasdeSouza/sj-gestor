@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This feature enables SJ Gestor users to subscribe to plans using PIX payments through Mercado Pago. The system generates a static PIX QR Code, users upload payment proof, and admins approve subscriptions. This runs **in parallel with existing Stripe integration** - no changes to Stripe code.
+This feature enables Cobr users to subscribe to plans using PIX payments through Mercado Pago. The system generates a static PIX QR Code, users upload payment proof, and admins approve subscriptions. This runs **in parallel with existing Stripe integration** - no changes to Stripe code.
 
 **Important:** Stripe integration remains fully functional and unchanged. This is a new payment method option.
 
@@ -15,7 +15,7 @@ This feature enables SJ Gestor users to subscribe to plans using PIX payments th
 - **Billing Frequency**: The interval between charges (monthly, yearly, etc.)
 - **Subscription Status**: Current state of a subscription (authorized, active, paused, canceled)
 - **MP**: Mercado Pago payment gateway
-- **User**: SJ Gestor account holder who creates subscriptions
+- **User**: Cobr account holder who creates subscriptions
 - **Customer**: End user who subscribes to a plan
 
 ## Requirements

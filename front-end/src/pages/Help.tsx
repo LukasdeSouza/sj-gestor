@@ -29,12 +29,12 @@ export default function Help() {
       content: (
         <Card>
           <CardHeader>
-            <CardTitle>Bem-vindo ao SJ Gestor</CardTitle>
+            <CardTitle>Bem-vindo ao Cobr</CardTitle>
             <CardDescription>Visão geral do sistema</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              O SJ Gestor é uma plataforma completa para gerenciamento de cobranças recorrentes e avulsas, 
+              O Cobr é uma plataforma completa para gerenciamento de cobranças recorrentes e avulsas, 
               com foco em automação via WhatsApp.
             </p>
             <div className="grid gap-4 md:grid-cols-2 mt-4">

@@ -1,4 +1,4 @@
-# SJ Gestor
+# Cobr
 
 Um sistema moderno de gestão de cobranças com integração ao WhatsApp, construído para otimizar o fluxo de caixa de empresas brasileiras. Automatize seus lembretes de vencimento, gerencie clientes, produtos e chaves PIX em um só lugar.
 

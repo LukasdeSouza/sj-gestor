@@ -71,10 +71,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 z-40">
         <div className="flex items-center gap-2">
-          {/* <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <Wallet className="w-5 h-5 text-primary-foreground" />
-          </div> */}
-          <span className="font-bold text-lg">SJ Gestor</span>
+          <div className="w-10 h-10 rounded-xl bg-cobr-gradient flex items-center justify-center hover-lift">
+            <span className="text-white font-bold text-lg">C</span>
+          </div>
+          <span className="font-bold text-lg">Cobr</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -96,11 +96,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="p-6 border-b border-border">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              {/* <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-medium">
-                <Wallet className="w-6 h-6 text-primary-foreground" />
-              </div> */}
+              <div className="w-10 h-10 rounded-xl bg-cobr-gradient flex items-center justify-center hover-lift">
+                <span className="text-white font-bold text-lg">C</span>
+              </div>
               <div>
-                <h1 className="font-bold text-xl">SJ Gestor</h1>
+                <h1 className="font-bold text-xl">Cobr</h1>
                 <p className="text-xs text-muted-foreground">Gestão de Cobranças</p>
                 <small className="text-[8px] text-muted-foreground">versão 1.0.19</small>
               </div>

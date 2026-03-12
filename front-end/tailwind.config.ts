@@ -60,6 +60,25 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Paleta Cobr - Verde Esmeralda
+        cobr: {
+          50: "#E6FBF4", // Sucesso/pago verde claro
+          100: "#D3F7ED",
+          200: "#A8ECD8",
+          300: "#6DD9BC",
+          400: "#3BC594",
+          500: "#00C896", // Principal - Verde esmeralda
+          600: "#00B085",
+          700: "#009672",
+          800: "#007B5F",
+          900: "#00634D",
+          950: "#004A3A",
+        },
+        // Fundos especiais
+        "dark-bg": "#0F1117", // Fundo escuro quase preto
+        "light-bg": "#F7F8FA", // Fundo claro off-white
+        "text-dark": "#1A1A2E", // Texto cinza escuro quase preto
+        "warning-light": "#FFF3CD", // Alerta/pendente amarelo suave
       },
       borderRadius: {
         lg: "var(--radius)",

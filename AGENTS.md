@@ -1,10 +1,10 @@
-# Repository Guidelines - SJ Gestor
+# Repository Guidelines - Cobr
 
-A comprehensive and objective guide for contributing to SJ Gestor. Keep changes focused, incremental, and consistent with existing code.
+A comprehensive and objective guide for contributing to Cobr. Keep changes focused, incremental, and consistent with existing code.
 
 ## Project Overview
 
-**SJ Gestor** is an integrated business management platform for small and medium-sized Brazilian businesses, combining:
+**Cobr** is an integrated business management platform for small and medium-sized Brazilian businesses, combining:
 - Client and charge management
 - PIX integration via Mercado Pago
 - WhatsApp automation via Baileys

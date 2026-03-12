@@ -68,7 +68,7 @@ const Index = () => {
         {/* Benefits Section */}
         <div className="mt-24 max-w-3xl mx-auto">
           <div className="bg-card rounded-3xl p-8 md:p-12 shadow-medium">
-            <h2 className="text-3xl font-bold text-center mb-8">Por que escolher o SJ Gestor?</h2>
+            <h2 className="text-3xl font-bold text-center mb-8">Por que escolher o Cobr?</h2>
             <div className="space-y-6">
               <div className="flex gap-4">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center font-bold">✓</div>
@@ -100,7 +100,7 @@ const Index = () => {
       <footer className="border-t border-border mt-24 py-8">
         <div className="container mx-auto px-4 flex flex-col items-center gap-4 text-center text-muted-foreground md:flex-row md:justify-center md:gap-6 md:text-left">
           <p className="text-sm flex flex-row gap-2">
-            © 2025 SJ Gestor. Desenvolvido por 
+            © 2025 Cobr. Desenvolvido por 
             <a className="underline font-semibold" href="https://codetechsoftware.com.br/br" target="_blank">
               Codetech Software.
             </a>

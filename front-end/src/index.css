@@ -8,44 +8,43 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 270 25% 97%;
-    --foreground: 0 0% 10%;
+    --background: 0 0% 98%;
+    --foreground: 240 10% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 240 10% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 240 10% 15%;
 
-    --primary: 270 65% 60%;
+    --primary: 168 100% 39%; /* #00C896 - Verde esmeralda */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 270 70% 35%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 15%;
 
-    --muted: 270 15% 94%;
-    --muted-foreground: 270 10% 45%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 5% 45%;
 
-    --accent: 270 50% 92%;
-    --accent-foreground: 270 70% 30%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 5% 15%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 270 20% 88%;
-    --input: 270 20% 88%;
-    --ring: 270 65% 60%;
+    --border: 240 5% 90%;
+    --input: 240 5% 90%;
+    --ring: 168 100% 39%; /* Verde esmeralda */
 
     --radius: 0.75rem;
     
-    --gradient-primary: linear-gradient(135deg, hsl(270 65% 60%), hsl(280 60% 70%));
-    --gradient-secondary: linear-gradient(135deg, hsl(270 70% 35%), hsl(280 65% 45%));
-    --shadow-soft: 0 2px 8px -2px hsl(270 30% 20% / 0.08);
-    --shadow-medium: 0 4px 16px -4px hsl(270 30% 20% / 0.12);
-    --shadow-strong: 0 8px 24px -8px hsl(270 30% 20% / 0.16);
+    --gradient-primary: linear-gradient(135deg, #00C896, #00D4A0);
+    --gradient-secondary: linear-gradient(135deg, #1A1A2E, #0F1117);
+    --shadow-soft: 0 2px 8px -2px rgba(26, 26, 46, 0.08);
+    --shadow-medium: 0 4px 16px -4px rgba(26, 26, 46, 0.12);
+    --shadow-strong: 0 8px 24px -8px rgba(26, 26, 46, 0.16);
 
-    --sidebar-background: 0 0% 98%;
-
+    --sidebar-background: 240 10% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
 
     --sidebar-primary: 240 5.9% 10%;
@@ -62,39 +61,39 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 270 30% 8%;
-    --foreground: 270 15% 95%;
+    --background: 240 10% 5%; /* #0F1117 */
+    --foreground: 240 5% 95%;
 
-    --card: 270 25% 12%;
-    --card-foreground: 270 15% 95%;
+    --card: 240 10% 8%;
+    --card-foreground: 240 5% 95%;
 
-    --popover: 270 25% 12%;
-    --popover-foreground: 270 15% 95%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 240 5% 95%;
 
-    --primary: 270 65% 65%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 168 100% 45%; /* Verde esmeralda um pouco mais claro no dark */
+    --primary-foreground: 240 10% 5%;
 
-    --secondary: 270 70% 40%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 240 10% 15%;
+    --secondary-foreground: 240 5% 95%;
 
-    --muted: 270 20% 18%;
-    --muted-foreground: 270 10% 60%;
+    --muted: 240 10% 15%;
+    --muted-foreground: 240 5% 60%;
 
-    --accent: 270 25% 20%;
-    --accent-foreground: 270 65% 70%;
+    --accent: 240 10% 15%;
+    --accent-foreground: 240 5% 95%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 270 20% 20%;
-    --input: 270 20% 20%;
-    --ring: 270 65% 65%;
+    --border: 240 10% 20%;
+    --input: 240 10% 20%;
+    --ring: 168 100% 45%; /* Verde esmeralda */
     
-    --gradient-primary: linear-gradient(135deg, hsl(270 65% 65%), hsl(280 60% 75%));
-    --gradient-secondary: linear-gradient(135deg, hsl(270 70% 40%), hsl(280 65% 50%));
-    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
-    --shadow-medium: 0 4px 16px -4px hsl(0 0% 0% / 0.4);
-    --shadow-strong: 0 8px 24px -8px hsl(0 0% 0% / 0.5);
+    --gradient-primary: linear-gradient(135deg, #00C896, #00D4A0);
+    --gradient-secondary: linear-gradient(135deg, #1A1A2E, #0F1117);
+    --shadow-soft: 0 2px 8px -2px rgba(26, 26, 46, 0.08);
+    --shadow-medium: 0 4px 16px -4px rgba(26, 26, 46, 0.12);
+    --shadow-strong: 0 8px 24px -8px rgba(26, 26, 46, 0.16);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

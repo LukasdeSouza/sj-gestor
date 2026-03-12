@@ -1,6 +1,6 @@
 # Product Overview
 
-SJ Gestor is a comprehensive business management platform that combines billing, client management, and WhatsApp automation for Brazilian businesses.
+Cobr is a comprehensive business management platform that combines billing, client management, and WhatsApp automation for Brazilian businesses.
 
 ## Core Features
 
