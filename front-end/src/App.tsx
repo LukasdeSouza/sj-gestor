@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import Templates from "./pages/Templates";
+import TemplatesUnified from "./pages/TemplatesUnified";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import WhatsApp from "./pages/WhatsApp";
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/products" element={<Products />} />
             <Route path="/pix-keys" element={<PixKeys />} />
             <Route path="/templates" element={<Templates />} />
+            <Route path="/templates-unified" element={<TemplatesUnified />} />
             <Route path="/whatsapp" element={<WhatsApp />} />
             <Route path="/account" element={<Account />} />
             <Route path="/users" element={<Users />} />

@@ -119,7 +119,7 @@ export function PopUpCreateTemplate({ onSuccess }: Props) {
                 </FormItem>
               )}
             />
-            <FormMessage className="text-white">Dica: Use variáveis como {"{nome}"}, {"{valor}"}, {"{vencimento}"} para personalizar</FormMessage>
+            <FormMessage className="dark:text-white text-slate-500">Dica: Use variáveis como {"{nome}"}, {"{valor}"}, {"{vencimento}"} para personalizar</FormMessage>
 
             <div className="flex flex-row justify-between">
               <ButtonLoading isLoading={isPending} type="submit" >
