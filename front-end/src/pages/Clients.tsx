@@ -21,6 +21,7 @@ import { Trash2, Search, CheckCircle2, Clock, X, InfoIcon } from "lucide-react";
 import { AuthUser } from "@/api/models/auth";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
+import { BillingStatusBadge } from "@/components/Client/BillingStatusBadge";
 
 export default function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -272,6 +273,7 @@ export default function Clients() {
                   <TableHead>Telefone</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Status Cobrança</TableHead>
+                  <TableHead>Régua Automática</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -312,6 +314,9 @@ export default function Clients() {
                             <span className="text-xs text-amber-600">Pendente</span>
                           </div>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <BillingStatusBadge clientId={client.id} clientName={client.name} />
                       </TableCell>
                       <TableCell className="text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                         <PopUpRegisterPayment id={client.id} onSuccess={() => { refetchPayments(); refetch(); }} />

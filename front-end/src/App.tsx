@@ -26,6 +26,8 @@ import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Help from "./pages/Help";
+import { NichoSelection } from "./pages/NichoSelection";
+import { BillingRules } from "./pages/BillingRules";
 import UpdatesBanner from "./components/UpdatesBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 // import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -72,6 +74,8 @@ const App = () => (
             <Route path="/account" element={<Account />} />
             <Route path="/users" element={<Users />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/nicho-selection" element={<NichoSelection />} />
+            <Route path="/billing-rules/:clientId" element={<BillingRules />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
