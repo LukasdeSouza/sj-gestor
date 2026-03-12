@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/
 import { fetchUseQuery, ApiErrorQuery } from "@/api/services/fetchUseQuery";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
-import SJGestor from "../assets/logo.png";
+import CobrLogo from "../assets/logo.png";
 import ButtonLoading from "@/components/ButtonLoading";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -66,7 +66,7 @@ export default function ForgotPassword() {
       <Card className="w-full max-w-md shadow-strong">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center -mb-12">
-            <img src={SJGestor} alt="" height={220} width={220} />
+            <img src={CobrLogo} alt="" height={220} width={220} />
           </div>
           <h2 className="text-2xl font-bold">Recuperar Senha</h2>
           <CardDescription>

@@ -12,6 +12,7 @@ import { AuthSchemas } from "@/schemas/AuthSchemas";
 import { LoginResponse } from "@/api/models/auth";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
+import CobrLogo from "../assets/logo.png";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -106,9 +107,10 @@ export default function LoginAuth() {
       <Card className="w-full max-w-md shadow-strong animate-fade-in">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-xl bg-cobr-gradient flex items-center justify-center hover-lift">
+            <img src={CobrLogo} alt="Cobr Logo" />
+            {/* <div className="w-16 h-16 rounded-xl bg-cobr-gradient flex items-center justify-center hover-lift">
               <span className="text-white font-bold text-2xl">C</span>
-            </div>
+            </div> */}
           </div>
           <h1 className="text-2xl font-bold text-foreground">Cobr</h1>
           <CardDescription>Gestão inteligente de cobranças com WhatsApp</CardDescription>
