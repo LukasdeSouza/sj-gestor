@@ -57,7 +57,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: Users, label: "Clientes", path: "/clients" },
     { icon: Package, label: "Produtos", path: "/products" },
     { icon: CreditCard, label: "Chaves PIX", path: "/pix-keys" },
-    { icon: MessageSquare, label: "Templates", path: "/templates" },
+    { icon: MessageSquare, label: "Templates", path: "/templates-unified" },
     { icon: MessageCircle, label: "WhatsApp", path: "/whatsapp" },
     ...(parsedUser?.group?.name === 'ADMIN' ? [{ icon: UserIcon, label: "Usuários & Comprovantes", path: "/users" }] : []),
     ...(parsedUser?.group?.name === 'USUARIO_CLIENTE' ? [{ icon: Wallet, label: "Pagamentos", path: "/payments" }] : []),
