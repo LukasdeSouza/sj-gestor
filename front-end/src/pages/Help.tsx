@@ -350,7 +350,7 @@ export default function Help() {
         </Card>
       )
     }] : []),
-    ...(isAdmin ? [{
+   ...(isAdmin ? [{
       id: "users",
       label: "Usuários & Comprovantes",
       icon: User,
@@ -378,8 +378,7 @@ export default function Help() {
           </CardContent>
         </Card>
       )
-    }
-  ];
+    }] : [])]
 
   return (
     <DashboardLayout>
