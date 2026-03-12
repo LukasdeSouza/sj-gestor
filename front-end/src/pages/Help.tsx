@@ -1,10 +1,10 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Package, CreditCard, MessageSquare, Smartphone, HelpCircle, FileText, Wallet, User, MessageCircleQuestion, LifeBuoy, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Package, CreditCard, MessageSquare, Smartphone, HelpCircle, FileText, Wallet, User, MessageCircleQuestion, LifeBuoy, AlertTriangle, ChevronDown, ChevronUp, Sparkles, Zap, Shield, Clock } from "lucide-react";
 import Cookies from "js-cookie";
 import { AuthUser } from "@/api/models/auth";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 export default function Help() {
@@ -25,29 +25,38 @@ export default function Help() {
     {
       id: "general",
       label: "Geral",
-      icon: HelpCircle,
+      icon: Sparkles,
       content: (
         <Card>
           <CardHeader>
-            <CardTitle>Bem-vindo ao Cobr</CardTitle>
-            <CardDescription>Visão geral do sistema</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-cobr-600" />
+              Bem-vindo ao Cobr
+            </CardTitle>
+            <CardDescription>O poder da automação de cobranças em suas mãos</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p>
-              O Cobr é uma plataforma completa para gerenciamento de cobranças recorrentes e avulsas, 
-              com foco em automação via WhatsApp.
+            <p className="text-foreground">
+              O Cobr é uma plataforma completa e inteligente para gerenciamento de cobranças, 
+              com foco total em automação via WhatsApp e experiência do usuário.
             </p>
-            <div className="grid gap-4 md:grid-cols-2 mt-4">
-              <div className="border rounded-lg p-4">
-                <h3 className="font-semibold mb-2">Dashboard</h3>
-                <p className="text-sm text-muted-foreground">
-                  Acompanhe métricas importantes como total de clientes, produtos, recebimentos do dia e do mês.
+            <div className="grid gap-4 md:grid-cols-2 mt-6">
+              <div className="bg-cobr-50 border border-cobr-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="w-4 h-4 text-cobr-600" />
+                  <h3 className="font-semibold text-cobr-800">Dashboard Inteligente</h3>
+                </div>
+                <p className="text-sm text-cobr-700">
+                  Métricas em tempo real: clientes, produtos, recebimentos e taxa de conversão.
                 </p>
               </div>
-              <div className="border rounded-lg p-4">
-                <h3 className="font-semibold mb-2">Navegação</h3>
-                <p className="text-sm text-muted-foreground">
-                  Utilize o menu lateral para acessar todas as funcionalidades do sistema.
+              <div className="bg-cobr-50 border border-cobr-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="w-4 h-4 text-cobr-600" />
+                  <h3 className="font-semibold text-cobr-800">Interface Intuitiva</h3>
+                </div>
+                <p className="text-sm text-cobr-700">
+                  Menu lateral organizado para acesso rápido a todas as funcionalidades.
                 </p>
               </div>
             </div>
@@ -369,15 +378,30 @@ export default function Help() {
           </CardContent>
         </Card>
       )
-    }] : [])
+    }
   ];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Central de Ajuda</h1>
-          <p className="text-muted-foreground">Tutoriais, guias e perguntas frequentes</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-cobr-gradient flex items-center justify-center">
+            <HelpCircle className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Central de Ajuda</h1>
+            <p className="text-muted-foreground">Tutoriais, guias e suporte dedicado</p>
+          </div>
+        </div>
+
+        <div className="bg-cobr-50 border border-cobr-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-cobr-700 mb-2">
+            <Clock className="w-4 h-4" />
+            <span className="font-medium">Horário de Suporte:</span>
+          </div>
+          <p className="text-sm text-cobr-600">
+            Segunda a Sexta: 9h às 18h | Sábado: 9h às 12h
+          </p>
         </div>
 
         {/* Desktop View: Tabs */}

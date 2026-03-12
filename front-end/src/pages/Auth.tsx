@@ -5,7 +5,6 @@ import { fetchUseQuery, ApiErrorQuery } from "@/api/services/fetchUseQuery";
 import { TOKEN_COOKIE_KEY, USER_COOKIE_KEY } from "@/constants/auth";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
-import SJGestor from "../assets/sj-gestor-removebg.png";
 import ButtonLoading from "@/components/ButtonLoading";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -13,7 +12,7 @@ import { AuthSchemas } from "@/schemas/AuthSchemas";
 import { LoginResponse } from "@/api/models/auth";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useState } from "react";
@@ -47,10 +46,8 @@ export default function LoginAuth() {
       });
     },
     onSuccess: (res) => {
-      toast.success("Usuário logado com sucesso!");
-
+      toast.success("Bem-vindo ao Cobr! 🎉");
       Cookies.set(TOKEN_COOKIE_KEY, res.token, { expires: 15 });
-
       Cookies.set(USER_COOKIE_KEY, JSON.stringify({
         email: res.user.email,
         name: res.user.name,
@@ -60,7 +57,11 @@ export default function LoginAuth() {
       navigate("/dashboard")
     },
     onError: (error: ApiErrorQuery) => {
-      if (Array.isArray(error.errors)) handleErrorMessages(error.errors);
+      if (Array.isArray(error.errors)) {
+        handleErrorMessages(error.errors);
+      } else {
+        toast.error("Erro ao fazer login. Verifique suas credenciais.");
+      }
     },
   });
 
@@ -84,11 +85,15 @@ export default function LoginAuth() {
       });
     },
     onSuccess: (res) => {
-      toast.success("Conta criada com sucesso!");
+      toast.success("Conta criada com sucesso! 🎉");
       setTab("login");
     },
     onError: (error: ApiErrorQuery) => {
-      if (Array.isArray(error.errors)) handleErrorMessages(error.errors);
+      if (Array.isArray(error.errors)) {
+        handleErrorMessages(error.errors);
+      } else {
+        toast.error("Erro ao criar conta. Tente novamente.");
+      }
     },
   });
 
@@ -97,20 +102,29 @@ export default function LoginAuth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-accent/20 to-background p-4">
-      <Card className="w-full max-w-md shadow-strong">
+    <div className="min-h-screen flex items-center justify-center bg-dark-gradient p-4">
+      <Card className="w-full max-w-md shadow-strong animate-fade-in">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center -mb-12">
-            <img src={SJGestor} alt="" height={220} width={220} />
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-xl bg-cobr-gradient flex items-center justify-center hover-lift">
+              <span className="text-white font-bold text-2xl">C</span>
+            </div>
           </div>
-          <CardDescription>Sistema de gestão de cobranças com WhatsApp</CardDescription>
+          <h1 className="text-2xl font-bold text-foreground">Cobr</h1>
+          <CardDescription>Gestão inteligente de cobranças com WhatsApp</CardDescription>
         </CardHeader>
 
         <CardContent>
           <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Cadastro</TabsTrigger>
+              <TabsTrigger value="login" className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Login
+              </TabsTrigger>
+              <TabsTrigger value="signup" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Cadastro
+              </TabsTrigger>
             </TabsList>
 
             {/* ===== LOGIN TAB ===== */}
@@ -122,9 +136,18 @@ export default function LoginAuth() {
                     control={loginForm.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="login-email">Email</FormLabel>
+                        <FormLabel htmlFor="login-email" className="flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          Email
+                        </FormLabel>
                         <FormControl>
-                          <Input type="email" id="login-email" {...field} />
+                          <Input 
+                            type="email" 
+                            id="login-email" 
+                            placeholder="seu@email.com"
+                            className="focus-cobr"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -135,18 +158,23 @@ export default function LoginAuth() {
                     control={loginForm.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="login-password">Senha</FormLabel>
+                        <FormLabel htmlFor="login-password" className="flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          Senha
+                        </FormLabel>
                         <div className="relative">
                           <FormControl>
                             <Input
                               type={showPasswordLogin ? "text" : "password"}
                               id="login-password"
+                              placeholder="••••••••"
+                              className="focus-cobr"
                               {...field}
                             />
                           </FormControl>
                           <button
                             type="button"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-cobr-600 transition-colors"
                             onClick={() => setShowPasswordLogin(!showPasswordLogin)}
                           >
                             {showPasswordLogin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -156,13 +184,13 @@ export default function LoginAuth() {
                       </FormItem>
                     )}
                   />
-                  <ButtonLoading type="submit" className="w-full" isLoading={loginLoading}>
-                    Entrar
+                  <ButtonLoading type="submit" className="w-full bg-cobr-600 hover:bg-cobr-700" isLoading={loginLoading}>
+                    Entrar no Cobr
                   </ButtonLoading>
                   <div className="text-center">
                     <a 
                       href="/forgot-password" 
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      className="text-sm text-muted-foreground hover:text-cobr-600 transition-colors"
                     >
                       Esqueceu sua senha?
                     </a>
@@ -180,9 +208,18 @@ export default function LoginAuth() {
                     control={signupForm.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="signup-full-name">Nome Completo</FormLabel>
+                        <FormLabel htmlFor="signup-full-name" className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          Nome Completo
+                        </FormLabel>
                         <FormControl>
-                          <Input type="text" id="signup-full-name" placeholder="Seu nome" {...field} />
+                          <Input 
+                            type="text" 
+                            id="signup-full-name" 
+                            placeholder="Seu nome" 
+                            className="focus-cobr"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -193,9 +230,18 @@ export default function LoginAuth() {
                     control={signupForm.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="signup-email">Email</FormLabel>
+                        <FormLabel htmlFor="signup-email" className="flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          Email
+                        </FormLabel>
                         <FormControl>
-                          <Input type="email" id="signup-email" placeholder="seu@email.com" {...field} />
+                          <Input 
+                            type="email" 
+                            id="signup-email" 
+                            placeholder="seu@email.com" 
+                            className="focus-cobr"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -206,19 +252,23 @@ export default function LoginAuth() {
                     control={signupForm.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="signup-password">Senha</FormLabel>
+                        <FormLabel htmlFor="signup-password" className="flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          Senha
+                        </FormLabel>
                         <div className="relative">
                           <FormControl>
                             <Input
                               type={showPasswordSignup ? "text" : "password"}
                               id="signup-password"
                               placeholder="••••••••"
+                              className="focus-cobr"
                               {...field}
                             />
                           </FormControl>
                           <button
                             type="button"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-cobr-600 transition-colors"
                             onClick={() => setShowPasswordSignup(!showPasswordSignup)}
                           >
                             {showPasswordSignup ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -228,8 +278,8 @@ export default function LoginAuth() {
                       </FormItem>
                     )}
                   />
-                  <ButtonLoading type="submit" className="w-full" isLoading={signupLoading}>
-                    Criar conta
+                  <ButtonLoading type="submit" className="w-full bg-cobr-600 hover:bg-cobr-700" isLoading={signupLoading}>
+                    Criar conta no Cobr
                   </ButtonLoading>
                 </form>
               </Form>

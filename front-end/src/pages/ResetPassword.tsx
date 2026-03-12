@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/
 import { fetchUseQuery, ApiErrorQuery } from "@/api/services/fetchUseQuery";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
-import SJGestor from "../assets/sj-gestor-removebg.png";
+import SJGestor from "../assets/logo.png";
 import ButtonLoading from "@/components/ButtonLoading";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";

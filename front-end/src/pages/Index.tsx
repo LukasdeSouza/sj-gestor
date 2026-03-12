@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Users, MessageCircle, CreditCard, BarChart3, Zap, Instagram } from "lucide-react";
-import SJGestor from "../assets/sj-gestor-removebg.png";
+import SJGestor from "../assets/logo.png";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 const Index = () => {
