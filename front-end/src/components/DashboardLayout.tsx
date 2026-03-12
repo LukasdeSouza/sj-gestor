@@ -100,9 +100,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <span className="text-white font-bold text-lg">C</span>
               </div>
               <div>
-                <h1 className="font-bold text-xl">Cobr</h1>
-                <p className="text-xs text-muted-foreground">Gestão de Cobranças</p>
-                <small className="text-[8px] text-muted-foreground">versão 1.0.19</small>
+                <h1 className="font-bold text-2xl">Cobr</h1>
+                <p className="text-xs text-muted-foreground">Cobranças</p>
+                <small className="text-[8px] text-muted-foreground">versão 1.0.20</small>
               </div>
             </div>
             <div className="hidden lg:block">
@@ -117,7 +117,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               key={item.path}
               to={item.path}
               className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-              activeClassName="bg-accent text-accent-foreground font-medium"
+              activeClassName="bg-primary text-accent-foreground font-medium"
               onClick={() => setSidebarOpen(false)}
             >
               <item.icon className="w-5 h-5" />

@@ -41,7 +41,7 @@ const App = () => (
       <TooltipProvider>
         <ErrorBoundary>
         <Toaster />
-        <MaintenanceBanner isActive={true}/>
+        <MaintenanceBanner isActive={false}/>
         <UpdatesBanner
           isActive={false} 
           version="1.0.19"
