@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Calendar, Clock, CheckCircle, AlertCircle, Pause, Play } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchUseQuery } from '@/api/services/fetchUseQuery';
+import { Calendar, Clock, CheckCircle2, AlertCircle, Pause, Settings } from 'lucide-react';
 
 interface BillingStatusBadgeProps {
   clientId: string;
@@ -15,105 +14,125 @@ interface BillingStats {
   scheduled: number;
   failed: number;
   success_rate: number;
-  next_scheduled?: {
-    date: string;
-    days_until: number;
-  };
+  next_scheduled?: { date: string; days_until: number };
   is_active: boolean;
 }
 
-export function BillingStatusBadge({ clientId, clientName }: BillingStatusBadgeProps) {
+type Variant = 'none' | 'active' | 'scheduled' | 'failed' | 'done' | 'inactive';
+
+function getVariant(stats: BillingStats | null): Variant {
+  if (!stats || stats.total === 0) return 'none';
+  if (!stats.is_active) return 'inactive';
+  if (stats.failed > 0) return 'failed';
+  if (stats.scheduled > 0) return 'scheduled';
+  return 'done';
+}
+
+const VARIANT_STYLES: Record<Variant, { bg: string; border: string; color: string }> = {
+  none:      { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', color: '#3A5A50' },
+  active:    { bg: 'rgba(0,200,150,0.08)',   border: 'rgba(0,200,150,0.2)',    color: '#00C896' },
+  scheduled: { bg: 'rgba(99,102,241,0.08)',  border: 'rgba(99,102,241,0.2)',   color: '#6366f1' },
+  failed:    { bg: 'rgba(232,69,69,0.08)',   border: 'rgba(232,69,69,0.2)',    color: '#E84545' },
+  done:      { bg: 'rgba(0,200,150,0.08)',   border: 'rgba(0,200,150,0.2)',    color: '#00C896' },
+  inactive:  { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.2)',   color: '#F5A623' },
+};
+
+const chip = (variant: Variant): React.CSSProperties => ({
+  display: 'inline-flex', alignItems: 'center', gap: 4,
+  background: VARIANT_STYLES[variant].bg,
+  border: `1px solid ${VARIANT_STYLES[variant].border}`,
+  color: VARIANT_STYLES[variant].color,
+  borderRadius: 20, padding: '3px 9px',
+  fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+});
+
+export function BillingStatusBadge({ clientId }: BillingStatusBadgeProps) {
   const [stats, setStats] = useState<BillingStats | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadBillingStats();
-  }, [clientId]);
+  useEffect(() => { loadStats(); }, [clientId]);
 
-  const loadBillingStats = async () => {
+  async function loadStats() {
     try {
-      const response = await fetch(`/api/billing/stats/${clientId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setStats(data.data);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar stats:', error);
-    } finally {
-      setLoading(false);
-    }
+      const data = await fetchUseQuery<undefined, BillingStats>({
+        route: `/billing/stats/${clientId}`, method: 'GET',
+      });
+      setStats(data);
+    } catch { /* silencioso */ }
+    finally { setLoading(false); }
+  }
+
+  const editBtn: React.CSSProperties = {
+    background: 'none', border: '1px solid rgba(255,255,255,0.07)',
+    color: '#3A5A50', borderRadius: 7, padding: '3px 8px',
+    fontSize: 11, fontWeight: 600, cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    transition: 'border-color 0.15s, color 0.15s',
   };
 
   if (loading) {
-    return <div className="w-16 h-6 bg-gray-200 rounded animate-pulse"></div>;
+    return (
+      <div style={{
+        width: 64, height: 22, borderRadius: 20,
+        background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 100%)',
+        backgroundSize: '400px 100%',
+        animation: 'sk-shimmer 1.5s ease-in-out infinite',
+      }} />
+    );
   }
 
-  if (!stats || stats.total === 0) {
+  const variant = getVariant(stats);
+
+  if (variant === 'none') {
     return (
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="text-xs">
-          <Clock className="w-3 h-3 mr-1" />
-          Sem régua
-        </Badge>
-        <Button
-          variant="ghost"
-          size="sm"
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={chip('none')}>
+          <Clock size={10} /> Sem régua
+        </span>
+        <button
+          style={editBtn}
           onClick={() => navigate(`/billing-rules/${clientId}`)}
-          className="text-xs h-6 px-2"
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(0,200,150,0.3)'; (e.currentTarget as HTMLButtonElement).style.color = '#00C896'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = '#3A5A50'; }}
         >
           Configurar
-        </Button>
+        </button>
       </div>
     );
   }
 
-  const getStatusColor = () => {
-    if (!stats.is_active) return 'bg-gray-100 text-gray-800';
-    if (stats.failed > 0) return 'bg-red-100 text-red-800';
-    if (stats.scheduled > 0) return 'bg-blue-100 text-blue-800';
-    return 'bg-green-100 text-green-800';
-  };
+  const label = variant === 'inactive'
+    ? 'Inativa'
+    : variant === 'failed'
+    ? `${stats!.failed} falha${stats!.failed > 1 ? 's' : ''}`
+    : variant === 'scheduled'
+    ? `${stats!.scheduled} agendada${stats!.scheduled > 1 ? 's' : ''}`
+    : `${stats!.sent}/${stats!.total} enviadas`;
 
-  const getStatusIcon = () => {
-    if (!stats.is_active) return <Pause className="w-3 h-3" />;
-    if (stats.failed > 0) return <AlertCircle className="w-3 h-3" />;
-    if (stats.scheduled > 0) return <Calendar className="w-3 h-3" />;
-    return <CheckCircle className="w-3 h-3" />;
-  };
-
-  const getStatusText = () => {
-    if (!stats.is_active) return 'Pausada';
-    if (stats.failed > 0) return `${stats.failed} falhas`;
-    if (stats.scheduled > 0) return `${stats.scheduled} agendadas`;
-    return 'Concluída';
-  };
+  const Icon = variant === 'inactive' ? Pause
+    : variant === 'failed'    ? AlertCircle
+    : variant === 'scheduled' ? Calendar
+    : CheckCircle2;
 
   return (
-    <div className="flex items-center gap-2">
-      <Badge variant="outline" className={`text-xs ${getStatusColor()}`}>
-        {getStatusIcon()}
-        <span className="ml-1">
-          {stats.sent}/{stats.total} ({getStatusText()})
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={chip(variant)}>
+        <Icon size={10} /> {label}
+      </span>
+      {stats?.next_scheduled && variant === 'scheduled' && (
+        <span style={chip('scheduled')}>
+          <Clock size={10} /> D+{stats.next_scheduled.days_until}
         </span>
-      </Badge>
-      
-      {stats.next_scheduled && stats.is_active && (
-        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-          <Calendar className="w-3 h-3 mr-1" />
-          D+{stats.next_scheduled.days_until}
-        </Badge>
       )}
-      
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
+        style={editBtn}
         onClick={() => navigate(`/billing-rules/${clientId}`)}
-        className="text-xs h-6 px-2"
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.3)'; (e.currentTarget as HTMLButtonElement).style.color = '#6366f1'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = '#3A5A50'; }}
       >
-        Gerenciar
-      </Button>
+        <Settings size={11} />
+      </button>
     </div>
   );
 }

@@ -43,6 +43,17 @@ export interface PaymentHistoryItem {
 }
 
 /**
+ * Finalize a Stripe checkout session and activate subscription
+ */
+export async function finalizeStripeSession(sessionId: string): Promise<{ status: string; planId: string }> {
+  return fetchUseQuery<{ session_id: string }, { status: string; planId: string }>({
+    route: '/checkout/finalize',
+    method: 'GET',
+    data: { session_id: sessionId },
+  });
+}
+
+/**
  * Select a plan and create a PIX payment
  */
 export async function selectPixPlan(planId: string): Promise<PixPaymentResponse> {

@@ -1,19 +1,20 @@
-import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchUseQuery, ApiErrorQuery } from "@/api/services/fetchUseQuery";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import LogoutButton from "@/components/LogoutButton";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import PixPaymentModal from "@/components/Subscription/PixPaymentModal";
 import ProofUploadForm from "@/components/Subscription/ProofUploadForm";
 import { selectPixPlan, getUserPayment } from "@/api/models/payments";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Eye, Download, Clock } from "lucide-react";
+import {
+  Eye, Download, Clock, CheckCircle2, XCircle,
+  CreditCard, Zap, Users, Star, AlertTriangle,
+} from "lucide-react";
+
+// ─── TYPES ───────────────────────────────────────────────────────────────────
 
 type Plan = {
   id: "FREE" | "PRO_100" | "PRO_UNLIMITED";
@@ -23,116 +24,144 @@ type Plan = {
   description: string;
 };
 
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+function fmtCurrency(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function fmtDate(dateStr: string) {
+  return format(new Date(dateStr), "dd/MM/yyyy HH:mm", { locale: ptBR });
+}
+
+function fmtDateLong(date: Date) {
+  return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+}
+
+// ─── STATUS BADGE ─────────────────────────────────────────────────────────────
+
+const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  PENDING: { label: "Pendente", color: "#F5A623", bg: "rgba(245,166,35,0.08)", border: "rgba(245,166,35,0.2)" },
+  PROOF_UPLOADED: { label: "Comprovante Enviado", color: "#818CF8", bg: "rgba(99,102,241,0.08)", border: "rgba(99,102,241,0.2)" },
+  APPROVED: { label: "Aprovado", color: "#00C896", bg: "rgba(0,200,150,0.08)", border: "rgba(0,200,150,0.2)" },
+  REJECTED: { label: "Rejeitado", color: "#E84545", bg: "rgba(232,69,69,0.08)", border: "rgba(232,69,69,0.2)" },
+  CANCELED: { label: "Cancelado", color: "#5A7A70", bg: "rgba(90,122,112,0.08)", border: "rgba(90,122,112,0.15)" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const s = STATUS_MAP[status] ?? STATUS_MAP.CANCELED;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: s.bg, color: s.color, border: `1px solid ${s.border}`, borderRadius: 100, padding: "3px 10px", fontSize: 11, fontWeight: 700, fontFamily: "'Syne', sans-serif" }}>
+      {s.label}
+    </span>
+  );
+}
+
+// ─── TIMELINE EVENT ───────────────────────────────────────────────────────────
+
+function TimelineEvent({ label, date, color, last = false }: {
+  label: string; date: string; color: string; last?: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ width: 10, height: 10, borderRadius: "50%", background: color, border: `2px solid ${color}40`, flexShrink: 0, marginTop: 2 }} />
+        {!last && <div style={{ width: 1, flex: 1, background: "rgba(255,255,255,0.06)", marginTop: 4, minHeight: 28 }} />}
+      </div>
+      <div style={{ paddingBottom: last ? 0 : 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#C0D5CC" }}>{label}</div>
+        <div style={{ fontSize: 11, color: "#4A6A60", marginTop: 2 }}>{date}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PLAN ICON ────────────────────────────────────────────────────────────────
+
+function PlanIcon({ id }: { id: Plan["id"] }) {
+  if (id === "FREE") return <Users size={18} color="#5A7A70" />;
+  if (id === "PRO_100") return <Zap size={18} color="#00C896" />;
+  if (id === "PRO_UNLIMITED") return <Star size={18} color="#F5A623" />;
+  return null;
+}
+
+function planAccent(id: Plan["id"]) {
+  if (id === "FREE") return { color: "#5A7A70", border: "rgba(90,122,112,0.2)", bg: "rgba(90,122,112,0.06)" };
+  if (id === "PRO_100") return { color: "#00C896", border: "rgba(0,200,150,0.25)", bg: "rgba(0,200,150,0.05)" };
+  if (id === "PRO_UNLIMITED") return { color: "#F5A623", border: "rgba(245,166,35,0.3)", bg: "rgba(245,166,35,0.05)" };
+  return { color: "#5A7A70", border: "rgba(255,255,255,0.1)", bg: "transparent" };
+}
+
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
+
 export default function Plans() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<"plans" | "history">("plans");
   const [showPixModal, setShowPixModal] = useState(false);
   const [showProofForm, setShowProofForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [pixPaymentData, setPixPaymentData] = useState<any>(null);
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
 
+  // ── queries ──────────────────────────────────────────────────────────────
+
   const { data: plans, isLoading } = useQuery<Plan[]>({
     queryKey: ["plans"],
-    queryFn: async () => await fetchUseQuery<undefined, Plan[]>({ route: "/plans", method: "GET" }),
+    queryFn: async () => fetchUseQuery<undefined, Plan[]>({ route: "/plans", method: "GET" }),
     retry: 1,
   });
 
-  const { data: subscription } = useQuery<{ 
-    id: string;
-    status: string; 
-    plan_id: Plan["id"] | null; 
-    activatedAt?: string; 
-    payment_status?: string;
-    proof_uploaded_at?: string | null;
-    approved_at?: string | null;
+  const { data: subscription } = useQuery<{
+    id: string; status: string; plan_id: Plan["id"] | null;
+    activatedAt?: string; payment_status?: string;
+    proof_uploaded_at?: string | null; approved_at?: string | null;
     pix_qr_code?: string | null;
   }>({
     queryKey: ["subscription", "me"],
-    queryFn: async () => await fetchUseQuery<undefined, { 
-      id: string;
-      status: string; 
-      plan_id: Plan["id"] | null; 
-      activatedAt?: string; 
-      payment_status?: string;
-      proof_uploaded_at?: string | null;
-      approved_at?: string | null;
-      pix_qr_code?: string | null;
-    }>({ route: "/subscription/me", method: "GET" }),
+    queryFn: async () => fetchUseQuery<undefined, any>({ route: "/subscription/me", method: "GET" }),
     retry: 0,
   });
 
   const { data: userPayment } = useQuery({
     queryKey: ["payment", "me"],
-    queryFn: async () => {
-      try {
-        return await getUserPayment();
-      } catch {
-        return null;
-      }
-    },
+    queryFn: async () => { try { return await getUserPayment(); } catch { return null; } },
     retry: 0,
   });
 
-  // Stripe mutation
+  // ── mutations ─────────────────────────────────────────────────────────────
+
   const { mutate: createPreference, isPending: isCreatingPreference } = useMutation({
-    mutationFn: async (planId: Plan["id"]) => {
-      const res = await fetchUseQuery<{ planId: Plan["id"] }, any>({
-        route: "/preferences",
-        method: "POST",
-        data: { planId },
-      });
-      return res;
-    },
+    mutationFn: async (planId: Plan["id"]) =>
+      fetchUseQuery<{ planId: Plan["id"] }, any>({ route: "/preferences", method: "POST", data: { planId } }),
     onSuccess: async (res: any) => {
       const url = res?.url || res?.initPoint || res?.init_point;
       const plan = res?.plan;
-
-      if (url) {
-        window.open(url, "_blank", "noopener,noreferrer");
-        return;
-      }
-
+      if (url) { window.open(url, "_blank", "noopener,noreferrer"); return; }
       if (plan && (plan.id === "FREE" || Number(plan.price) === 0)) {
         toast.success("Plano gratuito ativado com sucesso");
-        await queryClient.invalidateQueries({ queryKey: ["subscription", "me" ] });
+        await queryClient.invalidateQueries({ queryKey: ["subscription", "me"] });
         return;
       }
-
       toast.error("Não foi possível iniciar o checkout");
     },
-    onError: (err: ApiErrorQuery) => {
-      toast.error(err.message || "Erro ao criar preferência");
-    },
+    onError: (err: ApiErrorQuery) => toast.error(err.message || "Erro ao criar preferência"),
   });
 
-  // PIX mutation
   const { mutate: selectPix, isPending: isSelectingPix } = useMutation({
-    mutationFn: async (planId: Plan["id"]) => {
-      return await selectPixPlan(planId);
-    },
-    onSuccess: (data) => {
-      console.log('data', data)
-      setPixPaymentData(data);
-      setShowPixModal(true);
-    },
-    onError: (err: ApiErrorQuery) => {
-      toast.error(err.message || "Erro ao selecionar plano PIX");
-    },
+    mutationFn: async (planId: Plan["id"]) => selectPixPlan(planId),
+    onSuccess: (data) => { setPixPaymentData(data); setShowPixModal(true); },
+    onError: (err: ApiErrorQuery) => toast.error(err.message || "Erro ao selecionar plano PIX"),
   });
+
+  // ── handlers ─────────────────────────────────────────────────────────────
 
   const handlePaymentMethodSelect = (plan: Plan, method: "stripe" | "pix") => {
     setSelectedPlan(plan);
-    if (method === "stripe") {
-      createPreference(plan.id);
-    } else {
-      selectPix(plan.id);
-    }
+    if (method === "stripe") createPreference(plan.id);
+    else selectPix(plan.id);
   };
 
-  const handlePixPaymentConfirmed = () => {
-    setShowPixModal(false);
-    setShowProofForm(true);
-  };
+  const handlePixPaymentConfirmed = () => { setShowPixModal(false); setShowProofForm(true); };
 
   const handleProofUploadSuccess = () => {
     setShowProofForm(false);
@@ -141,348 +170,368 @@ export default function Plans() {
   };
 
   const handleUploadProofClick = () => {
-    if (subscription?.id) {
-      setPixPaymentData({ subscriptionId: subscription.id });
-      setShowProofForm(true);
-    }
+    if (subscription?.id) { setPixPaymentData({ subscriptionId: subscription.id }); setShowProofForm(true); }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: any }> = {
-      PENDING: { label: 'Pendente', variant: 'secondary' },
-      PROOF_UPLOADED: { label: 'Comprovante Enviado', variant: 'outline' },
-      APPROVED: { label: 'Aprovado', variant: 'default' },
-      REJECTED: { label: 'Rejeitado', variant: 'destructive' },
-      CANCELED: { label: 'Cancelado', variant: 'secondary' },
-    };
-    const config = statusMap[status] || { label: status, variant: 'secondary' };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
+  // ─────────────────────────────────────────────────────────────────────────
 
-  if (isLoading) return <div className="p-6">Carregando planos...</div>;
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 300 }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid rgba(0,200,150,0.15)", borderTopColor: "#00C896", animation: "spin 0.8s linear infinite" }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const tabBtn = (id: "plans" | "history"): React.CSSProperties => ({
+    background: activeTab === id ? "#141917" : "transparent",
+    border: `1px solid ${activeTab === id ? "rgba(0,200,150,0.2)" : "transparent"}`,
+    color: activeTab === id ? "#00C896" : "#5A7A70",
+    borderRadius: 7, padding: "0.5rem 1rem",
+    fontSize: 12, fontWeight: 700, cursor: "pointer",
+    fontFamily: "'Syne', sans-serif", transition: "all 0.15s",
+  });
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Assinatura</h1>
-            <p className="text-muted-foreground">Gerencie seu plano e histórico de pagamentos</p>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+        .pl-card:hover { border-color: rgba(0,200,150,0.2) !important; }
+        .pl-btn-primary { display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#00C896;color:#051A12;border:none;border-radius:8px;padding:0.65rem 1.1rem;font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:background 0.2s;width:100%; }
+        .pl-btn-primary:hover:not(:disabled){background:#00A87E;}
+        .pl-btn-primary:disabled{opacity:0.55;cursor:not-allowed;}
+        .pl-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#5A7A70;border-radius:8px;padding:0.65rem 1.1rem;font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all 0.15s;width:100%;}
+        .pl-btn-ghost:hover:not(:disabled){border-color:rgba(0,200,150,0.25);color:#C0D5CC;}
+        .pl-btn-ghost:disabled{opacity:0.4;cursor:not-allowed;}
+        .pl-tab:hover{color:#C0D5CC !important;}
+        .pl-proof-btn:hover{border-color:rgba(0,200,150,0.3) !important;color:#00C896 !important;}
+        .pl-modal-close:hover{color:#F0F5F2 !important;}
+      `}</style>
+
+      <DashboardLayout>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", fontFamily: "'DM Sans', sans-serif", color: "#F0F5F2" }}>
+
+          {/* ── HEADER ── */}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div>
+              <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.3rem", fontWeight: 800, color: "#F0F5F2", letterSpacing: -0.5, margin: "0 0 3px" }}>
+                Assinatura
+              </h1>
+              <p style={{ fontSize: "0.8rem", color: "#5A7A70", margin: 0 }}>Gerencie seu plano e histórico de pagamentos</p>
+            </div>
+            <LogoutButton variant="outline" />
           </div>
-          <LogoutButton variant="outline" />
-        </div>
 
-        <Tabs defaultValue="plans" className="w-full">
-          <TabsList>
-            <TabsTrigger value="plans">Planos Disponíveis</TabsTrigger>
-            <TabsTrigger value="history">Histórico de Pagamentos</TabsTrigger>
-          </TabsList>
+          {/* ── TABS ── */}
+          <div style={{ display: "flex", gap: 4, background: "#0D1210", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 4, width: "fit-content" }}>
+            <button className="pl-tab" style={tabBtn("plans")} onClick={() => setActiveTab("plans")}>Planos disponíveis</button>
+            <button className="pl-tab" style={tabBtn("history")} onClick={() => setActiveTab("history")}>Histórico</button>
+          </div>
 
-          <TabsContent value="plans" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* ── PLANS TAB ── */}
+          {activeTab === "plans" && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
               {plans?.map((p) => {
+                const accent = planAccent(p.id);
                 const isCurrent = subscription?.plan_id === p.id;
                 const isActive = subscription?.status === "ACTIVE";
                 const isPending = subscription?.status && subscription.status !== "ACTIVE";
                 const isPendingPayment = isCurrent && isPending;
-                const paymentStatus = subscription?.payment_status;
-                
                 const proofUploadedAt = subscription?.proof_uploaded_at;
                 const approvedAt = subscription?.approved_at;
                 const isPix = !!subscription?.pix_qr_code;
                 const needsProof = isCurrent && isPix && !proofUploadedAt;
                 const isWaitingApproval = isCurrent && isPix && proofUploadedAt && !approvedAt;
-
-                // Calculate expiration based on activatedAt + 30 days
                 const activatedAt = subscription?.activatedAt ? new Date(subscription.activatedAt) : null;
                 const expiresAt = activatedAt ? addDays(activatedAt, 30) : null;
                 const daysUntilExpiration = expiresAt ? differenceInDays(expiresAt, new Date()) : null;
-                
-                // Show renew button if expiring in 7 days or less (including negative days if expired)
                 const isExpiringSoon = isCurrent && isActive && daysUntilExpiration !== null && daysUntilExpiration <= 7;
 
                 return (
-                  <Card key={p.id} className={isCurrent ? "border-primary" : undefined}>
-                    <CardHeader>
-                      <CardTitle>{p.name}</CardTitle>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {p.description}
-                        {isCurrent && (
-                          <Badge variant={isActive ? "default" : "secondary"}>
-                            {isActive ? "Atual" : "Pendente"}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">
-                        {p.price === 0 ? "Grátis" : p.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-2">
-                        Limite de clientes: {p.clientLimit === null ? "Ilimitado" : p.clientLimit}
-                      </div>
-
-                      {isCurrent && isActive && expiresAt && (
-                        <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm border">
-                          <p className="font-medium text-muted-foreground mb-1">Vencimento</p>
-                          <p className="font-semibold">{format(expiresAt, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                  <div
+                    key={p.id}
+                    className="pl-card"
+                    style={{
+                      background: isCurrent ? accent.bg : "#0D1210",
+                      border: `1px solid ${isCurrent ? accent.border : "rgba(255,255,255,0.06)"}`,
+                      borderRadius: 14, padding: "1.5rem",
+                      display: "flex", flexDirection: "column", gap: "1rem",
+                      transition: "border-color 0.2s", position: "relative", overflow: "hidden",
+                    }}
+                  >
+                    {/* Popular badge */}
+                    {p.id === "PRO_100" && (
+                      <div style={{ position: "absolute", top: 0, right: 0 }}>
+                        <div style={{ background: "#00C896", color: "#051A12", fontSize: 9, fontWeight: 800, fontFamily: "'Syne', sans-serif", padding: "3px 10px", borderRadius: "0 0 0 8px" }}>
+                          POPULAR
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {isCurrent && isWaitingApproval && (
-                        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 rounded-lg text-sm border border-yellow-200 dark:border-yellow-800">
-                          <p className="font-semibold flex items-center gap-2 mb-1">
-                            <Clock className="w-4 h-4" />
-                            Em análise
-                          </p>
-                          <p className="text-xs opacity-90">Seu comprovante foi enviado e está aguardando aprovação do administrador.</p>
+                    {/* Plan header */}
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 9, background: `${accent.color}15`, border: `1px solid ${accent.color}30`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <PlanIcon id={p.id} />
                         </div>
+                        <div>
+                          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.9rem", fontWeight: 800, color: "#F0F5F2" }}>{p.name}</div>
+                          <div style={{ fontSize: 11, color: "#5A7A70" }}>{p.description}</div>
+                        </div>
+                      </div>
+                      {isCurrent && (
+                        <span style={{ background: isActive ? "rgba(0,200,150,0.1)" : "rgba(245,166,35,0.1)", color: isActive ? "#00C896" : "#F5A623", border: `1px solid ${isActive ? "rgba(0,200,150,0.2)" : "rgba(245,166,35,0.2)"}`, borderRadius: 100, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: "'Syne', sans-serif", whiteSpace: "nowrap" }}>
+                          {isActive ? "Atual" : "Pendente"}
+                        </span>
                       )}
+                    </div>
 
-                      {isCurrent && needsProof && (
-                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-sm border border-blue-200 dark:border-blue-800">
-                          <p className="font-semibold flex items-center gap-2 mb-1">
-                            <Clock className="w-4 h-4" />
-                            Aguardando Comprovante
-                          </p>
-                          <p className="text-xs opacity-90">Envie o comprovante para liberar seu acesso.</p>
+                    {/* Price */}
+                    <div>
+                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "2rem", fontWeight: 800, color: accent.color, letterSpacing: -1.5, lineHeight: 1 }}>
+                        {p.price === 0 ? "Grátis" : fmtCurrency(p.price)}
+                      </div>
+                      {p.price > 0 && <div style={{ fontSize: 11, color: "#3A5A50", marginTop: 3 }}>/mês</div>}
+                      <div style={{ fontSize: 12, color: "#5A7A70", marginTop: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                        <Users size={11} />
+                        {p.clientLimit === null ? "Clientes ilimitados" : `Até ${p.clientLimit} clientes`}
+                      </div>
+                    </div>
+
+                    {/* Expiry info */}
+                    {isCurrent && isActive && expiresAt && (
+                      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 9, padding: "0.65rem 0.85rem" }}>
+                        <div style={{ fontSize: 10, color: "#3A5A50", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 3 }}>Vencimento</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#C0D5CC" }}>{fmtDateLong(expiresAt)}</div>
+                      </div>
+                    )}
+
+                    {/* Waiting approval */}
+                    {isWaitingApproval && (
+                      <div style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.18)", borderRadius: 9, padding: "0.65rem 0.85rem", display: "flex", gap: 8 }}>
+                        <Clock size={13} color="#F5A623" style={{ flexShrink: 0, marginTop: 1 }} />
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "#F5A623" }}>Em análise</div>
+                          <div style={{ fontSize: 11, color: "#8A7040", marginTop: 2 }}>Comprovante enviado, aguardando aprovação do administrador.</div>
                         </div>
-                      )}
-                    </CardContent>
-                    <CardFooter>
+                      </div>
+                    )}
+
+                    {/* Needs proof */}
+                    {needsProof && (
+                      <div style={{ background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: 9, padding: "0.65rem 0.85rem", display: "flex", gap: 8 }}>
+                        <AlertTriangle size={13} color="#818CF8" style={{ flexShrink: 0, marginTop: 1 }} />
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "#818CF8" }}>Comprovante necessário</div>
+                          <div style={{ fontSize: 11, color: "#4A4A80", marginTop: 2 }}>Envie o comprovante para liberar o acesso.</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Expiring soon */}
+                    {isExpiringSoon && (
+                      <div style={{ background: "rgba(232,69,69,0.07)", border: "1px solid rgba(232,69,69,0.18)", borderRadius: 9, padding: "0.65rem 0.85rem" }}>
+                        <div style={{ fontSize: 11, color: "#E84545", fontWeight: 700 }}>
+                          {daysUntilExpiration !== null && daysUntilExpiration <= 0 ? "Plano vencido" : `Expira em ${daysUntilExpiration} dia${daysUntilExpiration !== 1 ? "s" : ""}`}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* CTA */}
+                    <div style={{ marginTop: "auto" }}>
                       {isCurrent && isActive && !needsProof && !isWaitingApproval ? (
                         isExpiringSoon ? (
-                          <div className="w-full space-y-2">
-                            <div className="text-xs text-center text-amber-600 font-medium">
-                              {daysUntilExpiration !== null && daysUntilExpiration <= 0 
-                                ? "Plano vencido"
-                                : `Expira em ${daysUntilExpiration} dias`
-                              }
-                            </div>
-                            <Button 
-                              onClick={() => handlePaymentMethodSelect(p, "pix")} 
-                              className="w-full"
-                              disabled={isSelectingPix || isCreatingPreference}
-                            >
-                              Renovar Plano
-                            </Button>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button className="pl-btn-primary" onClick={() => createPreference(p.id)} disabled={isCreatingPreference || isSelectingPix}>
+                              <CreditCard size={13} />{isCreatingPreference ? "Aguarde..." : "Cartão"}
+                            </button>
+                            <button className="pl-btn-ghost" onClick={() => handlePaymentMethodSelect(p, "pix")} disabled={isSelectingPix || isCreatingPreference}>
+                              PIX
+                            </button>
                           </div>
                         ) : (
-                          <Button variant="secondary" disabled className="w-full">Plano atual</Button>
+                          <button className="pl-btn-ghost" disabled style={{ cursor: "not-allowed" }}>
+                            <CheckCircle2 size={13} /> Plano atual
+                          </button>
                         )
                       ) : needsProof ? (
-                        <Button onClick={handleUploadProofClick} className="w-full">Enviar Comprovante</Button>
+                        <button className="pl-btn-primary" onClick={handleUploadProofClick}>
+                          Enviar comprovante
+                        </button>
                       ) : isWaitingApproval ? (
-                        <Button variant="secondary" disabled className="w-full">Aguardando aprovação</Button>
+                        <button className="pl-btn-ghost" disabled>
+                          <Clock size={13} /> Aguardando aprovação
+                        </button>
                       ) : isPendingPayment ? (
-                        <Button variant="secondary" disabled className="w-full">Pagamento pendente</Button>
+                        <button className="pl-btn-ghost" disabled>
+                          Pagamento pendente
+                        </button>
                       ) : p.price === 0 ? (
-                        <Button onClick={() => createPreference(p.id)} disabled={isCreatingPreference} className="w-full">
-                          Usar plano gratuito
-                        </Button>
+                        <button className="pl-btn-primary" onClick={() => createPreference(p.id)} disabled={isCreatingPreference}>
+                          {isCreatingPreference ? "Aguarde..." : "Usar plano gratuito"}
+                        </button>
                       ) : (
-                        <div className="flex gap-2 w-full">
-                          <Button
-                            variant="outline"
-                            onClick={() => handlePaymentMethodSelect(p, "pix")}
-                            disabled={isSelectingPix || isCreatingPreference}
-                            className="flex-1"
-                          >
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="pl-btn-primary" onClick={() => createPreference(p.id)} disabled={isCreatingPreference || isSelectingPix}>
+                            <CreditCard size={13} />{isCreatingPreference ? "Aguarde..." : "Cartão"}
+                          </button>
+                          <button className="pl-btn-ghost" onClick={() => handlePaymentMethodSelect(p, "pix")} disabled={isSelectingPix || isCreatingPreference}>
                             PIX
-                          </Button>
+                          </button>
                         </div>
                       )}
-                    </CardFooter>
-                  </Card>
-                )
+                    </div>
+                  </div>
+                );
               })}
             </div>
-          </TabsContent>
+          )}
 
-          <TabsContent value="history" className="mt-6">
-            {!userPayment ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Histórico de Pagamentos</CardTitle>
-                  <CardDescription>Você ainda não tem nenhum pagamento registrado.</CardDescription>
-                </CardHeader>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Pagamento #{userPayment.id.substring(0, 8)}</CardTitle>
-                      <CardDescription>
-                        Criado em {format(new Date(userPayment.createdAt || new Date()), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                      </CardDescription>
-                    </div>
-                    {getStatusBadge(userPayment.status)}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Plano</p>
-                      <p className="font-medium">{userPayment.planId}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Valor</p>
-                      <p className="font-medium">
-                        {userPayment.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 mt-6">
-                    <div className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <div className="w-0.5 h-12 bg-gray-200"></div>
-                      </div>
-                      <div>
-                        <p className="font-medium">Pagamento Iniciado</p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(userPayment.createdAt || new Date()), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                        </p>
-                      </div>
-                    </div>
-
-                    {userPayment.proofUploadedAt && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                          <div className="w-0.5 h-12 bg-gray-200"></div>
-                        </div>
-                        <div>
-                          <p className="font-medium">Comprovante Enviado</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(userPayment.proofUploadedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                          </p>
-                          {userPayment.proofUrl && (
-                            <Button
-                              variant="link"
-                              size="sm"
-                              onClick={() => setSelectedProof(userPayment.proofUrl)}
-                              className="mt-2 h-auto p-0"
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Visualizar Comprovante
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {userPayment.approvedAt && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        </div>
-                        <div>
-                          <p className="font-medium">Pagamento Aprovado</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(userPayment.approvedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {userPayment.rejectedAt && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        </div>
-                        <div>
-                          <p className="font-medium">Pagamento Rejeitado</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(userPayment.rejectedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {userPayment.canceledAt && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-                        </div>
-                        <div>
-                          <p className="font-medium">Pagamento Cancelado</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(userPayment.canceledAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* PIX Payment Modal */}
-      {showPixModal && pixPaymentData && (
-        <PixPaymentModal
-          isOpen={showPixModal}
-          onClose={() => setShowPixModal(false)}
-          pixQrCode={pixPaymentData.pixQrCode}
-          pixKey={pixPaymentData.pixKey}
-          accountHolder={pixPaymentData.accountHolder}
-          amount={pixPaymentData.amount}
-          planName={selectedPlan?.name || ""}
-          onPaymentConfirmed={handlePixPaymentConfirmed}
-        />
-      )}
-
-      {/* Proof Upload Modal */}
-      {showProofForm && pixPaymentData && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-950 rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-lg font-bold mb-4">Enviar Comprovante</h2>
-            <ProofUploadForm
-              subscriptionId={pixPaymentData.subscriptionId}
-              onUploadSuccess={handleProofUploadSuccess}
-              onCancel={() => setShowProofForm(false)}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Proof Preview Modal */}
-      {selectedProof && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-950 rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Comprovante de Pagamento</h2>
-              <button
-                onClick={() => setSelectedProof(null)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </button>
-            </div>
-            {selectedProof.endsWith('.pdf') ? (
-              <div className="bg-muted p-4 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-4">Arquivo PDF</p>
-                <a
-                  href={selectedProof}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-600"
-                >
-                  <Download className="w-4 h-4" />
-                  Baixar PDF
-                </a>
+          {/* ── HISTORY TAB ── */}
+          {activeTab === "history" && (
+            !userPayment ? (
+              <div style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "3rem", textAlign: "center", color: "#3A5A50" }}>
+                <CreditCard size={28} style={{ margin: "0 auto 10px", display: "block", opacity: 0.35 }} />
+                <p style={{ fontSize: 13, margin: 0 }}>Nenhum pagamento registrado ainda.</p>
               </div>
             ) : (
-              <img src={selectedProof} alt="Comprovante" className="w-full rounded-lg" />
-            )}
-          </div>
+              <div style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, overflow: "hidden" }}>
+                {/* Payment header */}
+                <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+                  <div>
+                    <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.9rem", fontWeight: 800, color: "#F0F5F2" }}>
+                      Pagamento #{userPayment.id.substring(0, 8)}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#5A7A70", marginTop: 2 }}>
+                      Criado em {fmtDate(userPayment.createdAt || new Date().toISOString())}
+                    </div>
+                  </div>
+                  <StatusBadge status={userPayment.status} />
+                </div>
+
+                {/* Payment details */}
+                <div style={{ padding: "1.25rem 1.5rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem", marginBottom: "1.25rem" }}>
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 9, padding: "0.75rem 1rem" }}>
+                      <div style={{ fontSize: 10, color: "#3A5A50", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Plano</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#C0D5CC" }}>{userPayment.planId}</div>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 9, padding: "0.75rem 1rem" }}>
+                      <div style={{ fontSize: 10, color: "#3A5A50", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Valor</div>
+                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "1rem", fontWeight: 800, color: "#00C896" }}>
+                        {fmtCurrency(userPayment.amount)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timeline */}
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <div style={{ fontSize: 10, color: "#3A5A50", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: "0.85rem" }}>Histórico</div>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <TimelineEvent label="Pagamento iniciado" date={fmtDate(userPayment.createdAt || new Date().toISOString())} color="#818CF8" last={!userPayment.proofUploadedAt && !userPayment.approvedAt && !userPayment.rejectedAt && !userPayment.canceledAt} />
+
+                      {userPayment.proofUploadedAt && (
+                        <div style={{ display: "flex", gap: 12 }}>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#818CF8", border: "2px solid rgba(99,102,241,0.3)", flexShrink: 0, marginTop: 2 }} />
+                            {(userPayment.approvedAt || userPayment.rejectedAt || userPayment.canceledAt) && <div style={{ width: 1, flex: 1, background: "rgba(255,255,255,0.06)", marginTop: 4, minHeight: 28 }} />}
+                          </div>
+                          <div style={{ paddingBottom: 16 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#C0D5CC" }}>Comprovante enviado</div>
+                            <div style={{ fontSize: 11, color: "#4A6A60", marginTop: 2 }}>{fmtDate(userPayment.proofUploadedAt)}</div>
+                            {userPayment.proofUrl && (
+                              <button
+                                className="pl-proof-btn"
+                                onClick={() => setSelectedProof(userPayment.proofUrl)}
+                                style={{ marginTop: 6, background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "#5A7A70", borderRadius: 7, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, transition: "all 0.15s" }}
+                              >
+                                <Eye size={11} /> Visualizar
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {userPayment.approvedAt && (
+                        <TimelineEvent label="Pagamento aprovado" date={fmtDate(userPayment.approvedAt)} color="#00C896" last />
+                      )}
+                      {userPayment.rejectedAt && (
+                        <TimelineEvent label="Pagamento rejeitado" date={fmtDate(userPayment.rejectedAt)} color="#E84545" last />
+                      )}
+                      {userPayment.canceledAt && (
+                        <TimelineEvent label="Pagamento cancelado" date={fmtDate(userPayment.canceledAt)} color="#5A7A70" last />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          )}
         </div>
-      )}
-    </DashboardLayout>
+
+        {/* ── PIX MODAL ── */}
+        {showPixModal && pixPaymentData && (
+          <PixPaymentModal
+            isOpen={showPixModal}
+            onClose={() => setShowPixModal(false)}
+            pixQrCode={pixPaymentData.pixQrCode}
+            pixKey={pixPaymentData.pixKey}
+            accountHolder={pixPaymentData.accountHolder}
+            amount={pixPaymentData.amount}
+            planName={selectedPlan?.name || ""}
+            onPaymentConfirmed={handlePixPaymentConfirmed}
+          />
+        )}
+
+        {/* ── PROOF UPLOAD MODAL ── */}
+        {showProofForm && pixPaymentData && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+            <div style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "1.5rem", maxWidth: 420, width: "100%", margin: "1rem" }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "1rem", fontWeight: 800, color: "#F0F5F2", marginBottom: "1rem" }}>
+                Enviar Comprovante
+              </div>
+              <ProofUploadForm
+                subscriptionId={pixPaymentData.subscriptionId}
+                onUploadSuccess={handleProofUploadSuccess}
+                onCancel={() => setShowProofForm(false)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── PROOF PREVIEW MODAL ── */}
+        {selectedProof && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+            <div style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "1.5rem", maxWidth: 560, width: "100%", margin: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.95rem", fontWeight: 800, color: "#F0F5F2" }}>
+                  Comprovante de Pagamento
+                </div>
+                <button
+                  className="pl-modal-close"
+                  onClick={() => setSelectedProof(null)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#5A7A70", fontSize: 18, lineHeight: 1, transition: "color 0.15s" }}
+                >
+                  ✕
+                </button>
+              </div>
+              {selectedProof.endsWith(".pdf") ? (
+                <div style={{ background: "#111614", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "1.5rem", textAlign: "center" }}>
+                  <p style={{ fontSize: 12, color: "#5A7A70", marginBottom: "1rem" }}>Arquivo PDF</p>
+                  <a href={selectedProof} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#00C896", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+                    <Download size={14} /> Baixar PDF
+                  </a>
+                </div>
+              ) : (
+                <img src={selectedProof} alt="Comprovante" style={{ width: "100%", borderRadius: 10 }} />
+              )}
+            </div>
+          </div>
+        )}
+      </DashboardLayout>
+    </>
   );
 }

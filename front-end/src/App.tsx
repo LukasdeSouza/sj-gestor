@@ -11,6 +11,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import Templates from "./pages/Templates";
+import Settings from "./pages/Settings";
+import BillingOverview from "./pages/BillingOverview";
 import TemplatesUnified from "./pages/TemplatesUnified";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
@@ -29,6 +31,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Help from "./pages/Help";
 import { NichoSelection } from "./pages/NichoSelection";
 import { BillingRules } from "./pages/BillingRules";
+import PaymentPage from "./pages/PaymentPage";
 import UpdatesBanner from "./components/UpdatesBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 // import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -54,7 +57,24 @@ const App = () => (
           ]}
         />
         <Sonner />
-        <ToastContainer />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={3500}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          draggable={false}
+          toastStyle={{
+            background: "#0D1210",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "12px",
+            color: "#C0D5CC",
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: "13px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          }}
+        />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -71,6 +91,8 @@ const App = () => (
             <Route path="/products" element={<Products />} />
             <Route path="/pix-keys" element={<PixKeys />} />
             <Route path="/templates" element={<Templates />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/billing-overview" element={<BillingOverview />} />
             <Route path="/templates-unified" element={<TemplatesUnified />} />
             <Route path="/whatsapp" element={<WhatsApp />} />
             <Route path="/account" element={<Account />} />
@@ -78,6 +100,7 @@ const App = () => (
             <Route path="/help" element={<Help />} />
             <Route path="/nicho-selection" element={<NichoSelection />} />
             <Route path="/billing-rules/:clientId" element={<BillingRules />} />
+            <Route path="/pagar/:token" element={<PaymentPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
