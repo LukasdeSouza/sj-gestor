@@ -73,7 +73,7 @@ function WhatsAppMock() {
       }}>
         {/* Status bar */}
         <div style={{ display: "flex", justifyContent: "space-between", padding: "0 16px 8px", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
-          <span>9:00</span>
+          <span>9:20</span>
           <span>●●●</span>
         </div>
         {/* WhatsApp UI */}
@@ -105,6 +105,7 @@ function WhatsAppMock() {
                     padding: "8px 10px",
                     maxWidth: "80%",
                     fontSize: 12,
+                    fontWeight: 300,
                     color: "#e9edef",
                     whiteSpace: "pre-wrap",
                     lineHeight: 1.4,
