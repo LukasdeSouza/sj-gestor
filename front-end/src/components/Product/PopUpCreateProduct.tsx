@@ -81,7 +81,7 @@ export function PopupCreateProduct({ onSuccess }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button id="btn-new-product">
           <Plus className="w-4 h-4 mr-2" />
           Novo Produto
         </Button>

@@ -143,8 +143,8 @@ function WhatsAppMock() {
         boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
         animation: "float 3s ease-in-out infinite 1.5s",
       }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: "#1a1a2e" }}>3 pagamentos ✅</div>
-        <div style={{ fontSize: 10, color: "#666" }}>últimas 2 horas</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#1a1a2e" }}>3 pagamentos</div>
+        <div style={{ fontSize: 10, color: "#666", fontWeight: 300 }}>últimas 2 horas</div>
       </div>
     </div>
   );
@@ -327,7 +327,7 @@ const Index = () => {
           {/* Left */}
           <div>
             <div className="fade-up-1" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(0,200,150,0.1)", border: "1px solid rgba(0,200,150,0.25)", borderRadius: 20, padding: "6px 14px", marginBottom: 28 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00C896", animation: "pulse-green 2s infinite" }} />
+              {/* <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00C896", animation: "pulse-green 2s infinite" }} /> */}
               <span style={{ fontSize: 13, color: "#00C896", fontWeight: 600 }}>Automatize. Receba. Cresça.</span>
             </div>
 

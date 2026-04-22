@@ -18,12 +18,27 @@ import {
   XAxis, YAxis,
 } from "recharts";
 import Cookies from "js-cookie";
+import { OnboardingChecklist } from "@/components/Onboarding/OnboardingChecklist";
+import { useState, useMemo } from "react";
+import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Dashboard() {
   useSubscriptionGuard({ protect: true });
 
   const user = Cookies.get("user");
   const parsedUser: AuthUser = user ? JSON.parse(user) : null;
+
+  // ── Date Filtering ──────────────────────────────────────────
+  const [filterType, setFilterType] = useState<"7d" | "30d" | "mt" | "all">("mt");
+  
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    if (filterType === "7d") return { start: subDays(now, 7), end: now };
+    if (filterType === "30d") return { start: subDays(now, 30), end: now };
+    if (filterType === "mt") return { start: startOfMonth(now), end: endOfMonth(now) };
+    return { start: undefined, end: undefined };
+  }, [filterType]);
 
   const { data: dataClients, isLoading: isloadingClients } = useQuery<ClientsResponse>({
     queryKey: ["listClients"],
@@ -49,37 +64,12 @@ export default function Dashboard() {
     enabled: !!parsedUser?.id,
   });
 
-  const { data: dataPixKeys, isLoading: isloadingPixKeys } = useQuery<PixKeysResponse>({
-    queryKey: ["listPixkeys"],
-    queryFn: async () =>
-      await fetchUseQuery<undefined, PixKeysResponse>({
-        route: `/pix_keys?user_id=${parsedUser.id}`,
-        method: "GET",
-      }),
-    retry: 2,
-    refetchOnWindowFocus: false,
-    enabled: !!parsedUser?.id,
-  });
-
-  const { data: dataMessageTemplates, isLoading: isloadingMessageTemplates } = useQuery<MessageTemplatesResponse>({
-    queryKey: ["listMessageTemplates"],
-    queryFn: async () =>
-      await fetchUseQuery<undefined, MessageTemplatesResponse>({
-        route: `/message_templates?user_id=${parsedUser.id}`,
-        method: "GET",
-      }),
-    retry: 2,
-    refetchOnWindowFocus: false,
-    enabled: !!parsedUser?.id,
-  });
-
   const { data: summary, isError: isSummaryError, isLoading: isLoadingSummary } = useQuery<any>({
-    queryKey: ["dashboardSummary", parsedUser?.id],
+    queryKey: ["dashboardSummary", parsedUser?.id, filterType],
     queryFn: async () =>
-      await fetchUseQuery<{ user_id: string }, any>({
-        route: "/dashboard/summary",
+      await fetchUseQuery<{ user_id: string; startDate?: string; endDate?: string }, any>({
+        route: `/dashboard/summary?user_id=${parsedUser.id}${dateRange.start ? `&startDate=${dateRange.start.toISOString()}` : ""}${dateRange.end ? `&endDate=${dateRange.end.toISOString()}` : ""}`,
         method: "GET",
-        data: { user_id: parsedUser.id },
       }),
     enabled: !!parsedUser?.id,
     refetchOnWindowFocus: false,
@@ -100,83 +90,68 @@ export default function Dashboard() {
   const isLoading =
     isloadingClients ||
     isloadingProducts ||
-    isloadingPixKeys ||
-    isloadingMessageTemplates ||
     isLoadingSummary;
 
   if (isLoading) return <SkeletonInformation />;
 
   // ── derived values ──────────────────────────────────────────
-  const totalClients   = summary?.totals?.clients   ?? dataClients?.resultados   ?? 0;
-  const totalProducts  = summary?.totals?.products  ?? dataProducts?.resultados  ?? 0;
-  const totalPixKeys   = summary?.totals?.pixKeys   ?? dataPixKeys?.resultados   ?? 0;
-  const totalTemplates = summary?.totals?.templates ?? dataMessageTemplates?.resultados ?? 0;
-  const dueToday       = summary?.dueTodayEligible  ?? 0;
-  const receivedToday  = summary?.payments?.today?.total
-    ? Number(summary.payments.today.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-    : "R$ 0,00";
-  const receivedTodayCount = summary?.payments?.today?.count ?? 0;
-  const receivedMonth  = summary?.payments?.month?.total
-    ? Number(summary.payments.month.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-    : "R$ 0,00";
-  const receivedMonthCount = summary?.payments?.month?.count ?? 0;
+  const totals = summary?.totals || {};
+  const period = summary?.payments?.period || {};
+
+  const totalClients = totals.clients || 0;
+  const totalProducts = totals.products || 0;
+  
+  const receivedPeriodValue = period.total || 0;
+  const receivedPeriodStr = Number(receivedPeriodValue).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  
+  const recoveredValue = period.recovered || 0;
+  const recoveredStr = Number(recoveredValue).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  
+  const pendingValue = period.pending || 0;
+  const pendingStr = Number(pendingValue).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  
+  const recoveryRate = period.recoveryRate || 0;
 
   const chartData = [
-    { label: "Clientes",  value: totalClients },
-    { label: "Produtos",  value: totalProducts },
-    { label: "Chaves PIX", value: totalPixKeys },
-    { label: "Templates", value: totalTemplates },
+    { label: "Recebido", value: receivedPeriodValue },
+    { label: "Recuperado", value: recoveredValue },
+    { label: "Pendente", value: pendingValue },
   ];
 
-  const statCards = [
+  const mainStats = [
     {
-      label: "Clientes",
-      value: totalClients,
-      icon: Users,
-      accent: "#00C896",
-      accentBg: "rgba(0,200,150,0.1)",
-    },
-    {
-      label: "Produtos",
-      value: totalProducts,
-      icon: Package,
-      accent: "#6496DC",
-      accentBg: "rgba(100,150,220,0.1)",
-    },
-    {
-      label: "Chaves PIX",
-      value: totalPixKeys,
-      icon: CreditCard,
-      accent: "#00C896",
-      accentBg: "rgba(0,200,150,0.1)",
-    },
-    {
-      label: "Templates",
-      value: totalTemplates,
-      icon: MessageSquare,
-      accent: "#B482DC",
-      accentBg: "rgba(180,130,220,0.1)",
-    },
-    {
-      label: "Cobranças hoje",
-      value: dueToday,
-      sub: "Vencimentos hoje",
-      icon: Calendar,
-      accent: "#F5A623",
-      accentBg: "rgba(245,166,35,0.1)",
-      highlight: false,
-      valueColor: "#F5A623",
-    },
-    {
-      label: "Recebido hoje",
-      value: receivedToday,
-      sub: `${receivedTodayCount} pagamentos`,
+      label: "Faturamento Total",
+      value: receivedPeriodStr,
+      sub: `${period.count || 0} pagamentos no período`,
       icon: DollarSign,
-      accent: "#00C896",
-      accentBg: "rgba(0,200,150,0.15)",
-      highlight: true,
-      valueColor: "#00C896",
+      color: "#00C896",
+      bg: "rgba(0,200,150,0.1)",
     },
+    {
+      label: "Lucro Recuperado",
+      value: recoveredStr,
+      sub: "Salvo pelo sistema",
+      icon: TrendingUp,
+      color: "#B482DC",
+      bg: "rgba(180,130,220,0.1)",
+      highlight: true
+    },
+    {
+      label: "Dinheiro na Mesa",
+      value: pendingStr,
+      sub: `${period.pendingCount || 0} cobranças em aberto`,
+      icon: Clock,
+      color: "#F5A623",
+      bg: "rgba(245,166,35,0.1)",
+    },
+    {
+      label: "Taxa de Eficiência",
+      value: `${recoveryRate}%`,
+      sub: "Conversão de cobranças",
+      icon: Activity,
+      color: "#6496DC",
+      bg: "rgba(100,150,220,0.1)",
+    }
   ];
 
   const onboardingSteps = [
@@ -192,8 +167,8 @@ export default function Dashboard() {
     },
     {
       n: 3,
-      title: "Configure Chaves PIX",
-      desc: "Adicione suas chaves PIX para receber pagamentos facilmente.",
+      title: "Meios de Pagamento",
+      desc: "Configure o PIX e links de checkout (cartão/boleto) para receber.",
     },
     {
       n: 4,
@@ -356,25 +331,54 @@ export default function Dashboard() {
         <div className="db">
           <div className="db-page">
 
-            {/* ── PAGE HEADER ── */}
-            <div className="db-header">
-              <h1 className="db-title">Dashboard</h1>
-              <p className="db-subtitle">Visão geral do seu sistema de cobranças</p>
+            {/* ── PAGE HEADER & FILTER ── */}
+            <div className="db-header" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 className="db-title">Visão do Negócio</h1>
+                <p className="db-subtitle">Acompanhe sua performance financeira em tempo real</p>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg2)', padding: '0.35rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                {[
+                  { id: '7d', label: '7 dias' },
+                  { id: '30d', label: '30 dias' },
+                  { id: 'mt', label: 'Este Mês' },
+                  { id: 'all', label: 'Tudo' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setFilterType(opt.id as any)}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      background: filterType === opt.id ? 'var(--cobr)' : 'transparent',
+                      color: filterType === opt.id ? '#fff' : 'var(--muted)',
+                      border: 'none'
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* ── STAT CARDS ── */}
             <div>
-              <div className="db-section-label">Visão geral</div>
-              <div className="db-stats">
-                {statCards.map((s) => (
+              <div className="db-section-label">Métricas de Performance</div>
+              <div id="dashboard-analytics" className="db-stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                {mainStats.map((s) => (
                   <div key={s.label} className={`db-stat${s.highlight ? " highlighted" : ""}`}>
                     <div className="db-stat-top">
                       <span className="db-stat-label">{s.label}</span>
-                      <div className="db-stat-icon" style={{ background: s.accentBg }}>
-                        <s.icon style={{ color: s.accent }} />
+                      <div className="db-stat-icon" style={{ background: s.bg }}>
+                        <s.icon style={{ color: s.color }} />
                       </div>
                     </div>
-                    <div className="db-stat-value" style={{ color: s.valueColor ?? "var(--text)" }}>
+                    <div className="db-stat-value" style={{ color: s.highlight ? s.color : "var(--text)" }}>
                       {s.value}
                     </div>
                     {s.sub && <div className="db-stat-sub">{s.sub}</div>}
@@ -464,33 +468,38 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* ── BOTTOM ROW ── */}
+            {/* ── BOTTOM ROW (Contadores Rápidos) ── */}
             <div className="db-bottom">
-              {/* Recebido este mês */}
+              {/* Resumo Base */}
               <div className="db-panel">
                 <div className="db-panel-title">
-                  <Wallet />
-                  Recebido este mês
+                  <Users />
+                  Base de Dados
                 </div>
-                <div className={`db-big-num${!isSummaryError ? " green" : ""}`}>
-                  {isSummaryError ? "—" : receivedMonth}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                    <div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Clientes</div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'Syne' }}>{totalClients}</div>
+                    </div>
+                    <div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Produtos</div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'Syne' }}>{totalProducts}</div>
+                    </div>
                 </div>
-                <div className="db-panel-sub">
-                  {isSummaryError ? "Erro ao carregar" : `${receivedMonthCount} pagamentos registrados`}
-                </div>
+                <div className="db-panel-sub" style={{ marginTop: '1rem' }}>Total acumulado na conta</div>
               </div>
 
               {/* Elegíveis */}
               <div className="db-panel">
                 <div className="db-panel-title">
-                  <Activity />
-                  Elegíveis para envio hoje
+                  <Calendar />
+                  Vencimentos Hoje
                 </div>
-                <div className="db-big-num">
-                  {isSummaryError ? "—" : dueToday}
+                <div className="db-big-num" style={{ color: 'var(--cobr)' }}>
+                  {summary?.dueTodayEligible ?? 0}
                 </div>
                 <div className="db-panel-sub">
-                  Clientes com cobrança automática ativa
+                  Clientes aguardando processamento
                 </div>
               </div>
 
@@ -498,7 +507,7 @@ export default function Dashboard() {
               <div className="db-panel">
                 <div className="db-panel-title">
                   <TrendingUp />
-                  Top produtos por cobranças
+                  Produtos em Destaque
                 </div>
                 <div style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.1rem" }}>
                   {!isTopProductsError && (topProducts ?? []).length > 0 ? (
@@ -508,35 +517,14 @@ export default function Dashboard() {
                         <span className="db-product-count">{p.count}</span>
                       </div>
                     ))
-                  ) : isTopProductsError ? (
-                    <div className="db-empty" style={{ textAlign: "left", padding: "0.5rem 0" }}>Erro ao carregar.</div>
                   ) : (
-                    <div className="db-empty" style={{ textAlign: "left", padding: "0.5rem 0" }}>Sem dados suficientes.</div>
+                    <div className="db-empty" style={{ textAlign: "left", padding: "0.5rem 0" }}>Sem dados no período.</div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* ── ONBOARDING ── */}
-            <div className="db-panel">
-              <div className="db-panel-header">
-                <div className="db-panel-title">
-                  <Clock />
-                  Primeiros passos
-                </div>
-              </div>
-              <div className="db-onboard-grid">
-                {onboardingSteps.map((s) => (
-                  <div key={s.n} className="db-step">
-                    <div className="db-step-num">{s.n}</div>
-                    <div>
-                      <div className="db-step-title">{s.title}</div>
-                      <div className="db-step-desc">{s.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <OnboardingChecklist />
 
           </div>
         </div>

@@ -28,6 +28,10 @@ import Plans from "./pages/Plans";
 import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import VerifyEmailNotice from "./pages/VerifyEmailNotice";
+import VerifyEmailAction from "./pages/VerifyEmailAction";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import Help from "./pages/Help";
 import { NichoSelection } from "./pages/NichoSelection";
 import { BillingRules } from "./pages/BillingRules";
@@ -81,6 +85,10 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email-notice" element={<VerifyEmailNotice />} />
+            <Route path="/verify-email" element={<VerifyEmailAction />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/assinatura/sucesso" element={<SubscriptionSuccess />} />
@@ -89,7 +97,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/products" element={<Products />} />
-            <Route path="/pix-keys" element={<PixKeys />} />
+            <Route path="/meios-pagamento" element={<PixKeys />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/billing-overview" element={<BillingOverview />} />

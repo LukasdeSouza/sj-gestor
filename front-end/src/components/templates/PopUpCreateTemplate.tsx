@@ -79,7 +79,7 @@ export function PopUpCreateTemplate({ onSuccess }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button id="btn-new-template">
           <Plus className="w-4 h-4 mr-2" />
           Nova Template
         </Button>

@@ -31,23 +31,7 @@ const VARIABLES = [
   { tag: "{dias}",       label: "Dias"       },
 ];
 
-const DEFAULT_TEMPLATES = [
-  {
-    id: "default-1",
-    name: "Lembrete de vencimento",
-    content: "Olá, {nome}! Sua fatura de {valor} vence em {vencimento}. Qualquer dúvida, estamos à disposição.",
-  },
-  {
-    id: "default-2",
-    name: "Cobrança em atraso",
-    content: "Olá, {nome}! Identificamos que sua fatura de {valor} está em aberto há {dias} dias. Por favor, regularize para evitar restrições.",
-  },
-  {
-    id: "default-3",
-    name: "Pagamento confirmado",
-    content: "Olá, {nome}! Recebemos seu pagamento de {valor}. Obrigado pela pontualidade!",
-  },
-];
+
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -238,7 +222,7 @@ function CreateTemplateDialog({ userId, onSuccess }: { userId: string; onSuccess
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button style={{
+        <button id="btn-new-template" style={{
           display: "inline-flex", alignItems: "center", gap: 6,
           background: "#00C896", color: "#051A12", border: "none",
           borderRadius: 8, padding: "0.6rem 1.1rem",
@@ -318,14 +302,14 @@ function EditTemplateDialog({ template, onSuccess }: { template: MessageTemplate
 // ─── TEMPLATE CARD ────────────────────────────────────────────────────────────
 
 function TemplateCard({
-  template, isDefault, onDelete, onSuccess, isDeleting,
+  template, onDelete, onSuccess, isDeleting,
 }: {
-  template: MessageTemplate | (typeof DEFAULT_TEMPLATES)[0];
-  isDefault: boolean;
+  template: MessageTemplate;
   onDelete?: (id: string) => void;
   onSuccess?: () => void;
   isDeleting?: boolean;
 }) {
+  const isDefault = template.is_default;
   const vars = extractVariables(template.content);
 
   return (
@@ -451,7 +435,9 @@ export function TemplatesContent() {
 
   if (isLoading) return <SkeletonInformation />;
 
-  const userTemplates = data?.templates ?? [];
+  const allTemplates = data?.templates ?? [];
+  const systemTemplates = allTemplates.filter(t => t.is_default);
+  const userTemplates = allTemplates.filter(t => !t.is_default);
 
   const sectionLabel: React.CSSProperties = {
     fontSize: "0.68rem", fontWeight: 700, color: "#3A5A50",
@@ -489,14 +475,16 @@ export function TemplatesContent() {
         </div>
 
         {/* ── DEFAULT TEMPLATES ── */}
-        <div>
-          <p style={sectionLabel}>Prontos para usar</p>
-          <div style={grid}>
-            {DEFAULT_TEMPLATES.map((t) => (
-              <TemplateCard key={t.id} template={t as any} isDefault />
-            ))}
+        {systemTemplates.length > 0 && (
+          <div>
+            <p style={sectionLabel}>Prontos para usar</p>
+            <div style={grid}>
+              {systemTemplates.map((t) => (
+                <TemplateCard key={t.id} template={t} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── USER TEMPLATES ── */}
         <div>
@@ -525,7 +513,6 @@ export function TemplatesContent() {
                 <TemplateCard
                   key={t.id}
                   template={t}
-                  isDefault={false}
                   onDelete={deleteTemplate}
                   onSuccess={refetch}
                   isDeleting={isDeleting}

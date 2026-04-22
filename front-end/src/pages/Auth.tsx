@@ -15,6 +15,7 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2 } from "lucide-
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import Cookies from "js-cookie";
 import z from "zod";
 
@@ -28,6 +29,7 @@ const FEATURES = [
 export default function LoginAuth() {
   const [showPasswordLogin, setShowPasswordLogin] = useState(false);
   const [showPasswordSignup, setShowPasswordSignup] = useState(false);
+  const [showConfirmPasswordSignup, setShowConfirmPasswordSignup] = useState(false);
   const navigate = useNavigate();
   const [tab, setTab] = useState<"login" | "signup">("login");
 
@@ -72,7 +74,7 @@ export default function LoginAuth() {
   const signupSchema = AuthSchemas.signup;
   const signupForm = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "", acceptedTerms: false },
   });
 
   const { mutate: signupMutate, isPending: signupLoading } = useMutation({
@@ -83,9 +85,18 @@ export default function LoginAuth() {
         data,
       });
     },
-    onSuccess: () => {
-      toast.success("Conta criada com sucesso! 🎉");
-      setTab("login");
+    onSuccess: (res: any) => {
+      toast.success("Bem-vindo ao Cobr! Sua conta foi criada. 🎉");
+      // Auto-login logic
+      Cookies.set(TOKEN_COOKIE_KEY, res.token, { expires: 15 });
+      Cookies.set(USER_COOKIE_KEY, JSON.stringify({
+        email: res.user.email,
+        name: res.user.name,
+        id: res.user.id,
+        group: res.user.group,
+      }), { expires: 15 });
+
+      navigate("/plans?first_time=true");
     },
     onError: (error: ApiErrorQuery) => {
       if (Array.isArray(error.errors)) {
@@ -611,6 +622,62 @@ export default function LoginAuth() {
                           </button>
                         </div>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    name="confirmPassword"
+                    control={signupForm.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="cobr-label">
+                          <Lock size={13} />
+                          Confirmar Senha
+                        </FormLabel>
+                        <div className="cobr-pw-wrapper">
+                          <FormControl>
+                            <Input
+                              type={showConfirmPasswordSignup ? "text" : "password"}
+                              placeholder="••••••••"
+                              className="cobr-input"
+                              {...field}
+                            />
+                          </FormControl>
+                          <button
+                            type="button"
+                            className="cobr-eye-btn"
+                            onClick={() => setShowConfirmPasswordSignup(!showConfirmPasswordSignup)}
+                          >
+                            {showConfirmPasswordSignup
+                              ? <EyeOff size={15} />
+                              : <Eye size={15} />
+                            }
+                          </button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                   <FormField
+                    name="acceptedTerms"
+                    control={signupForm.control}
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-4 bg-white/5 border border-white/5">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="border-white/20 data-[state=checked]:bg-[#00C896] data-[state=checked]:text-[#051A12]"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-[0.75rem] font-medium text-[#7A9087] leading-relaxed cursor-pointer">
+                            Eu aceito os <a href="/terms" target="_blank" className="text-[#00C896] hover:underline">Termos de Uso</a> e a <a href="/privacy" target="_blank" className="text-[#00C896] hover:underline">Política de Privacidade</a>
+                          </FormLabel>
+                          <FormMessage />
+                        </div>
                       </FormItem>
                     )}
                   />

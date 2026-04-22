@@ -90,7 +90,7 @@ export function PopupCreatePixKey({ onSuccess }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button id="btn-new-pix">
           <Plus className="w-4 h-4 mr-2" />
           Nova Chave PIX
         </Button>

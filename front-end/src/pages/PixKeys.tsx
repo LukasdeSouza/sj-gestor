@@ -4,13 +4,12 @@ import { ApiErrorQuery, fetchUseQuery } from "@/api/services/fetchUseQuery";
 import { PopupCreatePixKey } from "@/components/Pixkey/PopUpCreatePixkey";
 import { PopupAlterPixKey } from "@/components/Pixkey/PopUpAlterPixKey";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
 import { PixKeysResponse } from "@/api/models/pixKeys";
-import { Trash2, Search, CreditCard, Plus } from "lucide-react";
+import { Trash2, Search, Wallet, Plus, CreditCard, Banknote, ExternalLink, Save, Info } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Button } from "@/components/ui/button";
 import { AuthUser } from "@/api/models/auth";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -42,9 +41,130 @@ function KeyTypeBadge({ type }: { type: string }) {
   );
 }
 
+// ─── LINKS SETTINGS ──────────────────────────────────────────────────────────
+
+const INPUT_STYLE: React.CSSProperties = {
+  width: "100%", height: 42, boxSizing: "border-box",
+  background: "#111614", border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 8, color: "#F0F5F2", fontSize: 13,
+  fontFamily: "'DM Sans', sans-serif", padding: "0 12px",
+  outline: "none", transition: "border-color 0.2s",
+};
+
+function PaymentLinksSection() {
+  const user: AuthUser = JSON.parse(Cookies.get("user") ?? "{}");
+  const qc = useQueryClient();
+
+  const [card,   setCard]   = useState("");
+  const [boleto, setBoleto] = useState("");
+
+  const { data } = useQuery({
+    queryKey: ["userPaymentLinks", user?.id],
+    queryFn: async () => {
+      const res = await fetchUseQuery<undefined, any>({ route: `/users/${user.id}`, method: "GET" });
+      return { 
+        payment_link_card: res?.data?.payment_link_card ?? "", 
+        payment_link_boleto: res?.data?.payment_link_boleto ?? "" 
+      };
+    },
+    enabled: !!user?.id,
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (data) {
+      setCard(data.payment_link_card   ?? "");
+      setBoleto(data.payment_link_boleto ?? "");
+    }
+  }, [data]);
+
+  const { mutate: save, isPending } = useMutation({
+    mutationFn: async () => {
+      await fetchUseQuery<any, any>({
+        route: `/users/${user.id}`,
+        method: "PATCH",
+        data: {
+          payment_link_card:   card   || null,
+          payment_link_boleto: boleto || null,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Links de pagamento salvos!");
+      qc.invalidateQueries({ queryKey: ["userPaymentLinks", user?.id] });
+    },
+    onError: () => toast.error("Erro ao salvar links."),
+  });
+
+  return (
+    <div style={{ background: "#0D110F", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: "1.5rem", marginTop: 24 }}>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 700, color: "#F0F5F2", margin: "0 0 4px", fontFamily: "'Syne', sans-serif" }}>
+          Links de Checkout (Cartão e Boleto)
+        </h2>
+        <p style={{ fontSize: 12, color: "#5A7A70", margin: 0 }}>
+          Configure links externos de checkout. Eles serão exibidos como opções na sua página de recebimento.
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        {/* Card */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
+            <CreditCard size={14} color="#818CF8" />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#7A9087" }}>Cartão de Crédito</span>
+          </div>
+          <div style={{ position: "relative" }}>
+            <input
+              type="url"
+              placeholder="Link do checkout (ex: Mercado Pago, Stripe)"
+              value={card}
+              onChange={e => setCard(e.target.value)}
+              style={INPUT_STYLE}
+            />
+          </div>
+        </div>
+
+        {/* Boleto */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
+            <Banknote size={14} color="#F5A623" />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#7A9087" }}>Boleto Bancário</span>
+          </div>
+          <div style={{ position: "relative" }}>
+            <input
+              type="url"
+              placeholder="Link do boleto (ex: Asaas, Iugu)"
+              value={boleto}
+              onChange={e => setBoleto(e.target.value)}
+              style={INPUT_STYLE}
+            />
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={() => save()}
+        disabled={isPending}
+        style={{
+          marginTop: 20, display: "inline-flex", alignItems: "center", gap: 7,
+          background: isPending ? "rgba(0,200,150,0.5)" : "#00C896",
+          color: "#051A12", border: "none", borderRadius: 8,
+          padding: "8px 16px", fontSize: 13, fontWeight: 700,
+          cursor: isPending ? "not-allowed" : "pointer",
+          fontFamily: "'Syne', sans-serif",
+        }}
+      >
+        <Save size={14} />
+        {isPending ? "Salvando..." : "Salvar Links"}
+      </button>
+    </div>
+  );
+}
+
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 
-export function PixKeysContent() {
+export function MeiosPagamentoContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 500);
   const [page, setPage] = useState(1);
@@ -144,11 +264,9 @@ export function PixKeysContent() {
         {/* ── HEADER ── */}
         <div style={S.header}>
           <div>
-            <h1 style={S.title}>Chaves PIX</h1>
+            <h1 style={S.title}>Meios de Pagamento</h1>
             <p style={S.sub}>
-              {keys.length > 0
-                ? `${dataPixKeys?.resultados ?? keys.length} chave${keys.length !== 1 ? "s" : ""} cadastrada${keys.length !== 1 ? "s" : ""}`
-                : "Nenhuma chave cadastrada ainda"}
+              Gerencie suas chaves PIX e links de checkout externos.
             </p>
           </div>
           <PopupCreatePixKey onSuccess={() => refetch()} />
@@ -254,15 +372,17 @@ export function PixKeysContent() {
           </div>
         </div>
 
+        <PaymentLinksSection />
+
       </div>
     </>
   );
 }
 
-export default function PixKeys() {
+export default function MeiosPagamento() {
   return (
     <DashboardLayout>
-      <PixKeysContent />
+      <MeiosPagamentoContent />
     </DashboardLayout>
   );
 }

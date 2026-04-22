@@ -559,6 +559,7 @@ export function WhatsAppContent() {
                   />
 
                   <ButtonLoading
+                    id="btn-connect-whatsapp"
                     className="wa-btn-primary"
                     isLoading={isPending}
                     onClick={formWhatsapp.handleSubmit(handleConnectClick)}

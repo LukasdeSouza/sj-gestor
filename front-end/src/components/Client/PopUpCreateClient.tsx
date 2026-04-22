@@ -21,7 +21,10 @@ import { toast } from "react-toastify";
 import { Input } from "../ui/input";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import type { ProductsResponse } from "@/api/models/products";
 import type { PixKeysResponse } from "@/api/models/pixKeys";
 import type { MessageTemplatesResponse } from "@/api/models/messageTemplate";
@@ -52,15 +55,11 @@ const createSchema = z.object({
   additional_info:         z.string().max(256).optional(),
   product_id:              z.string().optional(),
   template_id:             z.string().optional(),
-  key_id:                  z.string().optional(),
   observacoes1:            z.string().max(256).optional(),
   observacoes2:            z.string().max(256).optional(),
   new_product_name:        z.string().optional(),
   new_product_value:       z.number().optional(),
   new_product_description: z.string().optional(),
-  new_key_type:            z.string().optional(),
-  new_key_value:           z.string().optional(),
-  new_key_label:           z.string().optional(),
 });
 
 type FormValues = z.infer<typeof createSchema>;
@@ -124,34 +123,34 @@ interface Props { onSuccess: () => void; }
 export function PopupCreateClient({ onSuccess }: Props) {
   const user = Cookies.get("user");
   const parsedUser: AuthUser = user ? JSON.parse(user) : null;
+  const navigate = useNavigate();
 
   const [open, setOpen]               = useState(false);
   const [isPending, setIsPending]     = useState(false);
   const [productMode, setProductMode] = useState<"existing" | "new">("existing");
-  const [pixMode, setPixMode]         = useState<"existing" | "new">("existing");
   const [templateMode, setTemplateMode] = useState<"existing" | "default">("existing");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [productValue, setProductValue] = useState<Product | undefined>();
   const [templateValue, setTemplateValue] = useState<MessageTemplate | undefined>();
-  const [keyValue, setKeyValue]         = useState<PixKey | undefined>();
   const [billingEnabled, setBillingEnabled] = useState(true);
   const [preferredChannels, setPreferredChannels] = useState<string[]>(["whatsapp"]);
   const [recurrence, setRecurrence] = useState<"none" | "monthly">("none");
   const [consentimento, setConsentimento] = useState(false);
+
+  const sub = useSubscriptionGuard();
+  const isAtLimit = sub?.usage && sub.usage.limit > 0 && sub.usage.current >= sub.usage.limit;
 
   // ── smart defaults ────────────────────────────────────────────────────────
 
   const { data: defaultsData } = useQuery({
     queryKey: ["smartDefaults", parsedUser?.id],
     queryFn: async () => {
-      const [productsRes, keysRes, templatesRes] = await Promise.all([
+      const [productsRes, templatesRes] = await Promise.all([
         fetchUseQuery<undefined, ProductsResponse>({ route: "/products?limit=1", method: "GET" }),
-        fetchUseQuery<undefined, PixKeysResponse>({ route: "/pix_keys?limit=1", method: "GET" }),
         fetchUseQuery<undefined, MessageTemplatesResponse>({ route: "/message_templates?limit=1", method: "GET" }),
       ]);
       return {
         product:  productsRes.products?.[0]   ?? null,
-        key:      keysRes.keys?.[0]            ?? null,
         template: templatesRes.templates?.[0]  ?? null,
       };
     },
@@ -180,10 +179,6 @@ export function PopupCreateClient({ onSuccess }: Props) {
       form.setValue("product_id", defaultsData.product.id);
       setProductValue(defaultsData.product);
     }
-    if (defaultsData.key && !form.getValues("key_id")) {
-      form.setValue("key_id", defaultsData.key.id);
-      setKeyValue(defaultsData.key);
-    }
     if (defaultsData.template && !form.getValues("template_id")) {
       form.setValue("template_id", defaultsData.template.id);
       setTemplateValue(defaultsData.template);
@@ -191,18 +186,17 @@ export function PopupCreateClient({ onSuccess }: Props) {
   }, [defaultsData]);
 
   function resetAllState() {
-    setProductMode("existing"); setPixMode("existing");
+    setProductMode("existing");
     setTemplateMode("existing"); setAdvancedOpen(false);
-    setProductValue(undefined); setTemplateValue(undefined); setKeyValue(undefined);
+    setProductValue(undefined); setTemplateValue(undefined);
     setBillingEnabled(true); setPreferredChannels(["whatsapp"]); setRecurrence("none"); setConsentimento(false);
     reset({
       name: "", phone: "", email: undefined, due_at: new Date(),
       additional_info: undefined, user_id: parsedUser?.id,
-      product_id: "", template_id: "", key_id: "",
+      product_id: "", template_id: "",
       observacoes1: "", observacoes2: "",
       new_product_name: "", new_product_value: undefined,
-      new_product_description: undefined, new_key_type: "",
-      new_key_value: "", new_key_label: undefined,
+      new_product_description: undefined,
     });
   }
 
@@ -215,8 +209,6 @@ export function PopupCreateClient({ onSuccess }: Props) {
     { value: "TELEFONE",  label: "Telefone"  },
     { value: "ALEATORIA", label: "Aleatória" },
   ];
-
-  // ── submit ────────────────────────────────────────────────────────────────
 
   async function onSubmit(values: FormValues) {
     setIsPending(true);
@@ -237,26 +229,15 @@ export function PopupCreateClient({ onSuccess }: Props) {
         productId = newProduct.id;
       }
 
-      let keyId = values.key_id;
-
-      if (advancedOpen && pixMode === "new") {
-        if (!values.new_key_type)  { toast.error("Selecione o tipo da chave PIX."); setIsPending(false); return; }
-        if (!values.new_key_value) { toast.error("Informe o valor da chave PIX.");  setIsPending(false); return; }
-        const newKey = await fetchUseQuery<Record<string, unknown>, PixKey>({
-          route: "/pix_keys", method: "POST",
-          data: { key_type: values.new_key_type, key_value: values.new_key_value, label: values.new_key_label || undefined, user_id: parsedUser?.id },
-        });
-        keyId = newKey.id;
-      }
-
       const payload: Record<string, unknown> = {
         name: values.name, phone: values.phone, email: values.email || undefined,
         due_at: values.due_at, user_id: parsedUser?.id,
-        product_id: productId, key_id: keyId || undefined,
+        product_id: productId,
         observacoes1: values.observacoes1 || undefined,
         observacoes2: values.observacoes2 || undefined,
         preferred_channels: preferredChannels,
       };
+
       if (templateMode === "existing" && values.template_id) payload.template_id = values.template_id;
 
       const newClient = await fetchUseQuery<typeof payload, CreateClientData>({ route: "/clients", method: "POST", data: payload });
@@ -414,9 +395,10 @@ export function PopupCreateClient({ onSuccess }: Props) {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <button className="cobr-trigger-btn">
-            <Plus size={14} /> Nova Cobrança
-          </button>
+          <Button id="btn-new-client">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Cobrança
+          </Button>
         </DialogTrigger>
 
         <DialogContent style={{
@@ -431,12 +413,67 @@ export function PopupCreateClient({ onSuccess }: Props) {
         }}>
           <DialogHeader style={{ marginBottom: "0.25rem" }}>
             <DialogTitle style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.1rem", fontWeight: 800, color: "#F0F5F2", letterSpacing: -0.3 }}>
-              Nova Cobrança
+              {isAtLimit ? "Limite do Plano Atingido" : "Nova Cobrança"}
             </DialogTitle>
           </DialogHeader>
 
-          <Form {...form}>
-            <form style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }} onSubmit={form.handleSubmit(onSubmit)}>
+          {isAtLimit ? (
+            <div style={{
+              padding: "1rem 0",
+              textAlign: "center",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem"
+            }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: 20,
+                background: "rgba(0,200,150,0.1)", color: "#00C896",
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>
+                <Zap size={32} />
+              </div>
+              
+              <div>
+                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>
+                  Hora de dar o próximo passo! 🚀
+                </h3>
+                <p style={{ color: "#7A9087", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                  Você atingiu o limite de <b>{sub?.usage?.limit} clientes</b> do plano {sub?.planName}. 
+                  Assine o plano <b>Starter</b> para liberar até 150 clientes e automação via E-mail!
+                </p>
+              </div>
+
+              <div style={{
+                width: "100%", background: "rgba(255,255,255,0.03)", 
+                borderRadius: 16, padding: "1.25rem", border: "1px solid rgba(255,255,255,0.05)",
+                textAlign: "left"
+              }}>
+                <div style={{ marginBottom: "0.75rem", fontSize: "0.75rem", fontWeight: 700, color: "#3A5A50", textTransform: "uppercase" }}>Vantagens do Upgrade:</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#F0F5F2" }}>
+                    <CheckCircle2 size={14} color="#00C896" /> +145 Clientes
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#F0F5F2" }}>
+                    <CheckCircle2 size={14} color="#00C896" /> Alertas por E-mail
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#F0F5F2" }}>
+                    <CheckCircle2 size={14} color="#00C896" /> Suporte Prioritário
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#F0F5F2" }}>
+                    <CheckCircle2 size={14} color="#00C896" /> Dashboard Full
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                type="button"
+                className="cobr-submit"
+                onClick={() => navigate("/plans")}
+              >
+                Ver Planos Disponíveis
+              </button>
+            </div>
+          ) : (
+            <Form {...form}>
+            <form style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }} onSubmit={form.handleSubmit(onSubmit as any)}>
 
               {/* ── SECTION 1: CLIENTE ── */}
               <div>
@@ -648,101 +685,7 @@ export function PopupCreateClient({ onSuccess }: Props) {
                 </button>
 
                 {advancedOpen && (
-                  <div style={{ marginTop: "0.85rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-
-                    {/* Chave PIX */}
-                    <div>
-                      <SectionHeader icon={CreditCard} title="Chave PIX" />
-                      <ModeToggle
-                        options={[{ value: "existing", label: "Selecionar existente" }, { value: "new", label: "Criar nova" }]}
-                        value={pixMode}
-                        onChange={(v) => setPixMode(v as "existing" | "new")}
-                      />
-
-                      {pixMode === "existing" && (
-                        <FormField
-                          control={form.control}
-                          name="key_id"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className={LABEL_CLS}>Chave PIX</FormLabel>
-                              <FormControl>
-                                <ComboboxDebounce
-                                  route="/pix_keys?name"
-                                  queryKey="keysQueryKey"
-                                  dataField="keys"
-                                  placeholderInputSearch="Busque por nome"
-                                  placeholderUnselected="Selecione o PIX"
-                                  selecionado={field.value as unknown as PixKey[] ?? keyValue as PixKey}
-                                  setSelecionado={(value) => { const b = value as unknown as PixKey; field.onChange(b.id); setKeyValue(b); }}
-                                  selectedField={(s: PixKey) => s?.key_value}
-                                  renderOption={(d) => <span key={(d as unknown as PixKey).id}>{typeof d === "string" ? d : (d as PixKey)?.key_value}</span>}
-                                  visualizacao={keyValue?.key_value}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-
-                      {pixMode === "new" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-                          <FormField
-                            control={form.control}
-                            name="new_key_type"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className={LABEL_CLS}>Tipo de chave <span style={{ color: "#E84545" }}>*</span></FormLabel>
-                                <FormControl>
-                                  <Select value={field.value} onValueChange={(v) => field.onChange(v === "" ? undefined : v)}>
-                                    <SelectTrigger style={{ background: "#111614", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#F0F5F2", height: 40, fontSize: 13 }}>
-                                      <SelectValue placeholder="Selecione o tipo" />
-                                    </SelectTrigger>
-                                    <SelectContent style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10 }}>
-                                      {keyTypes.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                                    </SelectContent>
-                                  </Select>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="new_key_value"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className={LABEL_CLS}>Valor da chave <span style={{ color: "#E84545" }}>*</span></FormLabel>
-                                <FormControl><Input className={INPUT_CLS} placeholder="Digite a chave PIX" {...field} /></FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="new_key_label"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className={LABEL_CLS}>Identificação (opcional)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    className={INPUT_CLS}
-                                    placeholder="Ex.: Chave principal"
-                                    {...field}
-                                    value={field.value || ""}
-                                    onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Template */}
+                  <>
                     <div>
                       <SectionHeader icon={MessageSquare} title="Template de mensagem" />
                       <ModeToggle
@@ -823,7 +766,7 @@ export function PopupCreateClient({ onSuccess }: Props) {
                         )}
                       />
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
 
@@ -985,6 +928,7 @@ export function PopupCreateClient({ onSuccess }: Props) {
 
             </form>
           </Form>
+          )}
         </DialogContent>
       </Dialog>
     </>

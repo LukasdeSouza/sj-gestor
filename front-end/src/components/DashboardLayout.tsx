@@ -14,19 +14,26 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { AuthUser } from "@/api/models/auth";
 import { ReactNode, useState } from "react";
+import { useLocation } from "react-router-dom";
 import CobrLogo from "../assets/logo.png";
 import Cookies from "js-cookie";
+import { OnboardingSpotlight } from "./Onboarding/OnboardingSpotlight";
+import { TourProvider } from "./Onboarding/TourProvider";
+import { OnboardingWelcome } from "./Onboarding/OnboardingWelcome";
+import NotificationCenter from "./Notifications/NotificationCenter";
+import { TrialExpiredGate } from "./TrialExpiredGate";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  useSubscriptionGuard({ protect: true });
+  const sub = useSubscriptionGuard({ protect: true });
   const navigate = useNavigate();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const { pathname } = useLocation();
   const user = Cookies.get("user");
   const parsedUser: AuthUser = user ? JSON.parse(user) : null;
 
@@ -48,6 +55,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     ...(parsedUser?.group?.name === "USUARIO_CLIENTE"
       ? [{ icon: Wallet, label: "Pagamentos", path: "/payments" }]
       : []),
+    { icon: Wallet,          label: "Meios de Pagamento", path: "/meios-pagamento" },
     { icon: HelpCircle, label: "Ajuda", path: "/help" },
   ];
 
@@ -56,7 +64,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     : "??";
 
   return (
-    <>
+    <TourProvider>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
@@ -291,18 +299,105 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           background: var(--bg);
         }
         .dl-main-inner {
-          padding: 2rem 2rem;
+          padding: 1rem 2rem 2rem;
+        }
+
+        /* ── top header (desktop) ── */
+        .dl-top-header {
+          height: 64px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding: 0 2rem;
+          border-bottom: 1px solid var(--border);
+          background: var(--bg);
+          position: sticky;
+          top: 0;
+          z-index: 30;
         }
 
         /* ══════════════════════════════
            RESPONSIVE
         ══════════════════════════════ */
+        /* ── usage widget ── */
+        .dl-usage {
+          margin: 0.75rem 0.75rem 0.25rem;
+          padding: 0.75rem;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+        }
+        .dl-usage-head {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 0.5rem;
+        }
+        .dl-usage-label { font-size: 0.62rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+        .dl-usage-val { font-size: 0.65rem; font-weight: 600; color: var(--text2); }
+        .dl-usage-bar-bg { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+        .dl-usage-bar-fill { height: 100%; transition: width 0.5s ease; border-radius: 2px; }
+
+        /* ── trial banner ── */
+        .dl-banner {
+          background: linear-gradient(90deg, var(--cobr-glow), rgba(0,200,150,0.02));
+          border-bottom: 1px solid var(--cobr-line);
+          padding: 0.6rem 1.25rem;
+          display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+          font-size: 0.8rem; font-weight: 500;
+          color: var(--text2);
+          animation: slideDown 0.4s ease;
+        }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        .dl-banner b { color: var(--cobr); }
+        .dl-banner-btn {
+          font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+          background: var(--cobr); color: var(--bg);
+          padding: 0.25rem 0.6rem; border-radius: 4px;
+          cursor: pointer; transition: opacity 0.2s;
+        }
+        .dl-banner-btn:hover { opacity: 0.9; }
+
+        /* ── captive portal (soft lock) ── */
+        .dl-captive {
+          position: fixed; inset: 0;
+          z-index: 100;
+          display: flex; align-items: center; justify-content: center;
+          padding: 2rem;
+          background: rgba(9,12,10,0.4);
+          backdrop-filter: blur(8px);
+          animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .dl-captive-card {
+          width: 100%; max-width: 440px;
+          background: var(--bg2);
+          border: 1px solid var(--cobr-line);
+          border-radius: 24px;
+          padding: 2.5rem;
+          text-align: center;
+          box-shadow: 0 32px 64px rgba(0,0,0,0.6);
+        }
+        .dl-captive-icon {
+          width: 56px; height: 56px; margin: 0 auto 1.5rem;
+          background: var(--cobr-glow); color: var(--cobr);
+          border-radius: 16px; display: flex; align-items: center; justify-content: center;
+        }
+        .dl-captive-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem; }
+        .dl-captive-text { font-size: 0.95rem; color: var(--text2); line-height: 1.6; margin-bottom: 2rem; }
+        .dl-captive-btn {
+          width: 100%; padding: 1rem; border-radius: 12px;
+          background: var(--cobr); color: var(--bg);
+          font-weight: 700; font-size: 1rem;
+          cursor: pointer; transition: transform 0.2s;
+        }
+        .dl-captive-btn:hover { transform: scale(1.02); }
+
         @media (max-width: 1024px) {
           .dl-sidebar { transform: translateX(-100%); }
           .dl-sidebar.open { transform: translateX(0); }
           .dl-mobile-header { display: flex; }
           .dl-main { margin-left: 0; padding-top: 56px; }
           .dl-main-inner { padding: 1.25rem; }
+          .dl-top-header { display: none; }
         }
       `}</style>
 
@@ -315,13 +410,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <img src={CobrLogo} alt="Cobr" />
               cobr.
             </div>
-            <button
-              className="dl-hamburger"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label="Menu"
-            >
-              {sidebarOpen ? <X /> : <Menu />}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <NotificationCenter userId={parsedUser?.id || ""} />
+                <button
+                    className="dl-hamburger"
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    aria-label="Menu"
+                >
+                    {sidebarOpen ? <X /> : <Menu />}
+                </button>
+            </div>
           </div>
 
           {/* ══ SIDEBAR ══ */}
@@ -349,15 +447,37 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               ))}
             </nav>
 
+            {/* Usage Sidebar Widget */}
+            {sub?.usage && (
+              <div className="dl-usage">
+                <div className="dl-usage-head">
+                  <span className="dl-usage-label">Uso do Plano</span>
+                  <span className="dl-usage-val">
+                    {sub.usage.current} / {sub.usage.limit || '∞'}
+                  </span>
+                </div>
+                <div className="dl-usage-bar-bg">
+                  <div 
+                    className="dl-usage-bar-fill" 
+                    style={{ 
+                      width: `${Math.min(100, (sub.usage.current / (sub.usage.limit || 1)) * 100)}%`,
+                      backgroundColor: (sub.usage.current / (sub.usage.limit || 1)) > 0.9 ? '#E84545' : 'var(--cobr)'
+                    }} 
+                  />
+                </div>
+              </div>
+            )}
+
             {/* User footer */}
             <div className="dl-sidebar-footer">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="dl-user-trigger">
-                    <div className="dl-user-avatar">{initials}</div>
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5Dh-hCRQx8d2VZzrmMMLcpUhAh53KlS1s5A&s" className="dl-user-avatar"/>
+                    {/* <div className="dl-user-avatar">{initials}</div> */}
                     <div className="dl-user-info">
                       <div className="dl-user-name">{parsedUser?.name || "Usuário"}</div>
-                      <div className="dl-user-status">● Conta ativa</div>
+                      <div className="dl-user-status">Conta ativa</div>
                     </div>
                     <ChevronDown className="dl-user-chevron" />
                   </button>
@@ -398,14 +518,34 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
           {/* ══ MAIN ══ */}
           <main className="dl-main">
+            <div className="dl-top-header">
+                <NotificationCenter userId={parsedUser?.id || ""} />
+            </div>
+            <OnboardingWelcome />
+            <OnboardingSpotlight />
+            {/* Trial Banner — só aparece após selecionar plano FREE e enquanto trial não expirou */}
+            {sub?.trial?.isActive && !sub?.trial?.isExpired && sub?.status === "ACTIVE" && pathname !== "/plans" && (
+              <div className="dl-banner">
+                <span>
+                  Aproveite seus <b>{sub.trial.daysRemaining} dias</b> de teste gratuito.
+                </span>
+                <div className="dl-banner-btn" onClick={() => navigate('/plans')}>
+                  Ver Planos
+                </div>
+              </div>
+            )}
+
             <div className="dl-main-inner">
               {children}
             </div>
           </main>
 
+          {/* ══ CAPTIVE PORTAL (Trial Expired) ══ */}
+          {sub?.trial?.isExpired && pathname !== "/plans" && <TrialExpiredGate />}
+
         </div>
       </div>
-    </>
+    </TourProvider>
   );
 };
 

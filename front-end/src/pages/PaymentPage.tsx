@@ -56,12 +56,20 @@ function buildPixPayload(key: string, name: string, city: string, amount?: numbe
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
+interface PixKeyData {
+  key_value: string;
+  key_type:  string;
+  label?:    string;
+}
+
 interface InvoiceData {
   client: {
     id: string; name: string; due_at: string | null;
     amount: number | null; product: string | null;
-    empresa: string; pix_key: string | null; pix_type: string | null;
-    payment_link_card: string | null; payment_link_boleto: string | null;
+    empresa: string;
+    pix_keys: PixKeyData[];
+    payment_link_card: string | null;
+    payment_link_boleto: string | null;
   };
   isPaid: boolean;
   lastPayment: { paid_at: string; method: string | null } | null;
@@ -159,10 +167,7 @@ export default function PaymentPage() {
 
   const { client, isPaid, lastPayment } = data;
 
-  const pixPayload = client.pix_key
-    ? buildPixPayload(client.pix_key, client.empresa, "Brasil", client.amount)
-    : null;
-
+  const pixKeys = client.pix_keys || [];
   const isOverdue = client.due_at && new Date(client.due_at) < new Date();
   const daysUntil = client.due_at
     ? Math.ceil((new Date(client.due_at).getTime() - Date.now()) / 86400000)
@@ -276,7 +281,7 @@ export default function PaymentPage() {
       </div>
 
       {/* PIX section */}
-      {pixPayload && (
+      {pixKeys.length > 0 && (
         <div style={{
           background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
           borderRadius: 16, padding: "20px 22px", marginBottom: 20,
@@ -289,40 +294,40 @@ export default function PaymentPage() {
             </span>
           </div>
 
-          {/* QR Code */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-            <div style={{
-              background: "#fff", borderRadius: 12, padding: 14,
-              display: "inline-block", boxShadow: "0 0 0 1px rgba(255,255,255,0.06)",
-            }}>
-              <QRCode value={pixPayload} size={180} level="M" />
-            </div>
-          </div>
-
-          {/* Pix type label */}
-          {client.pix_type && (
-            <div style={{ textAlign: "center", marginBottom: 12, fontSize: 12, color: "#5A7A70" }}>
-              Chave {client.pix_type}:{" "}
-              <span style={{ color: "#C0D5CC", fontWeight: 600 }}>{client.pix_key}</span>
-            </div>
-          )}
-
-          {/* Copy button */}
-          <button
-            className="pay-copy-btn"
-            onClick={() => copyPix(pixPayload)}
-            style={{
-              width: "100%", padding: "11px 0", borderRadius: 10,
-              background: "none", border: "1px solid rgba(255,255,255,0.1)",
-              color: copied ? "#00C896" : "#7A9087",
-              fontSize: 13, fontWeight: 600, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
-            {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
-            {copied ? "Copiado!" : "Copiar código PIX"}
-          </button>
+          {pixKeys.map((key, idx) => {
+            const payload = buildPixPayload(key.key_value, client.empresa, "Brasil", client.amount);
+            return (
+              <div key={idx} style={{ marginBottom: idx === pixKeys.length - 1 ? 0 : 24 }}>
+                {pixKeys.length > 1 && (
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#3A5A50", marginBottom: 10, textTransform: "uppercase" }}>
+                    Chave: {key.label || key.key_type}
+                  </div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ background: "#fff", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+                    <QRCode value={payload} size={pixKeys.length > 1 ? 140 : 180} level="M" />
+                  </div>
+                  <div style={{ textAlign: "center", marginBottom: 12, fontSize: 12, color: "#5A7A70" }}>
+                    Chave {key.key_type}: <span style={{ color: "#C0D5CC", fontWeight: 600 }}>{key.key_value}</span>
+                  </div>
+                  <button
+                    className="pay-copy-btn"
+                    onClick={() => copyPix(payload)}
+                    style={{
+                      width: "100%", padding: "10px 0", borderRadius: 10,
+                      background: "none", border: "1px solid rgba(255,255,255,0.1)",
+                      color: copied ? "#00C896" : "#7A9087",
+                      fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                    }}
+                  >
+                    {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                    {copied ? "Copiado!" : "Copiar código PIX"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -333,10 +338,10 @@ export default function PaymentPage() {
           borderRadius: 16, padding: "20px 22px", marginBottom: 20,
           animation: "fadeIn 0.38s ease",
         }}>
-          <div style={{ fontSize: 11, color: "#3A5A50", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
-            Outros métodos
+          <div style={{ fontSize: 13, fontWeight: 800, color: "#F0F5F2", fontFamily: "'Syne', sans-serif", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+             <CreditCard size={15} color="#818CF8" /> Outros Meios de Pagamento
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {client.payment_link_card && (
               <a
                 href={client.payment_link_card}
@@ -344,20 +349,26 @@ export default function PaymentPage() {
                 rel="noopener noreferrer"
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "13px 16px", borderRadius: 10, textDecoration: "none",
-                  background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)",
-                  transition: "background 0.15s",
+                  padding: "18px 20px", borderRadius: 14, textDecoration: "none",
+                  background: "linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(129,140,248,0.08) 100%)",
+                  border: "1px solid rgba(99,102,241,0.3)",
+                  boxShadow: "0 4px 12px rgba(99,102,241,0.1)",
+                  transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = "rgba(99,102,241,0.14)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "rgba(99,102,241,0.08)")}
+                className="pay-link-card"
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <CreditCard size={16} color="#818CF8" />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#818CF8", fontFamily: "'Syne', sans-serif" }}>
-                    Pagar com Cartão
-                  </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ background: "rgba(99,102,241,0.2)", padding: 8, borderRadius: 10 }}>
+                    <CreditCard size={20} color="#818CF8" />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: 15, fontWeight: 800, color: "#818CF8", fontFamily: "'Syne', sans-serif" }}>
+                      Cartão de Crédito
+                    </span>
+                    <span style={{ fontSize: 11, color: "rgba(129,140,248,0.7)" }}>Pague em até 12x</span>
+                  </div>
                 </div>
-                <ArrowRight size={14} color="#818CF8" />
+                <ArrowRight size={18} color="#818CF8" />
               </a>
             )}
             {client.payment_link_boleto && (
@@ -367,20 +378,26 @@ export default function PaymentPage() {
                 rel="noopener noreferrer"
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "13px 16px", borderRadius: 10, textDecoration: "none",
-                  background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)",
-                  transition: "background 0.15s",
+                  padding: "18px 20px", borderRadius: 14, textDecoration: "none",
+                  background: "linear-gradient(135deg, rgba(245,166,35,0.12) 0%, rgba(245,158,11,0.08) 100%)",
+                  border: "1px solid rgba(245,166,35,0.3)",
+                  boxShadow: "0 4px 12px rgba(245,166,35,0.1)",
+                  transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,166,35,0.14)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "rgba(245,166,35,0.08)")}
+                className="pay-link-boleto"
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Banknote size={16} color="#F5A623" />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#F5A623", fontFamily: "'Syne', sans-serif" }}>
-                    Pagar com Boleto
-                  </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ background: "rgba(245,166,35,0.2)", padding: 8, borderRadius: 10 }}>
+                    <Banknote size={20} color="#F5A623" />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: 15, fontWeight: 800, color: "#F5A623", fontFamily: "'Syne', sans-serif" }}>
+                      Boleto Bancário
+                    </span>
+                    <span style={{ fontSize: 11, color: "rgba(245,166,35,0.7)" }}>Compensação em até 48h</span>
+                  </div>
                 </div>
-                <ArrowRight size={14} color="#F5A623" />
+                <ArrowRight size={18} color="#F5A623" />
               </a>
             )}
           </div>

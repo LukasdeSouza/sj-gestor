@@ -1,18 +1,16 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { WhatsAppContent } from "./WhatsApp";
-import { PixKeysContent } from "./PixKeys";
+import { MeiosPagamentoContent } from "./PixKeys";
 import { ProductsContent } from "./Products";
 import { TemplatesContent } from "./Templates";
-import { PaymentLinksSettings } from "@/components/PaymentLinksSettings";
 import { useSearchParams } from "react-router-dom";
-import { MessageCircle, CreditCard, FileText, Package, Link } from "lucide-react";
+import { MessageCircle, Wallet, FileText, Package } from "lucide-react";
 
 const TABS = [
   { value: "whatsapp",  label: "WhatsApp",   icon: MessageCircle },
-  { value: "pix",       label: "Chaves PIX", icon: CreditCard },
+  { value: "pix",       label: "Meios de Pagamento", icon: Wallet },
   { value: "templates", label: "Templates",  icon: FileText },
   { value: "produtos",  label: "Produtos",   icon: Package },
-  { value: "pagamento", label: "Pagamento",  icon: Link },
 ];
 
 export default function Settings() {
@@ -135,10 +133,9 @@ export default function Settings() {
           {/* ── TAB CONTENT ── */}
           <div className="st-panel">
             {activeTab === "whatsapp"  && <WhatsAppContent />}
-            {activeTab === "pix"       && <PixKeysContent />}
+            {activeTab === "pix"       && <MeiosPagamentoContent />}
             {activeTab === "templates" && <TemplatesContent />}
             {activeTab === "produtos"  && <ProductsContent />}
-            {activeTab === "pagamento" && <PaymentLinksSettings />}
           </div>
 
         </div>
