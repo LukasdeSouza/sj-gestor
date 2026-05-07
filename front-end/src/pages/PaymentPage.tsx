@@ -1,17 +1,15 @@
 import { useParams } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchUseQuery } from "@/api/services/fetchUseQuery";
 import QRCode from "react-qr-code";
 import { useState } from "react";
-import { toast } from "react-toastify";
 import {
   CheckCircle2, Clock, AlertCircle, Copy, Smartphone,
-  CreditCard, Banknote, ArrowRight, X,
+  CreditCard, ArrowRight, X, ExternalLink,
 } from "lucide-react";
+import Logo from "@/assets/logo.png";
 
 // ─── PIX PAYLOAD (BR Code) ───────────────────────────────────────────────────
-// Generates a Pix Copia e Cola string from a key + amount
-// Spec: BCB manual de padrões para iniciação do Pix - BR Code
 
 function crc16(str: string): string {
   let crc = 0xffff;
@@ -36,19 +34,19 @@ function buildPixPayload(key: string, name: string, city: string, amount?: numbe
     ? tlv("54", amount.toFixed(2))
     : "";
 
-  const safeName = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").slice(0, 25).toUpperCase();
-  const safeCity = city.normalize("NFD").replace(/[\u0300-\u036f]/g, "").slice(0, 15).toUpperCase();
+  const safeName = name.normalize("NFD").replace(/[̀-ͯ]/g, "").slice(0, 25).toUpperCase();
+  const safeCity = city.normalize("NFD").replace(/[̀-ͯ]/g, "").slice(0, 15).toUpperCase();
 
   const payload =
-    tlv("00", "01") +           // payload format indicator
-    mai +                        // merchant account info
-    tlv("52", "0000") +         // merchant category code
-    tlv("53", "986") +          // currency (BRL)
-    amt +                        // transaction amount (optional)
-    tlv("58", "BR") +           // country code
-    tlv("59", safeName) +       // merchant name
-    tlv("60", safeCity) +       // merchant city
-    tlv("62", tlv("05", "***")); // additional data
+    tlv("00", "01") +
+    mai +
+    tlv("52", "0000") +
+    tlv("53", "986") +
+    amt +
+    tlv("58", "BR") +
+    tlv("59", safeName) +
+    tlv("60", safeCity) +
+    tlv("62", tlv("05", "***"));
 
   const withoutCrc = payload + "6304";
   return withoutCrc + crc16(withoutCrc);
@@ -58,29 +56,34 @@ function buildPixPayload(key: string, name: string, city: string, amount?: numbe
 
 interface PixKeyData {
   key_value: string;
-  key_type:  string;
-  label?:    string;
+  key_type: string;
+  label?: string;
 }
 
 interface InvoiceData {
   client: {
     id: string; name: string; due_at: string | null;
-    amount: number | null; product: string | null;
+    amount: number | null;
+    base_amount: number | null;
+    late_fees: { fee: number; interest: number; daysLate: number } | null;
+    product: string | null;
     empresa: string;
     pix_keys: PixKeyData[];
     payment_link_card: string | null;
-    payment_link_boleto: string | null;
+    dynamic_charge?: {
+      qr_code?: string;
+      qr_code_base64?: string;
+      ticket_url?: string;
+      transaction_id: string;
+    } | null;
   };
   isPaid: boolean;
   lastPayment: { paid_at: string; method: string | null } | null;
 }
 
-const METHOD_ICONS: Record<string, { label: string; color: string }> = {
-  pix:      { label: "PIX",          color: "#00C896" },
-  card:     { label: "Cartão",       color: "#6366f1" },
-  cash:     { label: "Dinheiro",     color: "#F5A623" },
-  transfer: { label: "Transferência",color: "#14b8a6" },
-  other:    { label: "Outro",        color: "#8b5cf6" },
+const METHOD_LABELS: Record<string, string> = {
+  pix: "PIX", card: "Cartão", cash: "Dinheiro",
+  transfer: "Transferência", other: "Outro",
 };
 
 function formatCurrency(v?: number | null) {
@@ -97,39 +100,16 @@ function formatDate(d?: string | null) {
 
 export default function PaymentPage() {
   const { token } = useParams<{ token: string }>();
-  const [copied, setCopied]     = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<string>("pix");
-  const [declarou, setDeclarou] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { data, isLoading, error } = useQuery<InvoiceData>({
     queryKey: ["paymentPage", token],
-    queryFn: async () => {
-      const res = await fetchUseQuery<undefined, InvoiceData>({
-        route: `/pay/${token}`,
-        method: "GET",
-      });
-      return res;
-    },
+    queryFn: async () => fetchUseQuery<undefined, InvoiceData>({
+      route: `/pay/${token}`,
+      method: "GET",
+    }),
     retry: 0,
     enabled: !!token,
-  });
-
-  const { mutate: confirm, isPending: isConfirming } = useMutation({
-    mutationFn: async () => {
-      await fetchUseQuery<any, any>({
-        route: `/pay/${token}/confirm`,
-        method: "POST",
-        data: { payment_method: selectedMethod },
-      });
-    },
-    onSuccess: () => {
-      setConfirmed(true);
-      toast.success("Pagamento confirmado!");
-    },
-    onError: () => {
-      toast.error("Erro ao confirmar. Tente novamente.");
-    },
   });
 
   function copyPix(pixCode: string) {
@@ -144,8 +124,8 @@ export default function PaymentPage() {
   if (isLoading) return (
     <PageShell>
       <div style={{ textAlign: "center", padding: "4rem 0" }}>
-        <div style={{ width: 36, height: 36, border: "3px solid rgba(0,200,150,0.2)", borderTopColor: "#00C896", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-        <p style={{ color: "#5A7A70", fontSize: 14 }}>Carregando cobrança...</p>
+        <div style={{ width: 36, height: 36, border: "3px solid rgba(0,200,150,0.1)", borderTopColor: "#00C896", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+        <p style={{ color: "#64748B", fontSize: 14 }}>Carregando cobrança...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     </PageShell>
@@ -173,9 +153,9 @@ export default function PaymentPage() {
     ? Math.ceil((new Date(client.due_at).getTime() - Date.now()) / 86400000)
     : null;
 
-  // ── already paid ─────────────────────────────────────────────────────────
+  // ── already paid (confirmed by the service provider) ─────────────────────
 
-  if (isPaid || confirmed) return (
+  if (isPaid) return (
     <PageShell>
       <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
         <div style={{
@@ -186,18 +166,19 @@ export default function PaymentPage() {
         }}>
           <CheckCircle2 size={34} color="#00C896" />
         </div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#F0F5F2", margin: "0 0 8px", fontFamily: "'Syne', sans-serif" }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#0F172A", margin: "0 0 8px", fontFamily: "'Montserrat', sans-serif" }}>
           Pagamento confirmado!
         </h2>
-        <p style={{ fontSize: 14, color: "#5A7A70", margin: "0 0 20px" }}>
-          Obrigado, {client.name}. O responsável foi notificado.
+        <p style={{ fontSize: 14, color: "#64748B", margin: "0 0 20px" }}>
+          Obrigado, {client.name}. Seu pagamento foi registrado.
         </p>
+
         {lastPayment && (
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(0,200,150,0.06)", border: "1px solid rgba(0,200,150,0.15)", borderRadius: 10, padding: "10px 16px" }}>
             <CheckCircle2 size={14} color="#00C896" />
-            <span style={{ fontSize: 13, color: "#C0D5CC" }}>
+            <span style={{ fontSize: 13, color: "#0F172A" }}>
               Pago em {formatDate(lastPayment.paid_at)}
-              {lastPayment.method && ` · ${METHOD_ICONS[lastPayment.method]?.label ?? lastPayment.method}`}
+              {lastPayment.method && ` · ${METHOD_LABELS[lastPayment.method] ?? lastPayment.method}`}
             </span>
           </div>
         )}
@@ -213,36 +194,64 @@ export default function PaymentPage() {
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .pay-method-btn { transition: all 0.15s; }
-        .pay-method-btn:hover { opacity: 0.85; }
-        .pay-confirm-btn { transition: background 0.2s; }
-        .pay-confirm-btn:hover:not(:disabled) { background: #00A87E !important; }
-        .pay-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .pay-copy-btn:hover { border-color: rgba(0,200,150,0.4) !important; color: #00C896 !important; }
+        .platform-cta:hover { background: rgba(0,200,150,0.08) !important; border-color: rgba(0,200,150,0.3) !important; }
+        .pay-link-card:hover { opacity: 0.85; }
       `}</style>
 
-      {/* Header — empresa name */}
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <div style={{ fontSize: 11, color: "#3A5A50", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700, marginBottom: 4 }}>
-          Cobrança enviada por
+      {/* Platform CTA */}
+      <a
+        href={typeof window !== "undefined" ? window.location.origin : "/"}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "rgba(0,200,150,0.05)", border: "1px solid rgba(0,200,150,0.15)",
+          borderRadius: 12, padding: "10px 16px", marginBottom: 32,
+          textDecoration: "none", transition: "all 0.2s ease", animation: "fadeIn 0.4s ease",
+        }}
+        className="platform-cta"
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img src={Logo} alt="Cobr" style={{ height: 18, filter: "brightness(1.2)" }} />
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#00C896", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Crie suas próprias cobranças
+            </span>
+            <span style={{ fontSize: 10, color: "#64748B" }}>Automatize seus recebimentos com a Cobr</span>
+          </div>
         </div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "#F0F5F2", fontFamily: "'Syne', sans-serif" }}>
+        <ExternalLink size={14} color="#00C896" />
+      </a>
+
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: 32, animation: "fadeIn 0.5s ease" }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 16, background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center",
+          justifyContent: "center", margin: "0 auto 16px", overflow: "hidden",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.2)"
+        }}>
+          <img src={Logo} alt="Cobr Logo" style={{ width: 32, height: 32, objectFit: "contain" }} />
+        </div>
+        <div style={{ fontSize: 12, color: "#64748B", textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 6 }}>
+          Cobrança
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: "#0F172A", fontFamily: "'Montserrat', sans-serif" }}>
           {client.empresa}
         </div>
       </div>
 
       {/* Invoice card */}
       <div style={{
-        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 16, padding: "20px 22px", marginBottom: 20,
-        animation: "fadeIn 0.3s ease",
+        background: "#FFFFFF", border: "1px solid #E2E8F0",
+        borderRadius: 16, padding: "20px 22px", marginBottom: 20, animation: "fadeIn 0.3s ease",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 11, color: "#3A5A50", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginBottom: 2 }}>Cliente</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#F0F5F2", fontFamily: "'Syne', sans-serif" }}>{client.name}</div>
+            <div style={{ fontSize: 11, color: "#64748B", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginBottom: 2 }}>Cliente</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#0F172A", fontFamily: "'Montserrat', sans-serif" }}>{client.name}</div>
           </div>
-          {/* Status badge */}
           {isOverdue ? (
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(232,69,69,0.1)", color: "#E84545", border: "1px solid rgba(232,69,69,0.2)", borderRadius: 100, padding: "4px 10px", fontSize: 12, fontWeight: 700 }}>
               <AlertCircle size={11} /> Em atraso
@@ -261,35 +270,105 @@ export default function PaymentPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {client.amount != null && (
             <div style={{ background: "rgba(0,200,150,0.05)", border: "1px solid rgba(0,200,150,0.12)", borderRadius: 10, padding: "10px 12px" }}>
-              <div style={{ fontSize: 10, color: "#3A5A50", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, marginBottom: 3 }}>Valor</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#00C896", fontFamily: "'Syne', sans-serif" }}>{formatCurrency(client.amount)}</div>
+              <div style={{ fontSize: 10, color: "#64748B", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, marginBottom: 3 }}>
+                {client.late_fees ? "Total com encargos" : "Valor"}
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: client.late_fees ? "#E84545" : "#00C896", fontFamily: "'Montserrat', sans-serif" }}>
+                {formatCurrency(client.amount)}
+              </div>
+              {client.late_fees && client.base_amount != null && (
+                <div style={{ fontSize: 10, color: "#64748B", marginTop: 3 }}>
+                  Original: {formatCurrency(client.base_amount)}
+                </div>
+              )}
             </div>
           )}
           {client.due_at && (
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 12px" }}>
-              <div style={{ fontSize: 10, color: "#3A5A50", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, marginBottom: 3 }}>Vencimento</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: isOverdue ? "#E84545" : "#C0D5CC", fontFamily: "'Syne', sans-serif" }}>{formatDate(client.due_at)}</div>
+            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: "#64748B", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700, marginBottom: 3 }}>Vencimento</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: isOverdue ? "#E84545" : "#0F172A", fontFamily: "'Montserrat', sans-serif" }}>{formatDate(client.due_at)}</div>
             </div>
           )}
         </div>
 
+        {/* Late fees breakdown */}
+        {client.late_fees && (
+          <div style={{ marginTop: 10, background: "rgba(232,69,69,0.05)", border: "1px solid rgba(232,69,69,0.15)", borderRadius: 10, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, color: "#E84545", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+              Encargos por atraso ({client.late_fees.daysLate} dia{client.late_fees.daysLate > 1 ? "s" : ""})
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {client.late_fees.fee > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#0F172A" }}>
+                  <span style={{ color: "#64748B" }}>Multa</span>
+                  <span>+ {formatCurrency(client.late_fees.fee)}</span>
+                </div>
+              )}
+              {client.late_fees.interest > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#0F172A" }}>
+                  <span style={{ color: "#64748B" }}>Juros</span>
+                  <span>+ {formatCurrency(client.late_fees.interest)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {client.product && (
-          <div style={{ marginTop: 10, fontSize: 12, color: "#5A7A70" }}>
-            Referente a: <strong style={{ color: "#C0D5CC" }}>{client.product}</strong>
+          <div style={{ marginTop: 10, fontSize: 12, color: "#64748B" }}>
+            Referente a: <strong style={{ color: "#0F172A" }}>{client.product}</strong>
           </div>
         )}
       </div>
 
       {/* PIX section */}
-      {pixKeys.length > 0 && (
+      {client.dynamic_charge?.qr_code ? (
         <div style={{
-          background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 16, padding: "20px 22px", marginBottom: 20,
-          animation: "fadeIn 0.35s ease",
+          background: "#FFFFFF", border: "1px solid #E2E8F0",
+          borderRadius: 16, padding: "20px 22px", marginBottom: 20, animation: "fadeIn 0.35s ease",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
             <Smartphone size={15} color="#00C896" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#C0D5CC", fontFamily: "'Syne', sans-serif" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", fontFamily: "'Montserrat', sans-serif" }}>
+              Pagar com PIX Automático
+            </span>
+          </div>
+          
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 14, marginBottom: 14, border: "1px solid #E2E8F0" }}>
+              {client.dynamic_charge.qr_code_base64 ? (
+                <img src={`data:image/png;base64,${client.dynamic_charge.qr_code_base64}`} alt="QR Code PIX" style={{ width: 180, height: 180 }} />
+              ) : (
+                <QRCode value={client.dynamic_charge.qr_code} size={180} level="M" />
+              )}
+            </div>
+            <div style={{ textAlign: "center", marginBottom: 12, fontSize: 12, color: "#64748B" }}>
+              Use a opção "PIX Copia e Cola" no seu banco.
+            </div>
+            <button
+              className="pay-copy-btn"
+              onClick={() => copyPix(client.dynamic_charge!.qr_code!)}
+              style={{
+                width: "100%", padding: "10px 0", borderRadius: 10,
+                background: "#F8FAFC", border: "1px solid #E2E8F0",
+                color: copied ? "#00C896" : "#64748B",
+                fontSize: 13, fontWeight: 600, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+              }}
+            >
+              {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+              {copied ? "Copiado!" : "Copiar código PIX"}
+            </button>
+          </div>
+        </div>
+      ) : pixKeys.length > 0 && (
+        <div style={{
+          background: "#FFFFFF", border: "1px solid #E2E8F0",
+          borderRadius: 16, padding: "20px 22px", marginBottom: 20, animation: "fadeIn 0.35s ease",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+            <Smartphone size={15} color="#00C896" />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", fontFamily: "'Montserrat', sans-serif" }}>
               Pagar com PIX
             </span>
           </div>
@@ -299,24 +378,24 @@ export default function PaymentPage() {
             return (
               <div key={idx} style={{ marginBottom: idx === pixKeys.length - 1 ? 0 : 24 }}>
                 {pixKeys.length > 1 && (
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#3A5A50", marginBottom: 10, textTransform: "uppercase" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 10, textTransform: "uppercase" }}>
                     Chave: {key.label || key.key_type}
                   </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ background: "#fff", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+                  <div style={{ background: "#fff", borderRadius: 12, padding: 14, marginBottom: 14, border: "1px solid #E2E8F0" }}>
                     <QRCode value={payload} size={pixKeys.length > 1 ? 140 : 180} level="M" />
                   </div>
-                  <div style={{ textAlign: "center", marginBottom: 12, fontSize: 12, color: "#5A7A70" }}>
-                    Chave {key.key_type}: <span style={{ color: "#C0D5CC", fontWeight: 600 }}>{key.key_value}</span>
+                  <div style={{ textAlign: "center", marginBottom: 12, fontSize: 12, color: "#64748B" }}>
+                    Chave {key.key_type}: <span style={{ color: "#0F172A", fontWeight: 600 }}>{key.key_value}</span>
                   </div>
                   <button
                     className="pay-copy-btn"
                     onClick={() => copyPix(payload)}
                     style={{
                       width: "100%", padding: "10px 0", borderRadius: 10,
-                      background: "none", border: "1px solid rgba(255,255,255,0.1)",
-                      color: copied ? "#00C896" : "#7A9087",
+                      background: "#F8FAFC", border: "1px solid #E2E8F0",
+                      color: copied ? "#00C896" : "#64748B",
                       fontSize: 13, fontWeight: 600, cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
                     }}
@@ -331,164 +410,62 @@ export default function PaymentPage() {
         </div>
       )}
 
-      {/* Card / Boleto links */}
-      {(client.payment_link_card || client.payment_link_boleto) && (
+      {/* External payment link */}
+      {(client.dynamic_charge?.ticket_url || client.payment_link_card) && (
         <div style={{
-          background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 16, padding: "20px 22px", marginBottom: 20,
-          animation: "fadeIn 0.38s ease",
+          background: "#FFFFFF", border: "1px solid #E2E8F0",
+          borderRadius: 16, padding: "20px 22px", marginBottom: 20, animation: "fadeIn 0.38s ease",
         }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: "#F0F5F2", fontFamily: "'Syne', sans-serif", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-             <CreditCard size={15} color="#818CF8" /> Outros Meios de Pagamento
+          <div style={{ fontSize: 13, fontWeight: 800, color: "#0F172A", fontFamily: "'Montserrat', sans-serif", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+            <CreditCard size={15} color="#818CF8" /> Outros Meios de Pagamento
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {client.payment_link_card && (
-              <a
-                href={client.payment_link_card}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "18px 20px", borderRadius: 14, textDecoration: "none",
-                  background: "linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(129,140,248,0.08) 100%)",
-                  border: "1px solid rgba(99,102,241,0.3)",
-                  boxShadow: "0 4px 12px rgba(99,102,241,0.1)",
-                  transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
-                }}
-                className="pay-link-card"
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ background: "rgba(99,102,241,0.2)", padding: 8, borderRadius: 10 }}>
-                    <CreditCard size={20} color="#818CF8" />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: "#818CF8", fontFamily: "'Syne', sans-serif" }}>
-                      Cartão de Crédito
-                    </span>
-                    <span style={{ fontSize: 11, color: "rgba(129,140,248,0.7)" }}>Pague em até 12x</span>
-                  </div>
-                </div>
-                <ArrowRight size={18} color="#818CF8" />
-              </a>
-            )}
-            {client.payment_link_boleto && (
-              <a
-                href={client.payment_link_boleto}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "18px 20px", borderRadius: 14, textDecoration: "none",
-                  background: "linear-gradient(135deg, rgba(245,166,35,0.12) 0%, rgba(245,158,11,0.08) 100%)",
-                  border: "1px solid rgba(245,166,35,0.3)",
-                  boxShadow: "0 4px 12px rgba(245,166,35,0.1)",
-                  transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
-                }}
-                className="pay-link-boleto"
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ background: "rgba(245,166,35,0.2)", padding: 8, borderRadius: 10 }}>
-                    <Banknote size={20} color="#F5A623" />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: "#F5A623", fontFamily: "'Syne', sans-serif" }}>
-                      Boleto Bancário
-                    </span>
-                    <span style={{ fontSize: 11, color: "rgba(245,166,35,0.7)" }}>Compensação em até 48h</span>
-                  </div>
-                </div>
-                <ArrowRight size={18} color="#F5A623" />
-              </a>
-            )}
-          </div>
+          <a
+            href={client.dynamic_charge?.ticket_url || client.payment_link_card!}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pay-link-card"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "18px 20px", borderRadius: 14, textDecoration: "none",
+              background: "linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(129,140,248,0.08) 100%)",
+              border: "1px solid rgba(99,102,241,0.3)",
+              transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ background: "rgba(99,102,241,0.2)", padding: 8, borderRadius: 10 }}>
+                <CreditCard size={20} color="#818CF8" />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: "#818CF8", fontFamily: "'Montserrat', sans-serif" }}>
+                  {client.dynamic_charge?.ticket_url ? "Ir para Pagamento Completo" : "Link de Pagamento"}
+                </span>
+                <span style={{ fontSize: 11, color: "rgba(129,140,248,0.7)" }}>Clique para acessar opções de Cartão/Boleto</span>
+              </div>
+            </div>
+            <ArrowRight size={18} color="#818CF8" />
+          </a>
         </div>
       )}
 
-      {/* "Já paguei" section */}
-      <div style={{
-        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 16, padding: "20px 22px",
-        animation: "fadeIn 0.4s ease",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-          <CheckCircle2 size={15} color="#00C896" />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#C0D5CC", fontFamily: "'Syne', sans-serif" }}>
-            Já realizei o pagamento
-          </span>
-        </div>
-
-        <p style={{ fontSize: 12, color: "#5A7A70", margin: "0 0 14px", lineHeight: 1.6 }}>
-          Se já pagou por outro meio (dinheiro, cartão, transferência), selecione abaixo e confirme.
-        </p>
-
-        {/* Method selector */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-          {([
-            { value: "pix",      label: "PIX",           icon: <Smartphone size={11} /> },
-            { value: "card",     label: "Cartão",        icon: <CreditCard size={11} /> },
-            { value: "cash",     label: "Dinheiro",      icon: <Banknote size={11} /> },
-            { value: "transfer", label: "Transferência", icon: <ArrowRight size={11} /> },
-          ]).map(({ value, label, icon }) => {
-            const active = selectedMethod === value;
-            const col = METHOD_ICONS[value]?.color ?? "#00C896";
-            return (
-              <button
-                key={value}
-                className="pay-method-btn"
-                onClick={() => setSelectedMethod(value)}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 5,
-                  padding: "6px 12px", borderRadius: 100, fontSize: 12, fontWeight: 600,
-                  cursor: "pointer",
-                  border: `1px solid ${active ? col + "55" : "rgba(255,255,255,0.08)"}`,
-                  background: active ? col + "18" : "transparent",
-                  color: active ? col : "#3A5A50",
-                }}
-              >
-                {icon} {label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Checkbox de responsabilidade */}
-        <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 18, cursor: "pointer", background: "rgba(0,0,0,0.2)", padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-          <input 
-            type="checkbox" 
-            checked={declarou} 
-            onChange={(e) => setDeclarou(e.target.checked)} 
-            style={{ marginTop: 2, accentColor: "#00C896", width: 16, height: 16, cursor: "pointer", flexShrink: 0 }} 
-          />
-          <span style={{ fontSize: 12, color: "#9AA5A0", lineHeight: 1.4, fontFamily: "'DM Sans', sans-serif" }}>
-            Confirmo que já realizei o pagamento/transferência e entendo que o envio de <strong>confirmações falsas</strong> resultará no bloqueio e cancelamento dos serviços vinculados a esta conta.
-          </span>
-        </label>
-
-        <button
-          className="pay-confirm-btn"
-          onClick={() => confirm()}
-          disabled={isConfirming || !declarou}
-          style={{
-            width: "100%", padding: "12px 0", borderRadius: 10, border: "none",
-            background: "#00C896", color: "#051A12",
-            fontSize: 14, fontWeight: 700, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-            fontFamily: "'Syne', sans-serif",
-          }}
-        >
-          {isConfirming
-            ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(0,0,0,0.2)", borderTopColor: "#051A12", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} /> Confirmando...</>
-            : <><CheckCircle2 size={15} /> Confirmar pagamento</>
-          }
-        </button>
-      </div>
-
       {/* Footer */}
-      <div style={{ textAlign: "center", marginTop: 28, paddingBottom: 12 }}>
-        <span style={{ fontSize: 11, color: "#2A4A40" }}>
-          Cobranças gerenciadas por{" "}
-          <span style={{ color: "#3A6A5A", fontWeight: 600 }}>Cobr</span>
-        </span>
+      <div style={{
+        textAlign: "center", marginTop: 40, padding: "20px 0",
+        borderTop: "1px solid #F1F5F9",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 10
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, opacity: 0.6 }}>
+          <span style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Processamento seguro por</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 14, height: 14, borderRadius: 3, background: "#00C896", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#050807" }} />
+            </div>
+            <span style={{ color: "#00C896", fontWeight: 800, fontSize: 13, letterSpacing: -0.5, fontFamily: "'Montserrat', sans-serif" }}>Cobr</span>
+          </div>
+        </div>
+        <p style={{ fontSize: 10, color: "#94A3B8", maxWidth: 280, lineHeight: 1.5 }}>
+          Esta é uma página oficial de cobrança. Verifique sempre os dados antes de pagar.
+        </p>
       </div>
     </PageShell>
   );
@@ -499,10 +476,10 @@ export default function PaymentPage() {
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      minHeight: "100vh", background: "#080E0C",
+      minHeight: "100vh", background: "#F8FAFC",
       display: "flex", alignItems: "flex-start", justifyContent: "center",
       padding: "32px 16px 40px",
-      fontFamily: "'DM Sans', sans-serif",
+      fontFamily: " 'Montserrat', sans-serif",
     }}>
       <div style={{ width: "100%", maxWidth: 440 }}>
         {children}
@@ -515,8 +492,8 @@ function ErrorCard({ icon, title, desc }: { icon: React.ReactNode; title: string
   return (
     <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
       <div style={{ marginBottom: 16 }}>{icon}</div>
-      <h2 style={{ fontSize: 20, fontWeight: 800, color: "#F0F5F2", margin: "0 0 8px", fontFamily: "'Syne', sans-serif" }}>{title}</h2>
-      <p style={{ fontSize: 13, color: "#5A7A70", margin: 0, lineHeight: 1.6 }}>{desc}</p>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0F172A", margin: "0 0 8px", fontFamily: "'Montserrat', sans-serif" }}>{title}</h2>
+      <p style={{ fontSize: 13, color: "#64748B", margin: 0, lineHeight: 1.6 }}>{desc}</p>
     </div>
   );
 }

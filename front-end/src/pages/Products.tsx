@@ -77,17 +77,17 @@ export function ProductsContent() {
   // ── styles ────────────────────────────────────────────────────────────────
   const pgBtn = (disabled: boolean): React.CSSProperties => ({
     background: "transparent",
-    border: `1px solid ${disabled ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.08)"}`,
-    color: disabled ? "#2A4A40" : "#5A7A70",
+    border: `1px solid ${disabled ? "#F1F5F9" : "#E2E8F0"}`,
+    color: disabled ? "#94A3B8" : "#64748B",
     borderRadius: 8, padding: "5px 12px", fontSize: 12,
     cursor: disabled ? "not-allowed" : "pointer",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: " 'Montserrat', sans-serif",
     transition: "border-color 0.15s, color 0.15s",
   });
 
   const btnDel: React.CSSProperties = {
-    background: "none", border: "1px solid rgba(255,255,255,0.07)",
-    color: "#3A5A50", borderRadius: 7, padding: "5px 7px",
+    background: "none", border: "1px solid #E2E8F0",
+    color: "#64748B", borderRadius: 7, padding: "5px 7px",
     cursor: "pointer", display: "inline-flex", alignItems: "center",
     transition: "border-color 0.15s, color 0.15s",
   };
@@ -95,29 +95,29 @@ export function ProductsContent() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
         .prod-search:focus  { border-color: rgba(0,200,150,0.35) !important; box-shadow: 0 0 0 3px rgba(0,200,150,0.06) !important; outline: none !important; }
-        .prod-search::placeholder { color: #2A4A40; }
+        .prod-search::placeholder { color: #94A3B8; }
         .prod-row           { transition: background 0.15s; cursor: default; }
         .prod-row:hover     { background: rgba(0,200,150,0.03) !important; }
         .prod-del:hover     { border-color: rgba(232,69,69,0.3) !important; color: #E84545 !important; }
         .prod-pg-btn:hover:not(:disabled) { border-color: rgba(0,200,150,0.3) !important; color: #00C896 !important; }
       `}</style>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: "1.75rem", fontFamily: "'DM Sans', sans-serif", color: "#F0F5F2" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: "1.75rem", fontFamily: " 'Montserrat', sans-serif", color: "#0F172A" }}>
 
         {/* ── HEADER ── */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <div>
-            <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.3rem", fontWeight: 800, color: "#F0F5F2", letterSpacing: -0.5, margin: "0 0 3px" }}>
+            <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "1.3rem", fontWeight: 800, color: "#0F172A", letterSpacing: -0.5, margin: "0 0 3px" }}>
               Produtos
             </h1>
-            <p style={{ fontSize: "0.8rem", color: "#5A7A70", margin: 0 }}>
+            <p style={{ fontSize: "0.8rem", color: "#64748B", margin: 0 }}>
               {currentProductsCount > 0
                 ? `${currentProductsCount} produto${currentProductsCount !== 1 ? "s" : ""} cadastrado${currentProductsCount !== 1 ? "s" : ""}`
                 : "Nenhum produto cadastrado ainda"}
               {effectivePlanId === "FREE" && (
-                <span style={{ color: "#3A5A50", marginLeft: 6 }}>
+                <span style={{ color: "#64748B", marginLeft: 6 }}>
                   · {currentProductsCount}/{productLimit} do plano gratuito
                 </span>
               )}
@@ -128,9 +128,9 @@ export function ProductsContent() {
           {!canAddProduct && (
             <div style={{
               display: "flex", alignItems: "center", gap: 8,
-              background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)",
+              background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
               borderRadius: 9, padding: "0.5rem 0.9rem",
-              fontSize: 12, color: "#D4A020", maxWidth: 280,
+              fontSize: 12, color: "#B45309", maxWidth: 280,
             }}>
               <AlertCircle size={13} style={{ flexShrink: 0 }} />
               <span>{limitMessage}</span>
@@ -145,9 +145,9 @@ export function ProductsContent() {
                 <span tabIndex={0}>
                   <button
                     style={{
-                      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                      color: "#3A5A50", borderRadius: 8, padding: "0.6rem 1.1rem",
-                      fontFamily: "'Syne', sans-serif", fontSize: "0.82rem", fontWeight: 700,
+                      background: "#F8FAFC", border: "1px solid #E2E8F0",
+                      color: "#64748B", borderRadius: 8, padding: "0.6rem 1.1rem",
+                      fontFamily: "'Montserrat', sans-serif", fontSize: "0.82rem", fontWeight: 700,
                       cursor: "not-allowed", opacity: 0.5,
                     }}
                     onClick={() => toast.error(limitMessage)}
@@ -165,16 +165,16 @@ export function ProductsContent() {
 
         {/* ── SEARCH ── */}
         <div style={{ position: "relative" }}>
-          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#3A5A50", pointerEvents: "none" }}>
+          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#64748B", pointerEvents: "none" }}>
             <Search size={14} />
           </span>
           <input
             className="prod-search"
             style={{
-              width: "100%", background: "#111614",
-              border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8,
+              width: "100%", background: "#FFFFFF",
+              border: "1px solid #E2E8F0", borderRadius: 8,
               padding: "0.55rem 0.85rem 0.55rem 2.2rem",
-              color: "#F0F5F2", fontSize: 13, fontFamily: "'DM Sans', sans-serif",
+              color: "#0F172A", fontSize: 13, fontFamily: " 'Montserrat', sans-serif",
             }}
             placeholder="Buscar produtos..."
             value={searchTerm}
@@ -183,20 +183,20 @@ export function ProductsContent() {
         </div>
 
         {/* ── TABLE ── */}
-        <div style={{ background: "#111614", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 12, overflow: "hidden" }}>
           <Table>
             <TableHeader>
-              <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <TableHead style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: "#3A5A50", paddingLeft: 20 }}>
+              <TableRow style={{ borderBottom: "1px solid #F1F5F9" }}>
+                <TableHead style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: "#64748B", paddingLeft: 20 }}>
                   Nome
                 </TableHead>
-                <TableHead style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: "#3A5A50" }}>
+                <TableHead style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: "#64748B" }}>
                   Descrição
                 </TableHead>
-                <TableHead style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: "#3A5A50" }}>
+                <TableHead style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: "#64748B" }}>
                   Valor
                 </TableHead>
-                <TableHead style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: "#3A5A50", textAlign: "right", paddingRight: 20 }}>
+                <TableHead style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: "#64748B", textAlign: "right", paddingRight: 20 }}>
                   Ações
                 </TableHead>
               </TableRow>
@@ -206,7 +206,7 @@ export function ProductsContent() {
               {products.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4}>
-                    <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#3A5A50" }}>
+                    <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#64748B" }}>
                       <Package size={28} style={{ margin: "0 auto 10px", display: "block", opacity: 0.35 }} />
                       <p style={{ fontSize: 13, margin: 0 }}>
                         {searchTerm ? "Nenhum produto encontrado para esta busca." : "Nenhum produto cadastrado ainda."}
@@ -218,7 +218,7 @@ export function ProductsContent() {
                 <TableRow
                   key={product.id}
                   className="prod-row"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+                  style={{ borderBottom: "1px solid #F1F5F9" }}
                 >
                   {/* Nome */}
                   <TableCell style={{ paddingLeft: 20 }}>
@@ -230,7 +230,7 @@ export function ProductsContent() {
                       }}>
                         <Package size={13} color="#00C896" />
                       </div>
-                      <span style={{ fontWeight: 600, fontSize: 13, color: "#C0D5CC" }}>
+                      <span style={{ fontWeight: 600, fontSize: 13, color: "#0F172A" }}>
                         {product.name}
                       </span>
                     </div>
@@ -238,7 +238,7 @@ export function ProductsContent() {
 
                   {/* Descrição */}
                   <TableCell>
-                    <span style={{ fontSize: 13, color: "#5A7A70" }}>
+                    <span style={{ fontSize: 13, color: "#64748B" }}>
                       {product.description || "—"}
                     </span>
                   </TableCell>
@@ -246,7 +246,7 @@ export function ProductsContent() {
                   {/* Valor */}
                   <TableCell>
                     <span style={{
-                      fontFamily: "'Syne', sans-serif", fontSize: 13,
+                      fontFamily: "'Montserrat', sans-serif", fontSize: 13,
                       fontWeight: 700, color: "#00C896",
                     }}>
                       {product.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -274,8 +274,8 @@ export function ProductsContent() {
           </Table>
 
           {/* Pagination */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-            <span style={{ fontSize: 12, color: "#3A5A50" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderTop: "1px solid #F1F5F9" }}>
+            <span style={{ fontSize: 12, color: "#64748B" }}>
               Página {currentPage} de {totalPages}
               {currentProductsCount > 0 && ` · ${currentProductsCount} total`}
             </span>

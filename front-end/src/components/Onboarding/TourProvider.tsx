@@ -89,9 +89,16 @@ export const TourProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isLastStep = currentTourStep === TOUR_STEPS.length - 1;
   const isFirstStep = currentTourStep === 0;
 
-  // Auto-navigation when step changes
+  // Auto-navigation when step changes — skip if on protected/guard-managed routes
   useEffect(() => {
-    if (isTourActive && location.pathname !== currentStepData.path) {
+    if (!isTourActive) return;
+    
+    const protectedPaths = ["/plans", "/verify-email-notice", "/verify-email", "/assinatura"];
+    const isOnProtectedRoute = protectedPaths.some(p => location.pathname.startsWith(p));
+    
+    if (isOnProtectedRoute) return;
+    
+    if (location.pathname !== currentStepData.path) {
       navigate(currentStepData.path);
     }
   }, [currentTourStep, isTourActive, navigate, currentStepData.path, location.pathname]);

@@ -52,8 +52,8 @@ function applyPreview(content: string) {
 // ─── SHARED STYLES ───────────────────────────────────────────────────────────
 
 const DIALOG_STYLE: React.CSSProperties = {
-  background: "#0D1210",
-  border: "1px solid rgba(255,255,255,0.07)",
+  background: "#FFFFFF",
+  border: "1px solid #E2E8F0",
   borderRadius: 16,
   maxWidth: 520,
   maxHeight: "90vh",
@@ -61,18 +61,18 @@ const DIALOG_STYLE: React.CSSProperties = {
 };
 
 const INPUT_STYLE: React.CSSProperties = {
-  background: "#111614",
-  border: "1px solid rgba(255,255,255,0.08)",
+  background: "#FFFFFF",
+  border: "1px solid #E2E8F0",
   borderRadius: 8,
-  color: "#F0F5F2",
+  color: "#0F172A",
   fontSize: 13,
-  fontFamily: "'DM Sans', sans-serif",
+  fontFamily: " 'Montserrat', sans-serif",
 };
 
 const LABEL_STYLE: React.CSSProperties = {
   fontSize: "0.78rem",
   fontWeight: 500,
-  color: "#7A9087",
+  color: "#64748B",
   marginBottom: "0.35rem",
   display: "block",
 };
@@ -152,7 +152,7 @@ function TemplateForm({ defaultValues, isPending, onSubmit, submitLabel }: Templ
                       color: "#00C896", borderRadius: 100,
                       padding: "3px 10px", fontSize: 11, fontWeight: 600,
                       cursor: "pointer", transition: "background 0.15s",
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: " 'Montserrat', sans-serif",
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,200,150,0.15)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0,200,150,0.07)")}
@@ -181,10 +181,10 @@ function TemplateForm({ defaultValues, isPending, onSubmit, submitLabel }: Templ
             background: "rgba(0,200,150,0.04)", border: "1px solid rgba(0,200,150,0.12)",
             borderRadius: 9, padding: "0.85rem 1rem",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 700, color: "#3A7A60", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 700, color: "#00A87E", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
               <Eye size={11} /> Preview
             </div>
-            <p style={{ fontSize: 13, color: "#C0D5CC", whiteSpace: "pre-wrap", lineHeight: 1.6, margin: 0 }}>
+            <p style={{ fontSize: 13, color: "#64748B", whiteSpace: "pre-wrap", lineHeight: 1.6, margin: 0 }}>
               {applyPreview(content)}
             </p>
           </div>
@@ -194,9 +194,9 @@ function TemplateForm({ defaultValues, isPending, onSubmit, submitLabel }: Templ
           isLoading={isPending}
           type="submit"
           style={{
-            background: "#00C896", color: "#051A12", border: "none",
+            background: "#00C896", color: "#FFFFFF", border: "none",
             borderRadius: 8, padding: "0.7rem 1.25rem",
-            fontFamily: "'Syne', sans-serif", fontSize: "0.85rem", fontWeight: 700,
+            fontFamily: "'Montserrat', sans-serif", fontSize: "0.85rem", fontWeight: 700,
             cursor: "pointer", width: "100%",
           }}
         >
@@ -224,9 +224,9 @@ function CreateTemplateDialog({ userId, onSuccess }: { userId: string; onSuccess
       <DialogTrigger asChild>
         <button id="btn-new-template" style={{
           display: "inline-flex", alignItems: "center", gap: 6,
-          background: "#00C896", color: "#051A12", border: "none",
+          background: "#00C896", color: "#FFFFFF", border: "none",
           borderRadius: 8, padding: "0.6rem 1.1rem",
-          fontFamily: "'Syne', sans-serif", fontSize: "0.82rem", fontWeight: 700,
+          fontFamily: "'Montserrat', sans-serif", fontSize: "0.82rem", fontWeight: 700,
           cursor: "pointer",
         }}>
           <Plus size={14} /> Novo template
@@ -234,7 +234,7 @@ function CreateTemplateDialog({ userId, onSuccess }: { userId: string; onSuccess
       </DialogTrigger>
       <DialogContent style={DIALOG_STYLE}>
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: "'Syne', sans-serif", color: "#F0F5F2", fontWeight: 800 }}>
+          <DialogTitle style={{ fontFamily: "'Montserrat', sans-serif", color: "#0F172A", fontWeight: 800 }}>
             Criar template
           </DialogTitle>
         </DialogHeader>
@@ -269,20 +269,20 @@ function EditTemplateDialog({ template, onSuccess }: { template: MessageTemplate
         <button
           title="Editar"
           style={{
-            background: "none", border: "1px solid rgba(255,255,255,0.07)",
-            color: "#5A7A70", borderRadius: 7, padding: "5px 7px",
+            background: "#F8FAFC", border: "1px solid #E2E8F0",
+            color: "#64748B", borderRadius: 7, padding: "5px 7px",
             cursor: "pointer", display: "inline-flex", alignItems: "center",
-            transition: "border-color 0.15s, color 0.15s",
+            transition: "all 0.15s",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,200,150,0.3)"; e.currentTarget.style.color = "#00C896"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#5A7A70"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
         >
           <Pencil size={13} />
         </button>
       </DialogTrigger>
       <DialogContent style={DIALOG_STYLE}>
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: "'Syne', sans-serif", color: "#F0F5F2", fontWeight: 800 }}>
+          <DialogTitle style={{ fontFamily: "'Montserrat', sans-serif", color: "#0F172A", fontWeight: 800 }}>
             Editar template
           </DialogTitle>
         </DialogHeader>
@@ -314,13 +314,13 @@ function TemplateCard({
 
   return (
     <div style={{
-      background: "#111614", border: "1px solid rgba(255,255,255,0.06)",
+      background: "#FFFFFF", border: "1px solid #E2E8F0",
       borderRadius: 12, padding: "1.1rem 1.15rem",
       display: "flex", flexDirection: "column", gap: 10,
       transition: "border-color 0.2s",
     }}
-      onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,200,150,0.18)")}
-      onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.06)")}
+      onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,200,150,0.35)")}
+      onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "#E2E8F0")}
     >
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
@@ -334,8 +334,8 @@ function TemplateCard({
             <FileText size={13} color={isDefault ? "#6496DC" : "#00C896"} />
           </div>
           <span style={{
-            fontFamily: "'Syne', sans-serif", fontSize: "0.82rem",
-            fontWeight: 700, color: "#C0D5CC",
+            fontFamily: "'Montserrat', sans-serif", fontSize: "0.82rem",
+            fontWeight: 700, color: "#0F172A",
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>
             {template.name}
@@ -346,9 +346,10 @@ function TemplateCard({
           {isDefault ? (
             <span style={{
               display: "inline-flex", alignItems: "center", gap: 4,
-              fontSize: 10, fontWeight: 700, color: "#3A5A50",
-              border: "1px solid rgba(255,255,255,0.07)", borderRadius: 100,
-              padding: "2px 8px", fontFamily: "'Syne', sans-serif",
+              fontSize: 10, fontWeight: 700, color: "#64748B",
+              border: "1px solid #E2E8F0", borderRadius: 100,
+              padding: "2px 8px", fontFamily: "'Montserrat', sans-serif",
+              background: "#F8FAFC",
             }}>
               <Lock size={9} /> Padrão
             </span>
@@ -360,14 +361,14 @@ function TemplateCard({
                 disabled={isDeleting}
                 onClick={() => onDelete!(template.id)}
                 style={{
-                  background: "none", border: "1px solid rgba(255,255,255,0.07)",
-                  color: "#3A5A50", borderRadius: 7, padding: "5px 7px",
+                  background: "#F8FAFC", border: "1px solid #E2E8F0",
+                  color: "#64748B", borderRadius: 7, padding: "5px 7px",
                   cursor: isDeleting ? "not-allowed" : "pointer",
                   display: "inline-flex", alignItems: "center",
-                  transition: "border-color 0.15s, color 0.15s",
+                  transition: "all 0.15s",
                 }}
                 onMouseEnter={(e) => { if (!isDeleting) { e.currentTarget.style.borderColor = "rgba(232,69,69,0.3)"; e.currentTarget.style.color = "#E84545"; } }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#3A5A50"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
               >
                 <Trash2 size={13} />
               </button>
@@ -378,7 +379,7 @@ function TemplateCard({
 
       {/* Content preview */}
       <p style={{
-        fontSize: 12, color: "#5A7A70", lineHeight: 1.65, margin: 0,
+        fontSize: 12, color: "#64748B", lineHeight: 1.65, margin: 0,
         display: "-webkit-box", WebkitLineClamp: 3,
         WebkitBoxOrient: "vertical", overflow: "hidden",
         whiteSpace: "pre-wrap",
@@ -440,7 +441,7 @@ export function TemplatesContent() {
   const userTemplates = allTemplates.filter(t => !t.is_default);
 
   const sectionLabel: React.CSSProperties = {
-    fontSize: "0.68rem", fontWeight: 700, color: "#3A5A50",
+    fontSize: "0.68rem", fontWeight: 700, color: "#64748B",
     textTransform: "uppercase", letterSpacing: 1.5,
     margin: "0 0 0.75rem",
   };
@@ -456,18 +457,18 @@ export function TemplatesContent() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
         .tmpl-input:focus { border-color: rgba(0,200,150,0.4) !important; box-shadow: 0 0 0 3px rgba(0,200,150,0.06) !important; outline: none !important; }
-        .tmpl-input::placeholder { color: #2A4A40 !important; }
+        .tmpl-input::placeholder { color: #94A3B8 !important; }
       `}</style>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", padding: "1.75rem", fontFamily: "'DM Sans', sans-serif", color: "#F0F5F2" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", padding: "1.75rem", fontFamily: " 'Montserrat', sans-serif", color: "#0F172A" }}>
 
         {/* ── HEADER ── */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <div>
-            <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.3rem", fontWeight: 800, color: "#F0F5F2", letterSpacing: -0.5, margin: "0 0 3px" }}>
+            <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "1.3rem", fontWeight: 800, color: "#0F172A", letterSpacing: -0.5, margin: "0 0 3px" }}>
               Templates de mensagem
             </h1>
-            <p style={{ fontSize: "0.8rem", color: "#5A7A70", margin: 0 }}>
+            <p style={{ fontSize: "0.8rem", color: "#64748B", margin: 0 }}>
               Modelos reutilizáveis com variáveis dinâmicas para suas cobranças.
             </p>
           </div>
@@ -494,16 +495,16 @@ export function TemplatesContent() {
 
           {userTemplates.length === 0 ? (
             <div style={{
-              background: "#111614",
-              border: "1px dashed rgba(255,255,255,0.08)",
+              background: "#FFFFFF",
+              border: "1px dashed #E2E8F0",
               borderRadius: 12, padding: "2.5rem 1.5rem",
-              textAlign: "center", color: "#3A5A50",
+              textAlign: "center", color: "#64748B",
             }}>
               <FileText size={28} style={{ margin: "0 auto 10px", display: "block", opacity: 0.35 }} />
-              <p style={{ fontSize: 13, margin: "0 0 4px", color: "#4A6A60" }}>
+              <p style={{ fontSize: 13, margin: "0 0 4px", color: "#0F172A" }}>
                 Você ainda não criou nenhum template.
               </p>
-              <p style={{ fontSize: 12, margin: 0, color: "#3A5050" }}>
+              <p style={{ fontSize: 12, margin: 0, color: "#64748B" }}>
                 Clique em "Novo template" para começar.
               </p>
             </div>

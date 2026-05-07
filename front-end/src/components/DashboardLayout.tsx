@@ -1,8 +1,9 @@
 import {
   LayoutDashboard, Users, LogOut, Menu, X,
   Wallet, Settings, User as UserIcon, HelpCircle,
-  Receipt, ChevronDown,
+  Receipt, ChevronDown, FileText, Scan
 } from "lucide-react";
+import { ImportWizard } from "./Client/ImportWizard";
 import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -45,17 +46,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Analytics",    path: "/dashboard" },
-    { icon: Users,           label: "Cobranças",     path: "/clients" },
+    { icon: LayoutDashboard, label: "Analytics", path: "/dashboard" },
+    { icon: Users, label: "Cobranças", path: "/clients" },
     // { icon: Receipt,         label: "Clientes",      path: "/billing-overview" },
-    { icon: Settings,        label: "Configurações", path: "/settings" },
+    { icon: Settings, label: "Whatsapp / Config.", path: "/settings" },
     ...(parsedUser?.group?.name === "ADMIN"
       ? [{ icon: UserIcon, label: "Usuários & Comprovantes", path: "/users" }]
       : []),
     ...(parsedUser?.group?.name === "USUARIO_CLIENTE"
       ? [{ icon: Wallet, label: "Pagamentos", path: "/payments" }]
       : []),
-    { icon: Wallet,          label: "Meios de Pagamento", path: "/meios-pagamento" },
+    { icon: Wallet, label: "Meios de Pagamento", path: "/meios-pagamento" },
     { icon: HelpCircle, label: "Ajuda", path: "/help" },
   ];
 
@@ -66,23 +67,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <TourProvider>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
 
         /* ── tokens ── */
         .dl {
           --cobr: #00C896;
           --cobr-dim: #00A87E;
-          --cobr-glow: rgba(0,200,150,0.1);
-          --cobr-line: rgba(0,200,150,0.2);
-          --bg:    #090C0A;
-          --bg2:   #0D1210;
-          --bg3:   #111614;
-          --border: rgba(255,255,255,0.06);
-          --text:  #F0F5F2;
-          --text2: #C0D5CC;
-          --muted: #5A7A70;
-          --muted2: #3A5A50;
-          font-family: 'DM Sans', sans-serif;
+          --cobr-glow: rgba(0,200,150,0.05);
+          --cobr-line: rgba(0,200,150,0.1);
+          --bg:    #F8FAFC;
+          --bg2:   #FFFFFF;
+          --bg3:   #F1F5F9;
+          --border: #E2E8F0;
+          --text:  #0F172A;
+          --text2: #334155;
+          --muted: #64748B;
+          --muted2: #94A3B8;
+          font-family:  "Montserrat", sans-serif
+;
           color: var(--text);
         }
 
@@ -124,7 +126,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           flex-shrink: 0;
         }
         .dl-logo-text {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.25rem;
           font-weight: 800;
           color: var(--cobr);
@@ -167,8 +169,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           cursor: pointer;
         }
         .dl-nav-item:hover {
-          background: rgba(255,255,255,0.04);
-          color: var(--text2);
+          background: rgba(0,0,0,0.03);
+          color: var(--text);
         }
         .dl-nav-item svg {
           width: 15px; height: 15px;
@@ -210,7 +212,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           display: flex; align-items: center; justify-content: center;
           font-size: 0.62rem; font-weight: 800;
           color: var(--cobr);
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           flex-shrink: 0;
         }
         .dl-user-info { flex: 1; min-width: 0; }
@@ -224,29 +226,30 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         /* dropdown override */
         .dl-dropdown-content {
-          background: var(--bg2) !important;
-          border: 1px solid var(--border) !important;
+          background: #FFFFFF !important;
+          border: 1px solid #E2E8F0 !important;
           border-radius: 10px !important;
-          color: var(--text2) !important;
-          font-family: 'DM Sans', sans-serif !important;
+          color: #334155 !important;
+          font-family:  "Montserrat", sans-serif !important;
           font-size: 0.82rem !important;
           padding: 0.35rem !important;
           min-width: 180px !important;
-          box-shadow: 0 16px 48px rgba(0,0,0,0.5) !important;
+          box-shadow: 0 16px 48px rgba(0,0,0,0.08) !important;
+          z-index: 9999 !important;
         }
         .dl-dropdown-item {
           border-radius: 7px !important;
-          color: var(--text2) !important;
+          color: #334155 !important;
           font-size: 0.82rem !important;
           padding: 0.5rem 0.75rem !important;
           cursor: pointer !important;
           transition: background 0.15s !important;
           display: flex !important; align-items: center !important; gap: 0.5rem !important;
         }
-        .dl-dropdown-item:hover { background: rgba(255,255,255,0.05) !important; }
+        .dl-dropdown-item:hover { background: rgba(0,0,0,0.03) !important; }
         .dl-dropdown-item.danger { color: #E84545 !important; }
         .dl-dropdown-item.danger:hover { background: rgba(232,69,69,0.08) !important; }
-        .dl-dropdown-sep { background: var(--border) !important; margin: 0.3rem 0 !important; }
+        .dl-dropdown-sep { background: #E2E8F0 !important; margin: 0.3rem 0 !important; }
 
         /* ══════════════════════════════
            MOBILE HEADER
@@ -264,7 +267,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           z-index: 40;
         }
         .dl-mobile-logo {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.1rem; font-weight: 800;
           color: var(--cobr); letter-spacing: -0.4px;
           display: flex; align-items: center; gap: 0.5rem;
@@ -276,7 +279,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           border-radius: 7px; transition: background 0.15s, color 0.15s;
           display: flex; align-items: center;
         }
-        .dl-hamburger:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .dl-hamburger:hover { background: rgba(0,0,0,0.04); color: var(--text); }
         .dl-hamburger svg { width: 20px; height: 20px; }
 
         /* ══════════════════════════════
@@ -284,7 +287,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         ══════════════════════════════ */
         .dl-overlay {
           position: fixed; inset: 0;
-          background: rgba(0,0,0,0.6);
+          background: rgba(0,0,0,0.05);
           backdrop-filter: blur(4px);
           z-index: 40;
         }
@@ -323,7 +326,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         .dl-usage {
           margin: 0.75rem 0.75rem 0.25rem;
           padding: 0.75rem;
-          background: rgba(255,255,255,0.03);
+          background: rgba(0,0,0,0.02);
           border: 1px solid var(--border);
           border-radius: 10px;
         }
@@ -333,12 +336,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         }
         .dl-usage-label { font-size: 0.62rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
         .dl-usage-val { font-size: 0.65rem; font-weight: 600; color: var(--text2); }
-        .dl-usage-bar-bg { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+        .dl-usage-bar-bg { height: 4px; background: rgba(0,0,0,0.04); border-radius: 2px; overflow: hidden; }
         .dl-usage-bar-fill { height: 100%; transition: width 0.5s ease; border-radius: 2px; }
 
         /* ── trial banner ── */
         .dl-banner {
-          background: linear-gradient(90deg, var(--cobr-glow), rgba(0,200,150,0.02));
+          background: linear-gradient(90deg, var(--cobr-glow), rgba(0,200,150,0.01));
           border-bottom: 1px solid var(--cobr-line);
           padding: 0.6rem 1.25rem;
           display: flex; align-items: center; justify-content: center; gap: 0.75rem;
@@ -362,7 +365,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           z-index: 100;
           display: flex; align-items: center; justify-content: center;
           padding: 2rem;
-          background: rgba(9,12,10,0.4);
+          background: rgba(255,255,255,0.6);
           backdrop-filter: blur(8px);
           animation: fadeIn 0.5s ease;
         }
@@ -374,14 +377,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           border-radius: 24px;
           padding: 2.5rem;
           text-align: center;
-          box-shadow: 0 32px 64px rgba(0,0,0,0.6);
+          box-shadow: 0 32px 64px rgba(0,0,0,0.1);
         }
         .dl-captive-icon {
           width: 56px; height: 56px; margin: 0 auto 1.5rem;
           background: var(--cobr-glow); color: var(--cobr);
           border-radius: 16px; display: flex; align-items: center; justify-content: center;
         }
-        .dl-captive-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem; }
+        .dl-captive-title { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem; }
         .dl-captive-text { font-size: 0.95rem; color: var(--text2); line-height: 1.6; margin-bottom: 2rem; }
         .dl-captive-btn {
           width: 100%; padding: 1rem; border-radius: 12px;
@@ -408,17 +411,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="dl-mobile-header">
             <div className="dl-mobile-logo">
               <img src={CobrLogo} alt="Cobr" />
-              cobr.
+              cobrancas
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <NotificationCenter userId={parsedUser?.id || ""} />
-                <button
-                    className="dl-hamburger"
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    aria-label="Menu"
-                >
-                    {sidebarOpen ? <X /> : <Menu />}
-                </button>
+              <NotificationCenter userId={parsedUser?.id || ""} />
+              <button
+                className="dl-hamburger"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                aria-label="Menu"
+              >
+                {sidebarOpen ? <X /> : <Menu />}
+              </button>
             </div>
           </div>
 
@@ -445,6 +448,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   {item.label}
                 </NavLink>
               ))}
+
+              <div className="dl-nav-label">Ferramentas PRO</div>
+              <ImportWizard
+                label="Importar Contrato"
+                variant="ghost"
+                className="dl-nav-item w-full justify-start hover:bg-white/[0.04] text-muted hover:text-text2 border-none"
+              />
             </nav>
 
             {/* Usage Sidebar Widget */}
@@ -457,12 +467,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   </span>
                 </div>
                 <div className="dl-usage-bar-bg">
-                  <div 
-                    className="dl-usage-bar-fill" 
-                    style={{ 
+                  <div
+                    className="dl-usage-bar-fill"
+                    style={{
                       width: `${Math.min(100, (sub.usage.current / (sub.usage.limit || 1)) * 100)}%`,
                       backgroundColor: (sub.usage.current / (sub.usage.limit || 1)) > 0.9 ? '#E84545' : 'var(--cobr)'
-                    }} 
+                    }}
                   />
                 </div>
               </div>
@@ -473,7 +483,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="dl-user-trigger">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5Dh-hCRQx8d2VZzrmMMLcpUhAh53KlS1s5A&s" className="dl-user-avatar"/>
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5Dh-hCRQx8d2VZzrmMMLcpUhAh53KlS1s5A&s" className="dl-user-avatar" />
                     {/* <div className="dl-user-avatar">{initials}</div> */}
                     <div className="dl-user-info">
                       <div className="dl-user-name">{parsedUser?.name || "Usuário"}</div>
@@ -519,7 +529,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* ══ MAIN ══ */}
           <main className="dl-main">
             <div className="dl-top-header">
-                <NotificationCenter userId={parsedUser?.id || ""} />
+              <NotificationCenter userId={parsedUser?.id || ""} />
             </div>
             <OnboardingWelcome />
             <OnboardingSpotlight />

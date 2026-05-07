@@ -5,23 +5,24 @@ export default function SkeletonInformation() {
     <DashboardLayout>
       <style>{`
         @keyframes sk-shimmer {
-          0%   { background-position: -700px 0; }
-          100% { background-position:  700px 0; }
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
         .sk {
           border-radius: 6px;
-          background: linear-gradient(
+          background: #f1f5f9;
+          background-image: linear-gradient(
             90deg,
-            rgba(255,255,255,0.03) 0%,
-            rgba(255,255,255,0.07) 45%,
-            rgba(255,255,255,0.03) 80%
+            #f1f5f9 0%,
+            #e2e8f0 50%,
+            #f1f5f9 100%
           );
-          background-size: 700px 100%;
-          animation: sk-shimmer 1.5s ease-in-out infinite;
+          background-size: 200% 100%;
+          animation: sk-shimmer 1.5s infinite linear;
         }
         .sk-panel {
-          background: #0D1210;
-          border: 1px solid rgba(255,255,255,0.06);
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
           border-radius: 14px;
         }
       `}</style>
@@ -64,7 +65,7 @@ export default function SkeletonInformation() {
           {/* table header */}
           <div style={{
             display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr",
-            padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)",
+            padding: "12px 20px", borderBottom: "1px solid #F1F5F9",
             gap: 16,
           }}>
             {Array.from({ length: 6 }).map((_, i) => (
@@ -77,7 +78,7 @@ export default function SkeletonInformation() {
             <div key={i} style={{
               display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr",
               padding: "14px 20px", gap: 16,
-              borderBottom: i < 6 ? "1px solid rgba(255,255,255,0.04)" : "none",
+              borderBottom: i < 6 ? "1px solid #F1F5F9" : "none",
               alignItems: "center",
             }}>
               {/* client cell */}
@@ -103,7 +104,7 @@ export default function SkeletonInformation() {
           {/* pagination */}
           <div style={{
             display: "flex", justifyContent: "space-between", alignItems: "center",
-            padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.05)",
+            padding: "12px 20px", borderTop: "1px solid #F1F5F9",
           }}>
             <div className="sk" style={{ height: 9, width: 100 }} />
             <div style={{ display: "flex", gap: 6 }}>

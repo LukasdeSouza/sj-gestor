@@ -12,6 +12,7 @@ interface RuleStep {
   type: string;
   subject: string;
   content: string;
+  template_id?: string;
 }
 
 interface Niche {
@@ -66,6 +67,7 @@ export function BillingRulesDialog({ clientId, open, onClose, onSuccess }: Props
   const [selectedNiche, setSelectedNiche] = useState<Niche | null>(null);
   const [loadingNiches, setLoadingNiches] = useState(false);
   const [recurrence, setRecurrence]     = useState<"none" | "monthly">("none");
+  const [userTemplates, setUserTemplates] = useState<any[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -80,9 +82,13 @@ export function BillingRulesDialog({ clientId, open, onClose, onSuccess }: Props
   async function loadNiches() {
     setLoadingNiches(true);
     try {
-      const res = await fetchUseQuery<undefined, { data: Niche[] }>({ route: "/niches", method: "GET" });
-      if (res?.data) setNiches(res.data);
-    } catch { /* nichos são opcionais */ }
+      const [nichesRes, templatesRes] = await Promise.all([
+        fetchUseQuery<undefined, { data: Niche[] }>({ route: "/niches", method: "GET" }),
+        fetchUseQuery<undefined, { templates: any[] }>({ route: "/templates", method: "GET" }),
+      ]);
+      if (nichesRes?.data) setNiches(nichesRes.data);
+      if (templatesRes?.templates) setUserTemplates(templatesRes.templates);
+    } catch { /* silent */ }
     finally { setLoadingNiches(false); }
   }
 
@@ -115,8 +121,19 @@ export function BillingRulesDialog({ clientId, open, onClose, onSuccess }: Props
     setSteps(prev => prev.map((s, i) => i === idx ? { ...s, days_offset: offset, type: getTypeFromOffset(offset) } : s));
   }
 
-  function updateField(idx: number, field: "subject" | "content", value: string) {
+  function updateField(idx: number, field: "subject" | "content" | "template_id", value: string) {
     setSteps(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
+  }
+
+  function applyTemplateToStep(idx: number, templateId: string) {
+    if (!templateId) {
+      updateField(idx, "template_id", "");
+      return;
+    }
+    const t = userTemplates.find(tmp => tmp.id === templateId);
+    if (t) {
+      setSteps(prev => prev.map((s, i) => i === idx ? { ...s, subject: t.subject, content: t.content, template_id: t.id } : s));
+    }
   }
 
   async function handleSave() {
@@ -134,6 +151,7 @@ export function BillingRulesDialog({ clientId, open, onClose, onSuccess }: Props
             days_offset: s.days_offset,
             subject: s.subject,
             content: s.content,
+            template_id: s.template_id || null,
           })),
         },
       });
@@ -305,6 +323,27 @@ export function BillingRulesDialog({ clientId, open, onClose, onSuccess }: Props
                   display: "flex", flexDirection: "column", gap: 10,
                 }}>
                   <div style={{ height: 8 }} />
+                  {userTemplates.length > 0 && (
+                    <div style={{ marginBottom: 10 }}>
+                      <label style={{ fontSize: 11, color: "var(--muted-foreground)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 4 }}>
+                        Carregar de um template salvo
+                      </label>
+                      <select
+                        value={step.template_id || ""}
+                        onChange={e => applyTemplateToStep(origIdx, e.target.value)}
+                        style={{
+                          width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 8, padding: "8px 10px", fontSize: 13, color: "var(--foreground)", outline: "none",
+                          cursor: "pointer"
+                        }}
+                      >
+                        <option value="">-- Texto manual --</option>
+                        {userTemplates.map(t => (
+                          <option key={t.id} value={t.id}>{t.title || t.subject}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label style={{ fontSize: 11, color: "var(--muted-foreground)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 4 }}>
                       Assunto
@@ -312,10 +351,11 @@ export function BillingRulesDialog({ clientId, open, onClose, onSuccess }: Props
                     <input
                       value={step.subject}
                       onChange={e => updateField(origIdx, "subject", e.target.value)}
+                      disabled={!!step.template_id}
                       style={{
                         width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
                         borderRadius: 8, padding: "8px 10px", fontSize: 13, color: "var(--foreground)", outline: "none",
-                        boxSizing: "border-box",
+                        boxSizing: "border-box", opacity: step.template_id ? 0.6 : 1
                       }}
                     />
                   </div>
@@ -326,12 +366,13 @@ export function BillingRulesDialog({ clientId, open, onClose, onSuccess }: Props
                     <textarea
                       value={step.content}
                       onChange={e => updateField(origIdx, "content", e.target.value)}
+                      disabled={!!step.template_id}
                       rows={5}
                       style={{
                         width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
                         borderRadius: 8, padding: "8px 10px", fontSize: 13, color: "var(--foreground)",
                         lineHeight: 1.6, resize: "vertical", outline: "none", fontFamily: "inherit",
-                        boxSizing: "border-box",
+                        boxSizing: "border-box", opacity: step.template_id ? 0.6 : 1
                       }}
                     />
                   </div>

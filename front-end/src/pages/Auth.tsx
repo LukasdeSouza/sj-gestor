@@ -74,7 +74,7 @@ export default function LoginAuth() {
   const signupSchema = AuthSchemas.signup;
   const signupForm = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "", acceptedTerms: false },
+    defaultValues: { name: "", email: "", phone: "", password: "", confirmPassword: "", acceptedTerms: false },
   });
 
   const { mutate: signupMutate, isPending: signupLoading } = useMutation({
@@ -115,12 +115,13 @@ export default function LoginAuth() {
 
         .cobr-auth-root {
           min-height: 100vh;
-          background: #090C0A;
+          background: #F9FAFB;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 1.5rem;
-          font-family: 'DM Sans', sans-serif;
+          font-family:  "Montserrat", sans-serif
+;
         }
 
         .cobr-auth-card {
@@ -131,20 +132,20 @@ export default function LoginAuth() {
           min-height: 560px;
           border-radius: 20px;
           overflow: hidden;
-          border: 1px solid rgba(255,255,255,0.07);
-          box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+          border: 1px solid rgba(0,0,0,0.06);
+          box-shadow: 0 32px 80px rgba(0,0,0,0.08);
         }
 
         /* ---- LEFT PANEL ---- */
         .cobr-auth-left {
-          background: #0D1210;
+          background: #FFFFFF;
           padding: 3rem 2.5rem;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           position: relative;
           overflow: hidden;
-          border-right: 1px solid rgba(255,255,255,0.06);
+          border-right: 1px solid rgba(0,0,0,0.05);
         }
         .cobr-auth-left::after {
           content: '';
@@ -159,7 +160,7 @@ export default function LoginAuth() {
         }
 
         .cobr-logo {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.5rem;
           font-weight: 800;
           color: #00C896;
@@ -183,10 +184,10 @@ export default function LoginAuth() {
         }
 
         .cobr-tagline {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.65rem;
           font-weight: 800;
-          color: #F0F5F2;
+          color: #0F172A;
           line-height: 1.18;
           letter-spacing: -0.8px;
           margin-bottom: 0.85rem;
@@ -195,7 +196,7 @@ export default function LoginAuth() {
 
         .cobr-desc {
           font-size: 0.875rem;
-          color: #6A8A80;
+          color: #64748B;
           line-height: 1.7;
           margin-bottom: 2rem;
         }
@@ -210,9 +211,9 @@ export default function LoginAuth() {
           align-items: center;
           gap: 0.65rem;
           padding: 0.6rem 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
+          border-top: 1px solid rgba(0,0,0,0.05);
           font-size: 0.82rem;
-          color: #7A9087;
+          color: #475569;
         }
         .cobr-feature-item svg {
           color: #00C896;
@@ -228,7 +229,7 @@ export default function LoginAuth() {
 
         /* ---- RIGHT PANEL ---- */
         .cobr-auth-right {
-          background: #0A0C0B;
+          background: #F8FAFC;
           padding: 2.75rem 2.5rem;
           display: flex;
           flex-direction: column;
@@ -239,27 +240,27 @@ export default function LoginAuth() {
           margin-bottom: 1.75rem;
         }
         .cobr-right-title {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.2rem;
           font-weight: 700;
-          color: #F0F5F2;
+          color: #0F172A;
           margin-bottom: 0.25rem;
           letter-spacing: -0.3px;
         }
         .cobr-right-sub {
           font-size: 0.82rem;
-          color: #5A7A70;
+          color: #64748B;
         }
 
         /* TABS */
         .cobr-tabs {
           display: flex;
           gap: 0;
-          background: #111614;
+          background: #F1F5F9;
           border-radius: 10px;
           padding: 4px;
           margin-bottom: 1.75rem;
-          border: 1px solid rgba(255,255,255,0.06);
+          border: 1px solid rgba(0,0,0,0.05);
         }
         .cobr-tab {
           flex: 1;
@@ -267,7 +268,7 @@ export default function LoginAuth() {
           text-align: center;
           font-size: 0.82rem;
           font-weight: 700;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           border-radius: 7px;
           cursor: pointer;
           color: #4A6A60;
@@ -277,9 +278,10 @@ export default function LoginAuth() {
           letter-spacing: 0.1px;
         }
         .cobr-tab-active {
-          background: #141917 !important;
+          background: #FFFFFF !important;
           color: #00C896 !important;
-          border: 1px solid rgba(0,200,150,0.2) !important;
+          border: 1px solid rgba(0,200,150,0.1) !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
         }
 
         /* FORM OVERRIDES */
@@ -295,7 +297,7 @@ export default function LoginAuth() {
           gap: 0.4rem;
           font-size: 0.79rem;
           font-weight: 500;
-          color: #7A9087 !important;
+          color: #475569 !important;
           margin-bottom: 0.35rem;
         }
         .cobr-label svg {
@@ -306,12 +308,13 @@ export default function LoginAuth() {
         }
 
         .cobr-input {
-          background: #111614 !important;
-          border: 1px solid rgba(255,255,255,0.08) !important;
+          background: #FFFFFF !important;
+          border: 1px solid #E2E8F0 !important;
           border-radius: 8px !important;
-          color: #F0F5F2 !important;
+          color: #0F172A !important;
           font-size: 0.875rem !important;
-          font-family: 'DM Sans', sans-serif !important;
+          font-family:  "Montserrat", sans-serif
+ !important;
           height: 42px !important;
           transition: border-color 0.2s !important;
         }
@@ -349,11 +352,11 @@ export default function LoginAuth() {
         .cobr-submit-btn {
           width: 100%;
           background: #00C896 !important;
-          color: #051A12 !important;
+          color: #FFFFFF !important;
           border: none !important;
           border-radius: 8px !important;
           padding: 0.8rem !important;
-          font-family: 'Syne', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
           font-size: 0.9rem !important;
           font-weight: 700 !important;
           margin-top: 0.25rem;
@@ -593,6 +596,28 @@ export default function LoginAuth() {
                   />
 
                   <FormField
+                    name="phone"
+                    control={signupForm.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="cobr-label">
+                          <User size={13} />
+                          Telefone
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="(00) 00000-0000"
+                            className="cobr-input"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
                     name="password"
                     control={signupForm.control}
                     render={({ field }) => (
@@ -660,7 +685,7 @@ export default function LoginAuth() {
                     )}
                   />
 
-                   <FormField
+                  <FormField
                     name="acceptedTerms"
                     control={signupForm.control}
                     render={({ field }) => (
@@ -669,7 +694,7 @@ export default function LoginAuth() {
                           <Checkbox
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            className="border-white/20 data-[state=checked]:bg-[#00C896] data-[state=checked]:text-[#051A12]"
+                            className="border-slate-300 data-[state=checked]:bg-[#00C896] data-[state=checked]:text-white"
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">

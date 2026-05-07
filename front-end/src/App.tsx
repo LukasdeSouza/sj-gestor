@@ -44,7 +44,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <TooltipProvider>
         <ErrorBoundary>
         <Toaster />
@@ -70,13 +70,13 @@ const App = () => (
           pauseOnHover
           draggable={false}
           toastStyle={{
-            background: "#0D1210",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "#FFFFFF",
+            border: "1px solid #E2E8F0",
             borderRadius: "12px",
-            color: "#C0D5CC",
-            fontFamily: "'DM Sans', sans-serif",
+            color: "#0F172A",
+            fontFamily: " 'Montserrat', sans-serif",
             fontSize: "13px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
           }}
         />
         <BrowserRouter>

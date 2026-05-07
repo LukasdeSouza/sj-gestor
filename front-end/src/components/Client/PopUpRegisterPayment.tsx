@@ -72,7 +72,8 @@ export function PopUpRegisterPayment({ id, onSuccess }: Props) {
           background: #111614 !important;
           border: 1px solid rgba(255,255,255,0.08) !important;
           border-radius: 8px !important; color: #F0F5F2 !important;
-          font-size: 13px !important; font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px !important; font-family:  "Montserrat", sans-serif
+ !important;
           height: 40px !important; padding: 0 12px !important;
           width: 100%; outline: none; transition: border-color 0.2s !important;
           box-sizing: border-box;
@@ -86,7 +87,8 @@ export function PopUpRegisterPayment({ id, onSuccess }: Props) {
           background: #111614 !important;
           border: 1px solid rgba(255,255,255,0.08) !important;
           border-radius: 8px !important; color: #F0F5F2 !important;
-          font-size: 13px !important; font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px !important; font-family:  "Montserrat", sans-serif
+ !important;
           resize: vertical !important; padding: 10px 12px !important;
           width: 100%; outline: none; transition: border-color 0.2s !important;
           box-sizing: border-box; line-height: 1.5;
@@ -100,7 +102,8 @@ export function PopUpRegisterPayment({ id, onSuccess }: Props) {
           width: 100%; height: 40px;
           background: #111614 !important; border: 1px solid rgba(255,255,255,0.08) !important;
           border-radius: 8px !important; color: #F0F5F2 !important;
-          font-size: 13px !important; font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px !important; font-family:  "Montserrat", sans-serif
+ !important;
           display: flex; align-items: center; justify-content: space-between;
           padding: 0 12px; cursor: pointer; transition: border-color 0.2s;
         }
@@ -111,7 +114,7 @@ export function PopUpRegisterPayment({ id, onSuccess }: Props) {
           background: #00C896 !important; color: #051A12 !important;
           border: none !important; border-radius: 8px !important;
           padding: 0.7rem 1.5rem !important;
-          font-family: 'Syne', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
           font-size: 0.88rem !important; font-weight: 700 !important;
           cursor: pointer !important; transition: background 0.2s !important;
           width: 100% !important;
@@ -123,7 +126,8 @@ export function PopUpRegisterPayment({ id, onSuccess }: Props) {
           color: #5A7A70 !important; border-radius: 8px !important;
           padding: 6px 12px !important; font-size: 12px !important; font-weight: 600 !important;
           cursor: pointer !important; display: flex !important; align-items: center !important; gap: 6px !important;
-          font-family: 'DM Sans', sans-serif !important; transition: all 0.15s !important;
+          font-family:  "Montserrat", sans-serif
+ !important; transition: all 0.15s !important;
           white-space: nowrap !important;
         }
         .regpay-trigger:hover { border-color: rgba(0,200,150,0.3) !important; color: #00C896 !important; }
@@ -159,7 +163,7 @@ export function PopUpRegisterPayment({ id, onSuccess }: Props) {
               <CheckCircle2 size={17} color="#00C896" />
             </div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#F0F5F2", fontFamily: "'Syne', sans-serif" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#F0F5F2", fontFamily: "'Montserrat', sans-serif" }}>
                 Registrar pagamento
               </div>
               <div style={{ fontSize: 12, color: "#5A7A70", marginTop: 2 }}>

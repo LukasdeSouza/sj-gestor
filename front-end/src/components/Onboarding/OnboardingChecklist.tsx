@@ -43,7 +43,7 @@ export function OnboardingChecklist() {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
         <div>
-          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.25rem", fontWeight: 800, color: "#F0F5F2", display: "flex", alignItems: "center", gap: 10 }}>
+          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "1.25rem", fontWeight: 800, color: "#F0F5F2", display: "flex", alignItems: "center", gap: 10 }}>
             <Sparkles size={20} color="#00C896" />
             Guia de Configuração
           </h2>

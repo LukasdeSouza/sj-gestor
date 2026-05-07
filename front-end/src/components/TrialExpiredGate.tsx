@@ -43,7 +43,7 @@ export function TrialExpiredGate() {
           border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: 22,
           overflow: "hidden",
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: " 'Montserrat', sans-serif",
           color: "#F0F5F2",
           boxShadow: "0 48px 96px rgba(0,0,0,0.65)",
         }}>
@@ -65,7 +65,7 @@ export function TrialExpiredGate() {
                   className="teg-dot"
                   style={{ width: 6, height: 6, borderRadius: "50%", background: "#E84545", display: "inline-block" }}
                 />
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#E84545", letterSpacing: 1.1, textTransform: "uppercase", fontFamily: "'Syne', sans-serif" }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#E84545", letterSpacing: 1.1, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
                   Período de teste encerrado
                 </span>
               </div>
@@ -74,7 +74,7 @@ export function TrialExpiredGate() {
             {/* Headline */}
             <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
               <h2 style={{
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "'Montserrat', sans-serif",
                 fontSize: "1.65rem", fontWeight: 800,
                 color: "#F0F5F2", letterSpacing: -0.8,
                 lineHeight: 1.15, margin: "0 0 0.6rem",
@@ -151,7 +151,7 @@ export function TrialExpiredGate() {
                   width: "100%", padding: "0.85rem",
                   background: "#00C896", color: "#051A12",
                   border: "none", borderRadius: 10,
-                  fontFamily: "'Syne', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: "0.92rem", fontWeight: 800,
                   cursor: "pointer",
                   display: "flex", alignItems: "center",
@@ -170,7 +170,7 @@ export function TrialExpiredGate() {
                   background: "none",
                   border: "1px solid rgba(255,255,255,0.07)",
                   color: "#4A6A60", borderRadius: 10,
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: " 'Montserrat', sans-serif",
                   fontSize: "0.8rem", fontWeight: 500,
                   cursor: "pointer",
                 }}

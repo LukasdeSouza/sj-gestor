@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, CreditCard, MessageSquare, AlertCircle, CheckCircle2, X } from "lucide-react";
+import { Bell, MessageSquare, AlertCircle, CheckCircle2, X, EraserIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,7 +112,7 @@ export default function NotificationCenter({ userId }: { userId: string }) {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <button className="relative p-2 rounded-full hover:bg-white/5 transition-colors group">
+        <button className="relative p-2 rounded-full hover:bg-black/5 transition-colors group">
           <Bell className={`h-5 w-5 ${unreadCount > 0 ? 'text-emerald-400 animate-pulse' : 'text-muted'}`} />
           {unreadCount > 0 && (
             <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
@@ -123,38 +123,40 @@ export default function NotificationCenter({ userId }: { userId: string }) {
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-80 p-0 bg-[#0D1210] border-white/5 shadow-2xl overflow-hidden rounded-xl">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-          <h3 className="text-sm font-bold text-emerald-400 font-syne">Atividades Recentes</h3>
+      <DropdownMenuContent align="end" className="z-[10000] w-80 p-0 shadow-2xl overflow-hidden rounded-xl" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+        <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "var(--border)", background: "#fff" }}>
+          <h3 className="text-sm font-bold text-emerald-500 font-syne">Atividades Recentes</h3>
           {unreadCount > 0 && (
-            <button 
+            <button
               onClick={handleMarkAllAsRead}
-              className="text-[10px] uppercase tracking-wider font-bold text-muted hover:text-white transition-colors"
+              className="text-[10px] uppercase tracking-wider font-bold transition-colors"
+              style={{ color: "var(--text2)" }}
             >
-              Limpar tudo
+              <EraserIcon size={16} className="hover:text-black transition-colors" />
+              {/* Limpar tudo */}
             </button>
           )}
         </div>
 
         <div className="max-h-[350px] overflow-y-auto py-1 scrollbar-hide">
           {notifications.length === 0 ? (
-            <div className="p-8 text-center text-muted text-xs">
+            <div className="p-8 text-center text-xs" style={{ color: "var(--text2)" }}>
               Nenhuma atividade recente encontrada.
             </div>
           ) : (
             notifications.map((n) => (
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 key={n.id}
                 onSelect={(e) => { e.preventDefault(); handleMarkAsRead(n.id); }}
-                className={`p-4 flex gap-3 cursor-pointer outline-none transition-colors border-l-2 ${n.is_read ? 'border-transparent opacity-60' : 'border-emerald-500 bg-emerald-500/5'}`}
+                className={`p-4 flex gap-3 cursor-pointer outline-none transition-colors border-l-2 rounded-sm ${n.is_read ? 'border-transparent opacity-100 hover:bg-black/5 bg-white' : 'border-emerald-500 bg-emerald-500/5'}`}
               >
                 <div className="mt-1 flex-shrink-0">
                   {getIcon(n.type)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold text-white mb-0.5 leading-tight">{n.title}</div>
-                  <div className="text-[11px] text-[#C0D5CC] line-clamp-2 leading-normal mb-1">{n.message}</div>
-                  <div className="text-[9px] uppercase tracking-wide font-bold text-muted">
+                  <div className="text-[13px] font-bold mb-0.5 leading-tight" style={{ color: "var(--text1)" }}>{n.title}</div>
+                  <div className="text-[11px] line-clamp-2 leading-normal mb-1" style={{ color: "var(--text2)" }}>{n.message}</div>
+                  <div className="text-[9px] uppercase tracking-wide font-bold" style={{ color: "var(--text2)", opacity: 0.8 }}>
                     {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: ptBR })}
                   </div>
                 </div>
@@ -163,12 +165,15 @@ export default function NotificationCenter({ userId }: { userId: string }) {
           )}
         </div>
 
-        <DropdownMenuSeparator className="bg-white/5" />
-        <div className="p-2 bg-white/[0.01]">
-            <button className="w-full p-2 text-[11px] font-bold text-muted hover:text-white transition-colors text-center">
-                Ver histórico completo
-            </button>
-        </div>
+        {/* <DropdownMenuSeparator style={{ backgroundColor: "var(--border)" }} /> */}
+        {/* <div className="p-2" style={{ background: "rgba(0,0,0,0.01)" }}>
+          <button className="w-full p-2 text-[11px] font-bold text-center transition-colors" style={{ color: "var(--text2)" }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text1)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text2)"}
+          >
+            Ver histórico completo
+          </button>
+        </div> */}
       </DropdownMenuContent>
     </DropdownMenu>
   );

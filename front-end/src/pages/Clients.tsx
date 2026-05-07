@@ -4,10 +4,11 @@ import { PopUpRegisterPayment } from "@/components/Client/PopUpRegisterPayment";
 import SkeletonInformation from "@/components/Skeletons/SkeletonInformation";
 import { ApiErrorQuery, fetchUseQuery } from "@/api/services/fetchUseQuery";
 import { PopupCreateClient } from "@/components/Client/PopUpCreateClient";
+import { ImportWizard } from "@/components/Client/ImportWizard";
 import { PopupAlterClient } from "@/components/Client/PopUpAlterClient";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
 import { BillingStatusBadge } from "@/components/Client/BillingStatusBadge";
-import { Client, ClientsResponse } from "@/api/models/clients";
+import { Client, ClientsResponse, getLastPaymentAt, getCurrentDueAt } from "@/api/models/clients";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Separator } from "@/components/ui/separator";
@@ -65,7 +66,7 @@ function Avatar({ name, size = 34 }: { name: string; size?: number }) {
       background: `linear-gradient(135deg, ${from}, ${to})`,
       display: "flex", alignItems: "center", justifyContent: "center",
       fontSize: size * 0.32, fontWeight: 800, color: "#fff", flexShrink: 0,
-      letterSpacing: -0.5, fontFamily: "'Syne', sans-serif",
+      letterSpacing: -0.5, fontFamily: "'Montserrat', sans-serif",
     }}>
       {getInitials(name)}
     </div>
@@ -81,6 +82,11 @@ function StatusChip({ client, lastPaymentAt }: { client: Client; lastPaymentAt?:
     whiteSpace: "nowrap",
   };
 
+  // Check if there's an active/pending billing cycle (indicates recurrence)
+  const hasActiveCycle = client.billing_cycles?.some(
+    (cycle) => cycle.status === 'running' || cycle.status === 'pending'
+  );
+
   // If there's a payment after due_at → paid this cycle
   if (lastPaymentAt && client.due_at) {
     const paymentDate = new Date(lastPaymentAt);
@@ -89,6 +95,23 @@ function StatusChip({ client, lastPaymentAt }: { client: Client; lastPaymentAt?:
     const cycleStart = new Date(dueDate);
     cycleStart.setDate(cycleStart.getDate() - 10); // lookback window
     if (paymentDate >= cycleStart) {
+      // If paid and has active cycle → show next due date
+      if (hasActiveCycle) {
+        const nextCycle = client.billing_cycles?.find(
+          (cycle) => cycle.status === 'running' || cycle.status === 'pending'
+        );
+        if (nextCycle) {
+          const nextDueDate = new Date(nextCycle.due_at);
+          const daysUntil = Math.ceil((nextDueDate.getTime() - Date.now()) / 86400000);
+          return (
+            <span style={{ ...base, background: "rgba(0,200,150,0.08)", color: "#00C896", border: "1px solid rgba(0,200,150,0.2)" }}>
+              <CheckCircle2 size={10} />
+              Próx: {formatDateShort(nextDueDate)}
+            </span>
+          );
+        }
+      }
+      // If paid and no active cycle → show "Pago"
       return (
         <span style={{ ...base, background: "rgba(0,200,150,0.1)", color: "#00C896", border: "1px solid rgba(0,200,150,0.25)" }}>
           <CheckCircle2 size={10} />
@@ -98,7 +121,8 @@ function StatusChip({ client, lastPaymentAt }: { client: Client; lastPaymentAt?:
     }
   }
 
-  const isOverdue = client.due_at && new Date(client.due_at) < new Date();
+  const currentDueAt = getCurrentDueAt(client);
+  const isOverdue = currentDueAt && new Date(currentDueAt) < new Date();
   const days = isOverdue ? getDaysOverdue(client.due_at) : 0;
 
   if (isOverdue) return (
@@ -130,11 +154,11 @@ function StatusChip({ client, lastPaymentAt }: { client: Client; lastPaymentAt?:
 // ─── CLIENT MODAL ─────────────────────────────────────────────────────────────
 
 const PAYMENT_METHOD_LABELS: Record<string, { label: string; color: string }> = {
-  pix:      { label: "PIX",          color: "#00C896" },
-  card:     { label: "Cartão",       color: "#6366f1" },
-  cash:     { label: "Dinheiro",     color: "#F5A623" },
-  transfer: { label: "Transferência",color: "#14b8a6" },
-  other:    { label: "Outro",        color: "#8b5cf6" },
+  pix: { label: "PIX", color: "#00C896" },
+  card: { label: "Cartão", color: "#6366f1" },
+  cash: { label: "Dinheiro", color: "#F5A623" },
+  transfer: { label: "Transferência", color: "#14b8a6" },
+  other: { label: "Outro", color: "#8b5cf6" },
 };
 
 type ClientPaymentsResponse = {
@@ -195,23 +219,23 @@ function ClientModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent style={{ maxWidth: 640, padding: 0, overflow: "hidden", borderRadius: 20, background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)" }}>
+      <DialogContent style={{ maxWidth: 640, padding: 0, overflow: "hidden", borderRadius: 20, background: "#FFFFFF", border: "1px solid #E2E8F0" }}>
         <DialogTitle style={{ display: "none" }}>Detalhes do Cliente</DialogTitle>
 
         {/* Header */}
-        <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid #F1F5F9" }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 18 }}>
             <Avatar name={client.name} size={48} />
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, fontFamily: "'Syne', sans-serif", color: "#F0F5F2" }}>{client.name}</h2>
-                <StatusChip client={client} lastPaymentAt={lastPaymentData?.paid_at} />
+                <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, fontFamily: "'Montserrat', sans-serif", color: "#0F172A" }}>{client.name}</h2>
+                <StatusChip client={client} lastPaymentAt={lastPaymentData?.paid_at ?? getLastPaymentAt(client)} />
               </div>
               <div style={{ display: "flex", gap: 14, marginTop: 5, flexWrap: "wrap" }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#5A7A70" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#64748B" }}>
                   <Phone size={11} /> {formatPhoneNumber(client.phone)}
                 </span>
-                {client.email && <span style={{ fontSize: 13, color: "#5A7A70" }}>{client.email}</span>}
+                {client.email && <span style={{ fontSize: 13, color: "#64748B" }}>{client.email}</span>}
               </div>
             </div>
           </div>
@@ -220,7 +244,7 @@ function ClientModal({
             {[
               {
                 icon: CreditCard, label: "Vencimento",
-                value: client.due_at ? formatDateShort(client.due_at) : "—",
+                value: (getCurrentDueAt(client) ?? client.due_at) ? formatDateShort(getCurrentDueAt(client) ?? client.due_at) : "—",
                 accent: isOverdue ? "#E84545" : "#00C896",
               },
               {
@@ -230,13 +254,13 @@ function ClientModal({
               },
               {
                 icon: CheckCircle2, label: "Último pagamento",
-                value: lastPaymentData?.paid_at ? formatDateShort(lastPaymentData.paid_at) : "—",
-                accent: lastPaymentData?.paid_at ? "#00C896" : "#3A5A50",
+                value: (lastPaymentData?.paid_at ?? getLastPaymentAt(client)) ? formatDateShort(lastPaymentData?.paid_at ?? getLastPaymentAt(client)) : "—",
+                accent: (lastPaymentData?.paid_at ?? getLastPaymentAt(client)) ? "#00C896" : "#3A5A50",
               },
             ].map((m, i) => (
               <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 12px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                  <m.icon size={11} color={m.accent} />
+                  {/* <m.icon size={11} color={m.accent} /> */}
                   <span style={{ fontSize: 10, color: "#3A5A50", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700 }}>{m.label}</span>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#C0D5CC" }}>{m.value}</div>
@@ -251,8 +275,8 @@ function ClientModal({
           {/* Régua */}
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6, color: "#C0D5CC", fontFamily: "'Syne', sans-serif" }}>
-                <Zap size={13} color="#00C896" /> Régua de Cobrança
+              <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6, color: "#C0D5CC", fontFamily: "'Montserrat', sans-serif" }}>
+                Régua de Cobrança
               </h3>
               <BillingStatusBadge clientId={client.id} clientName={client.name} />
             </div>
@@ -268,7 +292,7 @@ function ClientModal({
                         border: `2px solid ${i === 1 ? "#00C896" : "rgba(255,255,255,0.08)"}`,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 9, fontWeight: 700, color: i === 1 ? "#00C896" : "#3A5A50",
-                        fontFamily: "'Syne', sans-serif",
+                        fontFamily: "'Montserrat', sans-serif",
                       }}>{s.label}</div>
                       <div style={{ fontSize: 10, color: "#3A5A50", marginTop: 4 }}>{s.desc}</div>
                     </div>
@@ -290,7 +314,7 @@ function ClientModal({
           {/* Observações */}
           {(client.observacoes1 || client.observacoes2) && (
             <div>
-              <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6, color: "#C0D5CC", fontFamily: "'Syne', sans-serif" }}>
+              <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6, color: "#C0D5CC", fontFamily: "'Montserrat', sans-serif" }}>
                 <InfoIcon size={13} color="#6366f1" /> Observações
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -309,8 +333,8 @@ function ClientModal({
           {/* Histórico */}
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6, color: "#C0D5CC", fontFamily: "'Syne', sans-serif" }}>
-                <Activity size={13} color="#00C896" /> Histórico de Pagamentos
+              <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6, color: "#C0D5CC", fontFamily: "'Montserrat', sans-serif" }}>
+                Histórico de Pagamentos
               </h3>
               <div style={{ display: "flex", gap: 6 }}>
                 <Button variant="outline" size="sm" disabled={paymentsPage <= 1 || isFetching} onClick={() => setPaymentsPage((p) => Math.max(1, p - 1))}>Anterior</Button>
@@ -328,34 +352,34 @@ function ClientModal({
                 {(dataPayments?.payments ?? []).map((p) => {
                   const method = p.payment_method ? PAYMENT_METHOD_LABELS[p.payment_method] : null;
                   return (
-                  <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,200,150,0.04)", border: "1px solid rgba(0,200,150,0.1)", borderRadius: 10, padding: "10px 12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(0,200,150,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <CheckCircle2 size={14} color="#00C896" />
-                      </div>
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "#C0D5CC" }}>{formatDateTime(p.paid_at)}</span>
-                          {method && (
-                            <span style={{ fontSize: 10, fontWeight: 700, color: method.color, background: method.color + "18", border: `1px solid ${method.color}44`, borderRadius: 100, padding: "1px 7px" }}>
-                              {method.label}
-                            </span>
-                          )}
+                    <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(0,200,150,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <CheckCircle2 size={14} color="#00C896" />
                         </div>
-                        {p.note && <div style={{ fontSize: 11, color: "#5A7A70" }}>{p.note}</div>}
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{formatDateTime(p.paid_at)}</span>
+                            {method && (
+                              <span style={{ fontSize: 10, fontWeight: 700, color: method.color, background: method.color + "18", border: `1px solid ${method.color}44`, borderRadius: 100, padding: "1px 7px" }}>
+                                {method.label}
+                              </span>
+                            )}
+                          </div>
+                          {p.note && <div style={{ fontSize: 11, color: "#64748B" }}>{p.note}</div>}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: "#00C896", fontFamily: "'Montserrat', sans-serif" }}>{formatCurrency(p.amount)}</span>
+                        <button onClick={() => onDeletePayment(p.id)} disabled={isDeletingPayment}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", padding: 4, borderRadius: 6, display: "flex", alignItems: "center", transition: "color 0.15s" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = "#E84545")}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: "#00C896", fontFamily: "'Syne', sans-serif" }}>{formatCurrency(p.amount)}</span>
-                      <button onClick={() => onDeletePayment(p.id)} disabled={isDeletingPayment}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "#3A5A50", padding: 4, borderRadius: 6, display: "flex", alignItems: "center", transition: "color 0.15s" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = "#E84545")}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = "#3A5A50")}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
                   );
                 })}
               </div>
@@ -364,7 +388,7 @@ function ClientModal({
         </div>
 
         {/* Footer */}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "14px 28px", display: "flex", gap: 10, justifyContent: "flex-end", background: "rgba(255,255,255,0.01)" }}>
+        <div style={{ borderTop: "1px solid #F1F5F9", padding: "14px 28px", display: "flex", gap: 10, justifyContent: "flex-end", background: "#F8FAFC" }}>
           <PopUpRegisterPayment id={client.id} onSuccess={handlePaymentSuccess} />
           <PopupAlterClient id={client.id} onSuccess={onEditSuccess} />
         </div>
@@ -376,15 +400,15 @@ function ClientModal({
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function Clients() {
-  const [searchTerm, setSearchTerm]       = useState("");
-  const debouncedSearch                   = useDebounce(searchTerm, 500);
-  const [page, setPage]                   = useState(1);
-  const limit                             = 10;
-  const [viewOpen, setViewOpen]           = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 500);
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const [viewOpen, setViewOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [sortOrder, setSortOrder]         = useState<"asc" | "desc" | undefined>(undefined);
-  const [dueDateOrder, setDueDateOrder]   = useState<"asc" | "desc" | undefined>(undefined);
-  const [showOverdue, setShowOverdue]     = useState(false);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>(undefined);
+  const [dueDateOrder, setDueDateOrder] = useState<"asc" | "desc" | undefined>(undefined);
+  const [showOverdue, setShowOverdue] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
@@ -456,9 +480,9 @@ export default function Clients() {
     return result;
   }, [dataClients, showOverdue, sortOrder, dueDateOrder]);
 
-  const totalPages    = useMemo(() => dataClients?.totalPaginas ?? 1, [dataClients]);
-  const currentPage   = useMemo(() => dataClients?.pagina ?? page, [dataClients, page]);
-  const overdueCount  = filteredClients.filter((c) => c.due_at && new Date(c.due_at) < new Date()).length;
+  const totalPages = useMemo(() => dataClients?.totalPaginas ?? 1, [dataClients]);
+  const currentPage = useMemo(() => dataClients?.pagina ?? page, [dataClients, page]);
+  const overdueCount = filteredClients.filter((c) => c.due_at && new Date(c.due_at) < new Date()).length;
   const dueTodayCount = filteredClients.filter((c) => {
     if (!c.due_at) return false;
     const d = new Date(c.due_at); const n = new Date();
@@ -467,12 +491,12 @@ export default function Clients() {
   const ruleActiveCount = filteredClients.length; // placeholder — replace with real field if available
 
   const isPixSubscription = !!subscription?.pix_qr_code;
-  const isApproved        = !!subscription?.approved_at;
-  const isPlanEffective   = subscription?.status === "ACTIVE" && (!isPixSubscription || isApproved);
-  const effectivePlanId   = isPlanEffective ? subscription?.plan_id : "FREE";
-  const clientLimit       = effectivePlanId === "PRO_UNLIMITED" ? Infinity : effectivePlanId === "PRO_100" ? 100 : 5;
+  const isApproved = !!subscription?.approved_at;
+  const isPlanEffective = subscription?.status === "ACTIVE" && (!isPixSubscription || isApproved);
+  const effectivePlanId = isPlanEffective ? subscription?.plan_id : "FREE";
+  const clientLimit = effectivePlanId === "PRO_UNLIMITED" ? Infinity : effectivePlanId === "PRO_100" ? 100 : 5;
   const currentClientsCount = dataClients?.resultados || 0;
-  const canAddClient      = currentClientsCount < clientLimit;
+  const canAddClient = currentClientsCount < clientLimit;
 
   const { mutate: mutateDelete, isPending: isloadingmutateDelete } = useMutation({
     mutationFn: async (id: string) => fetchUseQuery({ route: `/clients/${id}`, method: "DELETE" }),
@@ -486,6 +510,12 @@ export default function Clients() {
     onError: (error: ApiErrorQuery) => { if (Array.isArray(error.errors)) handleErrorMessages(error.errors); },
   });
 
+  const { mutate: mutateTrigger, isPending: isTriggering } = useMutation({
+    mutationFn: async () => fetchUseQuery({ route: `/billing/trigger`, method: "POST" }),
+    onSuccess: () => { toast.success("Processamento iniciado! Verifique o console do backend."); },
+    onError: (error: ApiErrorQuery) => { toast.error("Falha ao iniciar processamento."); },
+  });
+
   if (isloadingClients || isLoadingSubscription) return <SkeletonInformation />;
 
   // ── styles ──────────────────────────────────────────────────────────────────
@@ -494,38 +524,38 @@ export default function Clients() {
 
     // header
     pageHeader: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 } as React.CSSProperties,
-    pageTitle: { fontSize: 22, fontWeight: 800, margin: "0 0 3px", letterSpacing: -0.6, fontFamily: "'Syne', sans-serif", color: "#F0F5F2" } as React.CSSProperties,
-    pageSub: { fontSize: 13, color: "#5A7A70", margin: 0 } as React.CSSProperties,
+    pageTitle: { fontSize: 22, fontWeight: 800, margin: "0 0 3px", letterSpacing: -0.6, fontFamily: "'Montserrat', sans-serif", color: "#0F172A" } as React.CSSProperties,
+    pageSub: { fontSize: 13, color: "#64748B", margin: 0 } as React.CSSProperties,
 
     // summary strip
     strip: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 } as React.CSSProperties,
-    scard: { background: "#0D1210", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "0.85rem 1rem", display: "flex", alignItems: "center", gap: 10 } as React.CSSProperties,
+    scard: { background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 10, padding: "0.85rem 1rem", display: "flex", alignItems: "center", gap: 10 } as React.CSSProperties,
     scardIcon: (bg: string): React.CSSProperties => ({ width: 32, height: 32, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }),
-    scardLabel: { fontSize: 11, color: "#5A7A70", fontWeight: 500 } as React.CSSProperties,
-    scardValue: { fontFamily: "'Syne', sans-serif", fontSize: "1.2rem", fontWeight: 800, color: "#F0F5F2", letterSpacing: -0.5, lineHeight: 1 } as React.CSSProperties,
+    scardLabel: { fontSize: 11, color: "#64748B", fontWeight: 500 } as React.CSSProperties,
+    scardValue: { fontFamily: "'Montserrat', sans-serif", fontSize: "1.2rem", fontWeight: 800, color: "#0F172A", letterSpacing: -0.5, lineHeight: 1 } as React.CSSProperties,
 
     // toolbar
     toolbar: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } as React.CSSProperties,
     searchWrap: { position: "relative", flex: 1, minWidth: 220 } as React.CSSProperties,
-    searchIcon: { position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#3A5A50", pointerEvents: "none" } as React.CSSProperties,
-    searchInput: { width: "100%", background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "0.55rem 0.85rem 0.55rem 2.1rem", color: "#F0F5F2", fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none" } as React.CSSProperties,
+    searchIcon: { position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none" } as React.CSSProperties,
+    searchInput: { width: "100%", background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: "0.55rem 0.85rem 0.55rem 2.1rem", color: "#0F172A", fontSize: 13, fontFamily: "'Montserrat', sans-serif", outline: "none" } as React.CSSProperties,
 
     // table
-    tableWrap: { background: "#0D1210", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, overflow: "hidden" } as React.CSSProperties,
-    th: { fontWeight: 700, fontSize: 11, textTransform: "uppercase" as const, letterSpacing: 0.8, color: "#3A5A50" },
+    tableWrap: { background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 14, overflow: "hidden" } as React.CSSProperties,
+    th: { fontWeight: 700, fontSize: 11, textTransform: "uppercase" as const, letterSpacing: 0.8, color: "#64748B" },
 
     // pagination
-    pgWrap: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.05)" } as React.CSSProperties,
-    pgInfo: { fontSize: 12, color: "#3A5A50" } as React.CSSProperties,
+    pgWrap: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderTop: "1px solid #F1F5F9" } as React.CSSProperties,
+    pgInfo: { fontSize: 12, color: "#64748B" } as React.CSSProperties,
     pgBtns: { display: "flex", gap: 6 } as React.CSSProperties,
   };
 
   const filterBtn = (active: boolean): React.CSSProperties => ({
     background: active ? "rgba(0,200,150,0.1)" : "transparent",
-    border: `1px solid ${active ? "rgba(0,200,150,0.3)" : "rgba(255,255,255,0.08)"}`,
-    color: active ? "#00C896" : "#5A7A70",
+    border: `1px solid ${active ? "rgba(0,200,150,0.3)" : "#E2E8F0"}`,
+    color: active ? "#00C896" : "#64748B",
     borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 500,
-    cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
+    cursor: "pointer", fontFamily: "'Montserrat', sans-serif", whiteSpace: "nowrap",
   });
 
   const btnView: React.CSSProperties = {
@@ -536,21 +566,21 @@ export default function Clients() {
   };
 
   const btnDel: React.CSSProperties = {
-    background: "none", border: "1px solid rgba(255,255,255,0.07)",
-    color: "#3A5A50", borderRadius: 7, padding: "5px 7px",
+    background: "none", border: "1px solid #E2E8F0",
+    color: "#64748B", borderRadius: 7, padding: "5px 7px",
     cursor: "pointer", display: "flex", alignItems: "center",
   };
 
   return (
     <DashboardLayout>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
         .cl-row { transition: background 0.15s; cursor: pointer; }
-        .cl-row:hover { background: rgba(0,200,150,0.04) !important; }
+        .cl-row:hover { background: rgba(0,200,150,0.02) !important; }
         .cl-del-btn:hover { border-color: rgba(232,69,69,0.3) !important; color: #E84545 !important; }
         .cl-filter:hover { border-color: rgba(0,200,150,0.3) !important; color: #00C896 !important; }
         .cl-search:focus { border-color: rgba(0,200,150,0.35) !important; }
-        .cl-search::placeholder { color: #2A4A40; }
+        .cl-search::placeholder { color: #94A3B8; }
         .cl-pg-btn:hover:not(:disabled) { border-color: rgba(0,200,150,0.3) !important; color: #00C896 !important; }
         .cl-pg-btn:disabled { opacity: 0.35 !important; cursor: not-allowed !important; }
       `}</style>
@@ -641,22 +671,47 @@ export default function Clients() {
             </p>
           </div>
 
-          {canAddClient ? (
-            <PopupCreateClient onSuccess={() => refetch()} />
-          ) : (
-            <Button onClick={() => toast.error("Limite de clientes atingido. Faça upgrade para adicionar mais.")}>
-              <Plus size={14} style={{ marginRight: 6 }} /> Novo Cliente
-            </Button>
-          )}
+          <div style={{ display: "flex", gap: 8 }}>
+            <ImportWizard
+              onSuccess={() => refetch()}
+              label="Importar Clientes"
+              className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
+            />
+            {canAddClient ? (
+              <PopupCreateClient onSuccess={() => refetch()} />
+            ) : (
+              <Button onClick={() => toast.error("Limite de clientes atingido. Faça upgrade para adicionar mais.")}>
+                <Plus size={14} style={{ marginRight: 6 }} /> Novo Cliente
+              </Button>
+            )}
+
+            {/* BOTÃO DE TESTE (SOMENTE DEV) */}
+            {(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && (
+              <Button 
+                variant="outline"
+                disabled={isTriggering}
+                onClick={() => mutateTrigger()}
+                style={{ 
+                  background: "rgba(99, 102, 241, 0.08)", 
+                  border: "1px solid rgba(99, 102, 241, 0.3)", 
+                  color: "#6366f1",
+                  gap: 6
+                }}
+              >
+                <Zap size={14} fill={isTriggering ? "none" : "#6366f1"} className={isTriggering ? "animate-pulse" : ""} />
+                {isTriggering ? "Processando..." : "Disparo Manual (Dev)"}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* ── SUMMARY STRIP ── */}
         <div style={S.strip}>
           {[
             { label: "Total de clientes", value: currentClientsCount, color: "#00C896", bg: "rgba(0,200,150,0.1)", icon: <Users size={15} color="#00C896" /> },
-            { label: "Inadimplentes",     value: overdueCount,        color: "#E84545", bg: "rgba(232,69,69,0.1)", icon: <AlertCircle size={15} color="#E84545" /> },
-            { label: "Vencem hoje",       value: dueTodayCount,       color: "#F5A623", bg: "rgba(245,166,35,0.1)", icon: <Clock size={15} color="#F5A623" /> },
-            { label: "Com régua ativa",   value: ruleActiveCount,     color: "#00C896", bg: "rgba(0,200,150,0.1)", icon: <Zap size={15} color="#00C896" /> },
+            { label: "Inadimplentes", value: overdueCount, color: "#E84545", bg: "rgba(232,69,69,0.1)", icon: <AlertCircle size={15} color="#E84545" /> },
+            { label: "Vencem hoje", value: dueTodayCount, color: "#F5A623", bg: "rgba(245,166,35,0.1)", icon: <Clock size={15} color="#F5A623" /> },
+            { label: "Com régua ativa", value: ruleActiveCount, color: "#00C896", bg: "rgba(0,200,150,0.1)", icon: <Zap size={15} color="#00C896" /> },
           ].map((s) => (
             <div key={s.label} style={S.scard}>
               <div style={S.scardIcon(s.bg)}>{s.icon}</div>
@@ -718,7 +773,7 @@ export default function Clients() {
         <div style={S.tableWrap}>
           <Table>
             <TableHeader>
-              <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <TableRow style={{ borderBottom: "1px solid #F1F5F9" }}>
                 <TableHead style={{ ...S.th, paddingLeft: 20 }}>Cliente</TableHead>
                 <TableHead style={S.th}>Situação</TableHead>
                 <TableHead style={S.th}>Vencimento</TableHead>
@@ -731,7 +786,7 @@ export default function Clients() {
             <TableBody>
               {filteredClients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} style={{ textAlign: "center", padding: "48px 20px", color: "#3A5A50" }}>
+                  <TableCell colSpan={6} style={{ textAlign: "center", padding: "48px 20px", color: "#64748B" }}>
                     <Users size={28} style={{ margin: "0 auto 10px", opacity: 0.4, display: "block" }} />
                     <p style={{ margin: 0, fontSize: 13 }}>
                       {searchTerm ? "Nenhum cliente encontrado para esta busca." : "Nenhum cliente cadastrado ainda."}
@@ -747,25 +802,25 @@ export default function Clients() {
                     key={client.id}
                     className="cl-row"
                     onClick={() => { setSelectedClient(client); setViewOpen(true); }}
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+                    style={{ borderBottom: "1px solid #F1F5F9" }}
                   >
                     {/* Cliente */}
                     <TableCell style={{ paddingLeft: 20 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <Avatar name={client.name} size={34} />
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: 13, color: "#D0E5DC" }}>{client.name}</div>
-                          <div style={{ fontSize: 11, color: "#4A6A60" }}>{formatPhoneNumber(client.phone)}</div>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: "#0F172A" }}>{client.name}</div>
+                          <div style={{ fontSize: 11, color: "#64748B" }}>{formatPhoneNumber(client.phone)}</div>
                         </div>
                       </div>
                     </TableCell>
 
                     {/* Situação */}
-                    <TableCell><StatusChip client={client} /></TableCell>
+                    <TableCell><StatusChip client={client} lastPaymentAt={getLastPaymentAt(client)} /></TableCell>
 
                     {/* Vencimento */}
                     <TableCell>
-                      <span style={{ fontSize: 13, color: isOverdue ? "#E84545" : "#C0D5CC", fontWeight: isOverdue ? 600 : 400 }}>
+                      <span style={{ fontSize: 13, color: isOverdue ? "#E84545" : "#475569", fontWeight: isOverdue ? 600 : 400 }}>
                         {client.due_at ? formatDateShort(client.due_at) : "—"}
                       </span>
                     </TableCell>
@@ -773,12 +828,12 @@ export default function Clients() {
                     {/* Último disparo */}
                     <TableCell>
                       {client.last_reminder_due_at ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#C0D5CC" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#475569" }}>
                           <Send size={11} color="#00C896" />
                           {formatDateShort(client.last_reminder_due_at)}
                         </div>
                       ) : (
-                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#3A5A50" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#94A3B8" }}>
                           <Clock size={11} /> Nunca
                         </div>
                       )}
@@ -793,7 +848,7 @@ export default function Clients() {
                     <TableCell style={{ textAlign: "right", paddingRight: 20 }} onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center" }}>
                         <button style={btnView} onClick={() => { setSelectedClient(client); setViewOpen(true); }}>
-                          Ver detalhes <ChevronRight size={11} />
+                          detalhes <ChevronRight size={11} />
                         </button>
                         <button
                           className="cl-del-btn"
@@ -837,13 +892,13 @@ export default function Clients() {
 
       {/* ── DELETE CONFIRM ── */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent style={{ maxWidth: 420, borderRadius: 16, background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)" }}>
+        <DialogContent style={{ maxWidth: 420, borderRadius: 16, background: "#FFFFFF", border: "1px solid #E2E8F0" }}>
           <DialogHeader>
-            <DialogTitle style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Syne', sans-serif", color: "#F0F5F2" }}>
+            <DialogTitle style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Montserrat', sans-serif", color: "#0F172A" }}>
               <AlertCircle size={16} color="#E84545" /> Remover cliente
             </DialogTitle>
           </DialogHeader>
-          <p style={{ fontSize: 13, color: "#5A7A70", margin: "8px 0 20px", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: "#64748B", margin: "8px 0 20px", lineHeight: 1.6 }}>
             Esta ação é irreversível. Todos os dados e histórico de pagamentos deste cliente serão removidos permanentemente.
           </p>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>

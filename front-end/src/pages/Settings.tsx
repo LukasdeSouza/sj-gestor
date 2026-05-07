@@ -1,16 +1,14 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { WhatsAppContent } from "./WhatsApp";
-import { MeiosPagamentoContent } from "./PixKeys";
 import { ProductsContent } from "./Products";
 import { TemplatesContent } from "./Templates";
 import { useSearchParams } from "react-router-dom";
-import { MessageCircle, Wallet, FileText, Package } from "lucide-react";
+import { MessageCircle, FileText, Package } from "lucide-react";
 
 const TABS = [
-  { value: "whatsapp",  label: "WhatsApp",   icon: MessageCircle },
-  { value: "pix",       label: "Meios de Pagamento", icon: Wallet },
-  { value: "templates", label: "Templates",  icon: FileText },
-  { value: "produtos",  label: "Produtos",   icon: Package },
+  { value: "whatsapp", label: "WhatsApp", icon: MessageCircle },
+  { value: "templates", label: "Templates", icon: FileText },
+  { value: "produtos", label: "Produtos", icon: Package },
 ];
 
 export default function Settings() {
@@ -30,22 +28,22 @@ export default function Settings() {
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
-          font-family: 'DM Sans', sans-serif;
-          color: #F0F5F2;
+          font-family:  "Montserrat", sans-serif;
+          color: #0F172A;
         }
 
         /* ── header ── */
         .st-title {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.5rem;
           font-weight: 800;
-          color: #F0F5F2;
+          color: #0F172A;
           letter-spacing: -0.6px;
           margin: 0 0 3px;
         }
         .st-sub {
           font-size: 0.82rem;
-          color: #5A7A70;
+          color: #64748B;
           margin: 0;
         }
 
@@ -53,8 +51,8 @@ export default function Settings() {
         .st-tabs {
           display: flex;
           gap: 4px;
-          background: #0D1210;
-          border: 1px solid rgba(255,255,255,0.06);
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
           border-radius: 10px;
           padding: 4px;
           width: fit-content;
@@ -67,20 +65,20 @@ export default function Settings() {
           border-radius: 7px;
           border: 1px solid transparent;
           background: transparent;
-          color: #5A7A70;
+          color: #64748B;
           font-size: 0.8rem;
           font-weight: 700;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           cursor: pointer;
           transition: color 0.15s, background 0.15s, border-color 0.15s;
           white-space: nowrap;
         }
         .st-tab:hover {
-          color: #C0D5CC;
-          background: rgba(255,255,255,0.03);
+          color: #0F172A;
+          background: #F8FAFC;
         }
         .st-tab.active {
-          background: #141917;
+          background: rgba(0,200,150,0.1);
           color: #00C896;
           border-color: rgba(0,200,150,0.2);
         }
@@ -92,8 +90,8 @@ export default function Settings() {
 
         /* ── content panel ── */
         .st-panel {
-          background: #0D1210;
-          border: 1px solid rgba(255,255,255,0.06);
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
           border-radius: 14px;
           overflow: hidden;
         }
@@ -132,10 +130,9 @@ export default function Settings() {
 
           {/* ── TAB CONTENT ── */}
           <div className="st-panel">
-            {activeTab === "whatsapp"  && <WhatsAppContent />}
-            {activeTab === "pix"       && <MeiosPagamentoContent />}
+            {activeTab === "whatsapp" && <WhatsAppContent />}
             {activeTab === "templates" && <TemplatesContent />}
-            {activeTab === "produtos"  && <ProductsContent />}
+            {activeTab === "produtos" && <ProductsContent />}
           </div>
 
         </div>

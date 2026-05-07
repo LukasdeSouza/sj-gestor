@@ -12,6 +12,7 @@ export class AuthSchemas {
   static signup = z.object({
     email: z.string().email("Email inválido").min(1).max(256),
     name: z.string().min(3).max(256),
+    phone: z.string().min(10, "Telefone inválido").max(15, "Telefone inválido"),
     password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres").max(256),
     confirmPassword: z.string().min(8, "A confirmação de senha deve ter no mínimo 8 caracteres").max(256),
     acceptedTerms: z.boolean().refine(v => v === true, {

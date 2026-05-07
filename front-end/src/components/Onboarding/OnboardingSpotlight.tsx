@@ -74,7 +74,7 @@ export function OnboardingSpotlight() {
         <rect
           width="100%"
           height="100%"
-          fill="rgba(0,0,0,0.82)"
+          fill="rgba(15,23,42,0.75)"
           mask="url(#spotlight-mask)"
           style={{ cursor: "default" }}
         />
@@ -111,16 +111,16 @@ export function OnboardingSpotlight() {
               Math.max(20, targetRect.x + targetRect.width / 2 - 160)
             ),
             width: 320,
-            background: "#111614",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: "#FFFFFF",
+            border: "1px solid #E2E8F0",
             borderRadius: 24,
             padding: "1.75rem",
-            boxShadow: "0 32px 64px -16px rgba(0,0,0,0.8)",
+            boxShadow: "0 32px 64px -16px rgba(0,0,0,0.15)",
             pointerEvents: "auto",
             display: "flex",
             flexDirection: "column",
             gap: "1rem",
-            fontFamily: "'DM Sans', sans-serif"
+            fontFamily: " 'Montserrat', sans-serif"
           }}
         >
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
@@ -133,25 +133,25 @@ export function OnboardingSpotlight() {
               }}>
                 <Sparkles size={14} />
               </div>
-              <span style={{ fontSize: "0.7rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2, fontFamily: "'Syne', sans-serif" }}>
+              <span style={{ fontSize: "0.7rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2, fontFamily: "'Montserrat', sans-serif" }}>
                 PASSO {currentStepNumber} DE {totalSteps}
               </span>
             </div>
             <button
               onClick={endTour}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#3A5A50", transition: "color 0.2s" }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", transition: "color 0.2s" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#E84545")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#3A5A50")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
             >
               <X size={18} />
             </button>
           </div>
 
           <div>
-            <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.1rem", fontWeight: 800, color: "#F0F5F2", marginBottom: "0.5rem", letterSpacing: -0.3 }}>
+            <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "1.1rem", fontWeight: 800, color: "#0F172A", marginBottom: "0.5rem", letterSpacing: -0.3 }}>
               {currentStepData.title}
             </h3>
-            <p style={{ fontSize: "0.85rem", color: "#7A9087", lineHeight: 1.6 }}>
+            <p style={{ fontSize: "0.85rem", color: "#64748B", lineHeight: 1.6 }}>
               {currentStepData.content}
             </p>
           </div>
@@ -162,9 +162,9 @@ export function OnboardingSpotlight() {
               disabled={isFirstStep}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
-                background: "none", border: "1px solid rgba(255,255,255,0.08)",
+                background: "none", border: "1px solid #E2E8F0",
                 borderRadius: 10, padding: "0.5rem 0.8rem",
-                fontSize: "0.8rem", fontWeight: 600, color: isFirstStep ? "#2A4A40" : "#C0D5CC",
+                fontSize: "0.8rem", fontWeight: 600, color: isFirstStep ? "#E2E8F0" : "#64748B",
                 cursor: isFirstStep ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
               }}
@@ -183,7 +183,7 @@ export function OnboardingSpotlight() {
                 display: "flex", alignItems: "center", gap: 6,
                 background: "#00C896", border: "none",
                 borderRadius: 10, padding: "0.5rem 1.25rem",
-                fontSize: "0.82rem", fontWeight: 700, color: "#051A12",
+                fontSize: "0.82rem", fontWeight: 700, color: "#FFFFFF",
                 cursor: "pointer", transition: "transform 0.2s, background 0.2s",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "#00A87E")}

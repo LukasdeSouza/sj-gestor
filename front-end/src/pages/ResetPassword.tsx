@@ -69,7 +69,8 @@ export default function ResetPassword() {
           align-items: center;
           justify-content: center;
           padding: 1.5rem;
-          font-family: 'DM Sans', sans-serif;
+          font-family:  "Montserrat", sans-serif
+;
         }
         .cobr-rp-card {
           width: 100%;
@@ -91,21 +92,22 @@ export default function ResetPassword() {
         .cobr-rp-inner { padding: 2.5rem 2.25rem 2.25rem; position: relative; z-index: 1; }
         .cobr-rp-logo-wrap { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2.25rem; }
         .cobr-rp-logo-wrap img { width: 28px; height: 28px; object-fit: contain; }
-        .cobr-rp-logo-text { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: #00C896; letter-spacing: -0.4px; }
+        .cobr-rp-logo-text { font-family: 'Montserrat', sans-serif; font-size: 1.25rem; font-weight: 800; color: #00C896; letter-spacing: -0.4px; }
         .cobr-rp-icon-wrap {
           width: 48px; height: 48px; border-radius: 12px;
           background: rgba(0,200,150,0.1); border: 1px solid rgba(0,200,150,0.2);
           display: flex; align-items: center; justify-content: center;
           margin-bottom: 1.25rem; color: #00C896;
         }
-        .cobr-rp-title { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: #F0F5F2; letter-spacing: -0.5px; margin-bottom: 0.4rem; }
+        .cobr-rp-title { font-family: 'Montserrat', sans-serif; font-size: 1.3rem; font-weight: 800; color: #F0F5F2; letter-spacing: -0.5px; margin-bottom: 0.4rem; }
         .cobr-rp-desc { font-size: 0.85rem; color: #6A8A80; line-height: 1.65; margin-bottom: 2rem; }
         .cobr-rp-label { font-size: 0.79rem; font-weight: 500; color: #7A9087 !important; margin-bottom: 0.35rem; }
         .cobr-rp-input-wrap { position: relative; }
         .cobr-rp-input {
           background: #111614 !important; border: 1px solid rgba(255,255,255,0.08) !important;
           border-radius: 8px !important; color: #F0F5F2 !important;
-          font-size: 0.875rem !important; font-family: 'DM Sans', sans-serif !important;
+          font-size: 0.875rem !important; font-family:  "Montserrat", sans-serif
+ !important;
           height: 42px !important; transition: border-color 0.2s, box-shadow 0.2s !important;
           padding-right: 44px !important;
         }
@@ -116,7 +118,7 @@ export default function ResetPassword() {
         .cobr-rp-btn {
           width: 100%; background: #00C896 !important; color: #051A12 !important;
           border: none !important; border-radius: 8px !important; padding: 0.8rem !important;
-          font-family: 'Syne', sans-serif !important; font-size: 0.9rem !important; font-weight: 700 !important;
+          font-family: 'Montserrat', sans-serif !important; font-size: 0.9rem !important; font-weight: 700 !important;
           margin-top: 1.25rem; transition: background 0.2s, transform 0.15s !important;
           display: flex !important; align-items: center !important; justify-content: center !important; gap: 0.5rem !important;
         }

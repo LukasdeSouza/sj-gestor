@@ -63,7 +63,8 @@ export default function ForgotPassword() {
           align-items: center;
           justify-content: center;
           padding: 1.5rem;
-          font-family: 'DM Sans', sans-serif;
+          font-family:  "Montserrat", sans-serif
+;
         }
 
         .cobr-fp-card {
@@ -114,7 +115,7 @@ export default function ForgotPassword() {
           object-fit: contain;
         }
         .cobr-fp-logo-text {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.25rem;
           font-weight: 800;
           color: #00C896;
@@ -135,7 +136,7 @@ export default function ForgotPassword() {
         }
 
         .cobr-fp-title {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.3rem;
           font-weight: 800;
           color: #F0F5F2;
@@ -172,7 +173,8 @@ export default function ForgotPassword() {
           border-radius: 8px !important;
           color: #F0F5F2 !important;
           font-size: 0.875rem !important;
-          font-family: 'DM Sans', sans-serif !important;
+          font-family:  "Montserrat", sans-serif
+ !important;
           height: 42px !important;
           transition: border-color 0.2s, box-shadow 0.2s !important;
         }
@@ -190,7 +192,7 @@ export default function ForgotPassword() {
           border: none !important;
           border-radius: 8px !important;
           padding: 0.8rem !important;
-          font-family: 'Syne', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
           font-size: 0.9rem !important;
           font-weight: 700 !important;
           margin-top: 1.25rem;
@@ -224,7 +226,8 @@ export default function ForgotPassword() {
           border: none;
           cursor: pointer;
           transition: color 0.2s;
-          font-family: 'DM Sans', sans-serif;
+          font-family:  "Montserrat", sans-serif
+;
           padding: 0.25rem;
         }
         .cobr-fp-back:hover { color: #00C896; }

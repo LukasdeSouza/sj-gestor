@@ -6,6 +6,8 @@ export interface Product {
   name: string;
   description: string;
   value: number;
+  late_fee_percent?: number | null;
+  late_interest_percent?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -59,6 +59,8 @@ export function PopupAlterProduct({ id, onSuccess }: Props) {
         name: data.name ?? "",
         value: data.value ?? 0,
         description: data.description ?? undefined,
+        late_fee_percent: (data as any).late_fee_percent ?? undefined,
+        late_interest_percent: (data as any).late_interest_percent ?? undefined,
         user_id: data?.user_id,
       });
     }
@@ -97,9 +99,9 @@ export function PopupAlterProduct({ id, onSuccess }: Props) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-[#E2E8F0] rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Editar Produto</DialogTitle>
+          <DialogTitle className="font-['Montserrat'] font-extrabold text-[#0F172A]">Editar Produto</DialogTitle>
         </DialogHeader>
         {isLoading ? (
           <SpinnerLoading />
@@ -111,9 +113,9 @@ export function PopupAlterProduct({ id, onSuccess }: Props) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome <span className="text-red-600">*</span></FormLabel>
+                    <FormLabel className="text-[#64748B] font-medium text-[0.8rem]">Nome <span className="text-red-600">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="name" {...field} />
+                      <Input className="bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#00C896]/40 focus:ring-[#00C896]/10" placeholder="Nome do produto" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,9 +127,9 @@ export function PopupAlterProduct({ id, onSuccess }: Props) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descrição</FormLabel>
+                    <FormLabel className="text-[#64748B] font-medium text-[0.8rem]">Descrição</FormLabel>
                     <FormControl>
-                      <Textarea rows={3} placeholder="Observações importantes..." {...field}
+                      <Textarea className="bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#00C896]/40 focus:ring-[#00C896]/10" rows={3} placeholder="Observações importantes..." {...field}
                         onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)} />
                     </FormControl>
                     <FormMessage />
@@ -137,29 +139,69 @@ export function PopupAlterProduct({ id, onSuccess }: Props) {
 
               <FormField
                 control={formProduct.control}
-                name="value" // Mude "value" para o nome real do campo no seu schema, se for diferente
+                name="value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor (R$) <span className="text-red-600">*</span></FormLabel>
+                    <FormLabel className="text-[#64748B] font-medium text-[0.8rem]">Valor (R$) <span className="text-red-600">*</span></FormLabel>
                     <FormControl>
                       <Input
-                        id="value"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
+                        className="bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#00C896]/40 focus:ring-[#00C896]/10"
+                        type="number" step="0.01" min="0" placeholder="0.00"
                         value={field.value === undefined ? "" : field.value}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          field.onChange(isNaN(value) ? undefined : value);
-                        }}
-                        required
+                        onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? undefined : v); }}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* ── Taxa de atraso ── */}
+              <div style={{ border: "1px solid #E2E8F0", borderRadius: 10, padding: "14px 16px", background: "#F8FAFC" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#64748B", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.6 }}>
+                  Taxa de atraso (opcional)
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <FormField
+                    control={formProduct.control}
+                    name="late_fee_percent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[#64748B] font-medium text-[0.8rem]">Multa <span style={{ color: "#94A3B8", fontWeight: 400 }}>(%)</span></FormLabel>
+                        <FormControl>
+                          <Input
+                            className="bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#00C896]/40 focus:ring-[#00C896]/10"
+                            type="number" step="0.01" min="0" max="100" placeholder="ex: 2"
+                            value={field.value === undefined ? "" : field.value}
+                            onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? undefined : v); }}
+                          />
+                        </FormControl>
+                        <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>Aplicada uma vez no D+1</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={formProduct.control}
+                    name="late_interest_percent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[#64748B] font-medium text-[0.8rem]">Juros <span style={{ color: "#94A3B8", fontWeight: 400 }}>(% ao mês)</span></FormLabel>
+                        <FormControl>
+                          <Input
+                            className="bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#00C896]/40 focus:ring-[#00C896]/10"
+                            type="number" step="0.01" min="0" max="100" placeholder="ex: 1"
+                            value={field.value === undefined ? "" : field.value}
+                            onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? undefined : v); }}
+                          />
+                        </FormControl>
+                        <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>Proporcional por dia de atraso</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               <div className="flex flex-row justify-between">
                 <ButtonLoading isLoading={isPending} type="submit" >

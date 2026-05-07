@@ -5,7 +5,7 @@ import { MessageTemplatesResponse } from "@/api/models/messageTemplate";
 import { ProductsResponse } from "@/api/models/products";
 import { PixKeysResponse } from "@/api/models/pixKeys";
 import { ClientsResponse } from "@/api/models/clients";
-import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
+
 import { useQuery } from "@tanstack/react-query";
 import { AuthUser } from "@/api/models/auth";
 import {
@@ -24,7 +24,7 @@ import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function Dashboard() {
-  useSubscriptionGuard({ protect: true });
+
 
   const user = Cookies.get("user");
   const parsedUser: AuthUser = user ? JSON.parse(user) : null;
@@ -180,23 +180,23 @@ export default function Dashboard() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
 
         /* ── tokens ── */
         .db {
           --cobr: #00C896;
           --cobr-dim: #00A87E;
-          --cobr-glow: rgba(0,200,150,0.1);
-          --cobr-line: rgba(0,200,150,0.2);
-          --bg:  #090C0A;
-          --bg2: #0D1210;
-          --bg3: #111614;
-          --border: rgba(255,255,255,0.06);
-          --text: #F0F5F2;
-          --text2: #C0D5CC;
-          --muted: #5A7A70;
-          --muted2: #3A5A50;
-          font-family: 'DM Sans', sans-serif;
+          --cobr-glow: rgba(0,200,150,0.05);
+          --cobr-line: rgba(0,200,150,0.1);
+          --bg:  #F8FAFC;
+          --bg2: #FFFFFF;
+          --bg3: #F1F5F9;
+          --border: #E2E8F0;
+          --text: #0F172A;
+          --text2: #334155;
+          --muted: #64748B;
+          --muted2: #94A3B8;
+          font-family:  "Montserrat", sans-serif;
           color: var(--text);
         }
 
@@ -206,7 +206,7 @@ export default function Dashboard() {
         /* ── page header ── */
         .db-header { display: flex; flex-direction: column; gap: 0.2rem; }
         .db-title {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 1.5rem; font-weight: 800;
           color: var(--text); letter-spacing: -0.6px;
         }
@@ -226,7 +226,7 @@ export default function Dashboard() {
           transition: border-color 0.2s;
         }
         .db-stat:hover { border-color: var(--cobr-line); }
-        .db-stat.highlighted { background: rgba(0,200,150,0.04); border-color: var(--cobr-line); }
+        .db-stat.highlighted { background: rgba(0,200,150,0.02); border-color: var(--cobr-line); }
         .db-stat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
         .db-stat-label { font-size: 0.72rem; color: var(--muted); font-weight: 500; }
         .db-stat-icon {
@@ -235,7 +235,7 @@ export default function Dashboard() {
         }
         .db-stat-icon svg { width: 14px; height: 14px; }
         .db-stat-value {
-          font-family: 'Syne', sans-serif; font-size: 1.55rem; font-weight: 800;
+          font-family: 'Montserrat', sans-serif; font-size: 1.55rem; font-weight: 800;
           color: var(--text); letter-spacing: -0.8px; line-height: 1;
         }
         .db-stat-sub { font-size: 0.68rem; color: var(--muted2); margin-top: 0.3rem; }
@@ -250,7 +250,7 @@ export default function Dashboard() {
           margin-bottom: 1rem;
         }
         .db-panel-title {
-          font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700;
+          font-family: 'Montserrat', sans-serif; font-size: 0.82rem; font-weight: 700;
           color: var(--text2); display: flex; align-items: center; gap: 0.4rem;
         }
         .db-panel-title svg { width: 14px; height: 14px; color: var(--cobr); }
@@ -265,7 +265,7 @@ export default function Dashboard() {
         .db-client-row {
           display: flex; align-items: center; justify-content: space-between;
           padding: 0.6rem 0;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
+          border-bottom: 1px solid rgba(0,0,0,0.04);
         }
         .db-client-row:last-child { border-bottom: none; }
         .db-client-info { display: flex; align-items: center; gap: 0.65rem; }
@@ -274,7 +274,7 @@ export default function Dashboard() {
           background: var(--cobr-glow); border: 1px solid var(--cobr-line);
           display: flex; align-items: center; justify-content: center;
           font-size: 0.62rem; font-weight: 800; color: var(--cobr);
-          font-family: 'Syne', sans-serif; flex-shrink: 0;
+          font-family: 'Montserrat', sans-serif; flex-shrink: 0;
         }
         .db-client-name { font-size: 0.8rem; font-weight: 500; color: var(--text2); }
         .db-client-phone { font-size: 0.7rem; color: var(--muted); }
@@ -284,7 +284,7 @@ export default function Dashboard() {
         /* ── bottom row ── */
         .db-bottom { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.85rem; }
         .db-big-num {
-          font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800;
+          font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 800;
           color: var(--text); letter-spacing: -1.5px; margin-top: 0.25rem;
         }
         .db-big-num.green { color: var(--cobr); }
@@ -293,12 +293,12 @@ export default function Dashboard() {
         /* top products */
         .db-product-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; padding: 0.3rem 0; }
         .db-product-name { color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%; }
-        .db-product-count { color: var(--cobr); font-weight: 700; font-family: 'Syne', sans-serif; }
+        .db-product-count { color: var(--cobr); font-weight: 700; font-family: 'Montserrat', sans-serif; }
 
         /* ── onboarding ── */
         .db-onboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 0.25rem; }
         .db-step {
-          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+          background: rgba(0,0,0,0.01); border: 1px solid rgba(0,0,0,0.04);
           border-radius: 10px; padding: 0.85rem 1rem;
           display: flex; align-items: flex-start; gap: 0.65rem;
           transition: border-color 0.2s;
@@ -309,7 +309,7 @@ export default function Dashboard() {
           background: var(--cobr-glow); border: 1px solid var(--cobr-line);
           display: flex; align-items: center; justify-content: center;
           font-size: 0.62rem; font-weight: 800; color: var(--cobr);
-          font-family: 'Syne', sans-serif; flex-shrink: 0; margin-top: 1px;
+          font-family: 'Montserrat', sans-serif; flex-shrink: 0; margin-top: 1px;
         }
         .db-step-title { font-size: 0.8rem; font-weight: 600; color: var(--text2); margin-bottom: 0.15rem; }
         .db-step-desc { font-size: 0.72rem; color: var(--muted); line-height: 1.55; }
@@ -402,13 +402,13 @@ export default function Dashboard() {
                     <BarChart data={chartData} barSize={32}>
                       <XAxis
                         dataKey="label"
-                        stroke="#3A5A50"
+                        stroke="#94A3B8"
                         fontSize={11}
                         tickLine={false}
                         axisLine={false}
                       />
                       <YAxis
-                        stroke="#3A5A50"
+                        stroke="#94A3B8"
                         fontSize={11}
                         tickLine={false}
                         axisLine={false}
@@ -417,18 +417,19 @@ export default function Dashboard() {
                         cursor={{ fill: "rgba(0,200,150,0.05)" }}
                         contentStyle={{
                           borderRadius: "8px",
-                          border: "1px solid rgba(0,200,150,0.2)",
-                          backgroundColor: "#0D1210",
-                          color: "#F0F5F2",
+                          border: "1px solid #E2E8F0",
+                          backgroundColor: "#FFFFFF",
+                          color: "#111827",
                           fontSize: "12px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
                         }}
                         itemStyle={{ color: "#00C896" }}
-                        labelStyle={{ color: "#7A9087", fontWeight: 700 }}
+                        labelStyle={{ color: "#64748B", fontWeight: 700 }}
                       />
                       <Bar
                         dataKey="value"
-                        fill="rgba(0,200,150,0.25)"
-                        stroke="rgba(0,200,150,0.4)"
+                        fill="rgba(0,200,150,0.6)"
+                        stroke="#00C896"
                         strokeWidth={1}
                         radius={[4, 4, 0, 0]}
                       />
@@ -479,11 +480,11 @@ export default function Dashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
                     <div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Clientes</div>
-                        <div style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'Syne' }}>{totalClients}</div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'Montserrat' }}>{totalClients}</div>
                     </div>
                     <div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Produtos</div>
-                        <div style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'Syne' }}>{totalProducts}</div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'Montserrat' }}>{totalProducts}</div>
                     </div>
                 </div>
                 <div className="db-panel-sub" style={{ marginTop: '1rem' }}>Total acumulado na conta</div>

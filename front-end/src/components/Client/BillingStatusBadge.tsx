@@ -29,7 +29,7 @@ function getVariant(stats: BillingStats | null): Variant {
 }
 
 const VARIANT_STYLES: Record<Variant, { bg: string; border: string; color: string }> = {
-  none:      { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', color: '#3A5A50' },
+  none:      { bg: '#F1F5F9', border: '#E2E8F0', color: '#64748B' },
   active:    { bg: 'rgba(0,200,150,0.08)',   border: 'rgba(0,200,150,0.2)',    color: '#00C896' },
   scheduled: { bg: 'rgba(99,102,241,0.08)',  border: 'rgba(99,102,241,0.2)',   color: '#6366f1' },
   failed:    { bg: 'rgba(232,69,69,0.08)',   border: 'rgba(232,69,69,0.2)',    color: '#E84545' },
@@ -64,8 +64,8 @@ export function BillingStatusBadge({ clientId }: BillingStatusBadgeProps) {
   }
 
   const editBtn: React.CSSProperties = {
-    background: 'none', border: '1px solid rgba(255,255,255,0.07)',
-    color: '#3A5A50', borderRadius: 7, padding: '3px 8px',
+    background: 'none', border: '1px solid #E2E8F0',
+    color: '#64748B', borderRadius: 7, padding: '3px 8px',
     fontSize: 11, fontWeight: 600, cursor: 'pointer',
     display: 'inline-flex', alignItems: 'center', gap: 4,
     transition: 'border-color 0.15s, color 0.15s',
@@ -75,7 +75,7 @@ export function BillingStatusBadge({ clientId }: BillingStatusBadgeProps) {
     return (
       <div style={{
         width: 64, height: 22, borderRadius: 20,
-        background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 100%)',
+        background: 'linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%)',
         backgroundSize: '400px 100%',
         animation: 'sk-shimmer 1.5s ease-in-out infinite',
       }} />
@@ -94,7 +94,7 @@ export function BillingStatusBadge({ clientId }: BillingStatusBadgeProps) {
           style={editBtn}
           onClick={() => navigate(`/billing-rules/${clientId}`)}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(0,200,150,0.3)'; (e.currentTarget as HTMLButtonElement).style.color = '#00C896'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = '#3A5A50'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E2E8F0'; (e.currentTarget as HTMLButtonElement).style.color = '#64748B'; }}
         >
           Configurar
         </button>
@@ -129,7 +129,7 @@ export function BillingStatusBadge({ clientId }: BillingStatusBadgeProps) {
         style={editBtn}
         onClick={() => navigate(`/billing-rules/${clientId}`)}
         onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,102,241,0.3)'; (e.currentTarget as HTMLButtonElement).style.color = '#6366f1'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = '#3A5A50'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E2E8F0'; (e.currentTarget as HTMLButtonElement).style.color = '#64748B'; }}
       >
         <Settings size={11} />
       </button>

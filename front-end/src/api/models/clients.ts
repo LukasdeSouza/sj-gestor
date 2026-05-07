@@ -23,6 +23,12 @@ export interface CreateClientData {
   observacoes2: string | null;
 }
 
+interface BillingCycle {
+  id: string;
+  due_at: string | Date;
+  status: string;
+}
+
 export interface Client extends CreateClientData {
   id: string;
   product?: Product;
@@ -31,8 +37,23 @@ export interface Client extends CreateClientData {
   last_reminder_due_at?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  payments?: { paid_at: string | Date }[];
+  billing_cycles?: BillingCycle[];
 }
 
 export interface ClientsResponse extends PaginationInfo {
   clients: Client[];
 }
+
+export const getLastPaymentAt = (client: Client): string | null => {
+  const paid = client.payments?.[0]?.paid_at;
+  return paid ? new Date(paid).toISOString() : null;
+};
+
+export const getCurrentDueAt = (client: Client): string | Date | null => {
+  const cycle = client.billing_cycles?.[0];
+  if (cycle && (cycle.status === 'running' || cycle.status === 'pending')) {
+    return cycle.due_at;
+  }
+  return client.due_at;
+};

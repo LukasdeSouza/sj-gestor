@@ -18,8 +18,7 @@ export class ClientSchemas {
       due_at: dateLike,
       additional_info: z.string().max(256).optional(),
       product_id: z.string().uuid(),
-      template_id: z.string().uuid(),
-      key_id: z.string().uuid(),
+      key_id: z.string().uuid().optional(),
       observacoes1: z.string().max(256).optional(),
       observacoes2: z.string().max(256).optional(),
     })
@@ -37,7 +36,6 @@ export class ClientSchemas {
       due_at: dateLike.optional(),
       additional_info: z.string().max(256).optional(),
       product_id: z.string().uuid().optional(),
-      template_id: z.string().uuid().optional(),
       key_id: z.string().uuid().optional(),
       observacoes1: z.string().max(256).optional(),
       observacoes2: z.string().max(256).optional(),

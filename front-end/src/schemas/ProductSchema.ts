@@ -10,6 +10,8 @@ export class ProductSchemas {
       .min(0.01, "O valor deve ser maior que zero.")
       .max(9999999.99, "O valor é muito alto."),
     description: z.string().max(552).optional(),
+    late_fee_percent: z.number().min(0).max(100).optional(),
+    late_interest_percent: z.number().min(0).max(100).optional(),
     user_id: z.string().uuid(),
   });
 
@@ -22,6 +24,8 @@ export class ProductSchemas {
       .min(0.01, "O valor deve ser maior que zero.")
       .max(9999999.99, "O valor é muito alto."),
     description: z.string().max(552).optional(),
+    late_fee_percent: z.number().min(0).max(100).optional(),
+    late_interest_percent: z.number().min(0).max(100).optional(),
     user_id: z.string().uuid(),
   });
 }

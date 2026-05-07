@@ -3,13 +3,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { ApiErrorQuery, fetchUseQuery } from "@/api/services/fetchUseQuery";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
-import { MessageTemplate } from "@/api/models/messageTemplate";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ClientSchemas } from "@/schemas/ClientSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CalendarIcon, Pencil, Zap, CheckCircle2,
-  AlertCircle, Clock, Settings, ChevronDown, ChevronUp, History, Link2, Copy,
+  AlertCircle, Clock, Settings, ChevronDown, ChevronUp, History, Link2,
 } from "lucide-react";
 import { BillingRulesDialog } from "./BillingRulesDialog";
 import ComboboxDebounce from "../ComboboxDebounce";
@@ -33,8 +32,8 @@ import { z } from "zod";
 
 const DEFAULT_BILLING_STEPS = [
   { days_offset: -3, type: "pre_vencimento", label: "D-3", desc: "3 dias antes" },
-  { days_offset:  0, type: "vencimento",     label: "D0",  desc: "No vencimento" },
-  { days_offset:  3, type: "pos_vencimento", label: "D+3", desc: "3 dias depois" },
+  { days_offset: 0, type: "vencimento", label: "D0", desc: "No vencimento" },
+  { days_offset: 3, type: "pos_vencimento", label: "D+3", desc: "3 dias depois" },
 ];
 
 interface Props { id: string; onSuccess: () => void; }
@@ -57,12 +56,11 @@ interface BillingCycle {
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 
 export function PopupAlterClient({ id, onSuccess }: Props) {
-  const [open, setOpen]                     = useState(false);
+  const [open, setOpen] = useState(false);
   const [creatingBilling, setCreatingBilling] = useState(false);
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
-  const [productValue, setProductValue]     = useState<Product>(null);
-  const [templateValue, setTemplateValue]   = useState<MessageTemplate>(null);
-  const [keyValue, setKeyValue]             = useState<PixKey>(null);
+  const [productValue, setProductValue] = useState<Product>(null);
+  const [keyValue, setKeyValue] = useState<PixKey>(null);
   const [preferredChannels, setPreferredChannels] = useState<string[]>(["whatsapp"]);
   const [recurrence, setRecurrence] = useState<"none" | "monthly">("none");
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -112,13 +110,13 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
             subject: s.days_offset < 0
               ? "Lembrete de pagamento - {nome}"
               : s.days_offset === 0
-              ? "Pagamento hoje - {nome}"
-              : "Pagamento em atraso - {nome}",
+                ? "Pagamento hoje - {nome}"
+                : "Pagamento em atraso - {nome}",
             content: s.days_offset < 0
-              ? "Olá, {nome}! 👋\n\nSeu pagamento de {valor} vence em {vencimento}.\n\n💳 Pix: {chave_pix}"
+              ? "Olá, {nome}! 👋\n\nSeu pagamento de {valor} vence em {vencimento}.\n\nVocê pode pagar via PIX ou Cartão acessando seu link exclusivo:\n🔗 {link_pagamento}"
               : s.days_offset === 0
-              ? "Olá, {nome}! 📅\n\nHoje é dia de pagamento!\n\nValor: {valor}\n🔑 Chave Pix: {chave_pix}"
-              : "Olá, {nome}! ⚠️\n\nSeu pagamento de {valor} está em atraso.\n\n🔑 Chave Pix: {chave_pix}",
+                ? "Olá, {nome}! 📅\n\nHoje é dia de pagamento!\n\nValor: {valor}\n\nPague agora pelo link seguro:\n🔗 {link_pagamento}"
+                : "Olá, {nome}! ⚠️\n\nSeu pagamento de {valor} está em atraso.\n\nAcesse seu link para regularizar:\n🔗 {link_pagamento}",
           })),
         },
       });
@@ -147,7 +145,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
     resolver: zodResolver(schema),
     defaultValues: {
       name: "", phone: "", email: undefined, due_at: new Date(),
-      additional_info: undefined, product_id: "", template_id: "",
+      additional_info: undefined, product_id: "",
       key_id: "", observacoes1: "", observacoes2: "",
     },
   });
@@ -160,12 +158,11 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
         name: data?.name ?? "", phone: data?.phone ?? "",
         email: data?.email ?? undefined, due_at: data?.due_at ?? new Date(),
         additional_info: data?.additional_info ?? undefined,
-        product_id: data?.product_id ?? "", template_id: data?.template_id ?? "",
+        product_id: data?.product_id ?? "",
         key_id: data?.key_id ?? "", user_id: data?.user_id,
         observacoes1: data?.observacoes1 ?? "", observacoes2: data?.observacoes2 ?? "",
       });
       setProductValue(data?.product ? { ...data.product } : null);
-      setTemplateValue(data?.template ? { ...data.template } : null);
       setKeyValue(data?.key ? { ...data.key } : null);
       if (Array.isArray((data as any)?.preferred_channels) && (data as any).preferred_channels.length > 0) {
         setPreferredChannels((data as any).preferred_channels);
@@ -175,6 +172,26 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
       }
     }
   }, [data, reset]);
+
+  // Update recurrence when it changes
+  const updateRecurrenceMutation = useMutation({
+    mutationFn: async (newRecurrence: "none" | "monthly") =>
+      fetchUseQuery<any, any>({ route: `/billing/recurrence/${id}`, method: "PATCH", data: { recurrence: newRecurrence } }),
+    onSuccess: () => {
+      toast.success("Recorrência atualizada!");
+      refetchBilling();
+    },
+    onError: (error: ApiErrorQuery) => {
+      toast.error("Erro ao atualizar recorrência");
+    },
+  });
+
+  const handleRecurrenceChange = (newRecurrence: "none" | "monthly") => {
+    setRecurrence(newRecurrence);
+    if (hasBilling) {
+      updateRecurrenceMutation.mutate(newRecurrence);
+    }
+  };
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: z.infer<typeof schema>) =>
@@ -191,7 +208,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
   // ── render ────────────────────────────────────────────────────────────────
 
   const LABEL: React.CSSProperties = {
-    fontSize: 12, fontWeight: 500, color: "#7A9087", marginBottom: 4, display: "block",
+    fontSize: 12, fontWeight: 500, color: "#475569", marginBottom: 4, display: "block",
   };
 
   return (
@@ -199,44 +216,44 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
         .alter-input {
-          background: #111614 !important;
-          border: 1px solid rgba(255,255,255,0.08) !important;
-          border-radius: 8px !important; color: #F0F5F2 !important;
-          font-size: 13px !important; font-family: 'DM Sans', sans-serif !important;
+          background: #FFFFFF !important;
+          border: 1px solid #E2E8F0 !important;
+          border-radius: 8px !important; color: #0F172A !important;
+          font-size: 13px !important; font-family:  "Montserrat", sans-serif !important;
           height: 40px !important; transition: border-color 0.2s !important;
         }
         .alter-input:focus {
           border-color: rgba(0,200,150,0.4) !important;
           box-shadow: 0 0 0 3px rgba(0,200,150,0.06) !important; outline: none !important;
         }
-        .alter-input::placeholder { color: #2A4A40 !important; }
+        .alter-input::placeholder { color: #94A3B8 !important; }
         .alter-textarea {
-          background: #111614 !important; border: 1px solid rgba(255,255,255,0.08) !important;
-          border-radius: 8px !important; color: #F0F5F2 !important;
-          font-size: 13px !important; font-family: 'DM Sans', sans-serif !important;
+          background: #FFFFFF !important; border: 1px solid #E2E8F0 !important;
+          border-radius: 8px !important; color: #0F172A !important;
+          font-size: 13px !important; font-family:  "Montserrat", sans-serif !important;
           resize: vertical !important; transition: border-color 0.2s !important;
         }
         .alter-textarea:focus {
           border-color: rgba(0,200,150,0.4) !important;
           box-shadow: 0 0 0 3px rgba(0,200,150,0.06) !important; outline: none !important;
         }
-        .alter-textarea::placeholder { color: #2A4A40 !important; }
+        .alter-textarea::placeholder { color: #94A3B8 !important; }
         .alter-cal-btn {
           width: 100%; height: 40px;
-          background: #111614 !important; border: 1px solid rgba(255,255,255,0.08) !important;
-          border-radius: 8px !important; color: #F0F5F2 !important;
-          font-size: 13px !important; font-family: 'DM Sans', sans-serif !important;
+          background: #FFFFFF !important; border: 1px solid #E2E8F0 !important;
+          border-radius: 8px !important; color: #0F172A !important;
+          font-size: 13px !important; font-family:  "Montserrat", sans-serif !important;
           display: flex; align-items: center; justify-content: space-between;
           padding: 0 12px; cursor: pointer; transition: border-color 0.2s;
         }
         .alter-cal-btn:hover { border-color: rgba(0,200,150,0.3) !important; }
-        .alter-cal-btn.empty { color: #2A4A40 !important; }
+        .alter-cal-btn.empty { color: #94A3B8 !important; }
         .alter-submit {
           display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-          background: #00C896 !important; color: #051A12 !important;
+          background: #00C896 !important; color: #FFFFFF !important;
           border: none !important; border-radius: 8px !important;
           padding: 0.7rem 1.5rem !important;
-          font-family: 'Syne', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
           font-size: 0.88rem !important; font-weight: 700 !important;
           cursor: pointer !important; transition: background 0.2s !important;
           width: 100% !important;
@@ -244,22 +261,22 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
         .alter-submit:hover:not(:disabled) { background: #00A87E !important; }
         .alter-submit:disabled { opacity: 0.65 !important; cursor: not-allowed !important; }
         .alter-trigger {
-          background: none; border: 1px solid rgba(255,255,255,0.07);
-          color: #5A7A70; border-radius: 7px; padding: 5px 7px;
+          background: none; border: 1px solid #E2E8F0;
+          color: #64748B; border-radius: 7px; padding: 5px 7px;
           cursor: pointer; display: inline-flex; align-items: center;
           transition: border-color 0.15s, color 0.15s;
         }
         .alter-trigger:hover { border-color: rgba(0,200,150,0.3); color: #00C896; }
-        .alter-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 0.25rem 0; }
+        .alter-divider { height: 1px; background: #F1F5F9; margin: 0.25rem 0; }
         .alter-section-title {
           display: flex; align-items: center; gap: 7px;
-          font-size: 10px; font-weight: 700; color: #3A5A50;
+          font-size: 10px; font-weight: 700; color: #64748B;
           text-transform: uppercase; letter-spacing: 1.2px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid #F1F5F9;
           padding-bottom: 0.5rem; margin-bottom: 0.85rem;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Montserrat', sans-serif;
         }
-        .alter-hint { font-size: 11px; color: #3A5A50; margin-top: 4px; }
+        .alter-hint { font-size: 11px; color: #94A3B8; margin-top: 4px; }
       `}</style>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -270,18 +287,18 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
         </DialogTrigger>
 
         <DialogContent style={{
-          background: "#0D1210",
-          border: "1px solid rgba(255,255,255,0.07)",
+          background: "#FFFFFF",
+          border: "1px solid #E2E8F0",
           borderRadius: 18,
           maxWidth: 620,
           maxHeight: "92vh",
           overflowY: "auto",
-          fontFamily: "'DM Sans', sans-serif",
-          color: "#F0F5F2",
+          fontFamily: " 'Montserrat', sans-serif",
+          color: "#0F172A",
         }}>
           <DialogHeader style={{ marginBottom: "0.25rem" }}>
-            <DialogTitle style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.1rem", fontWeight: 800, color: "#F0F5F2", letterSpacing: -0.3 }}>
-              Editar Cliente
+            <DialogTitle style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "1.1rem", fontWeight: 800, color: "#0F172A", letterSpacing: -0.3 }}>
+              Editar Cobrança
             </DialogTitle>
           </DialogHeader>
 
@@ -299,7 +316,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                 {/* ── CLIENTE ── */}
                 <div>
                   <div className="alter-section-title">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00C896" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00C896" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
                     Cliente
                   </div>
 
@@ -370,61 +387,65 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                 {/* ── VÍNCULOS ── */}
                 <div>
                   <div className="alter-section-title">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00C896" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00C896" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
                     Vínculos
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                    <FormField
-                      control={formClient.control}
-                      name="product_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel style={LABEL}>Produto <span style={{ color: "#E84545" }}>*</span></FormLabel>
-                          <FormControl>
-                            <ComboboxDebounce
-                              route="/products?name"
-                              queryKey="productsQueryKey"
-                              dataField="products"
-                              placeholderInputSearch="Busque por nome"
-                              placeholderUnselected="Selecione o produto"
-                              selecionado={field.value as unknown as Product[] ?? productValue as Product}
-                              setSelecionado={(value) => { const b = value as unknown as Product; field.onChange(b.id); setProductValue(b); }}
-                              selectedField={(s: Product) => s?.name}
-                              renderOption={(d) => <span key={(d as unknown as Product).id}>{typeof d === "string" ? d : (d as Product)?.name}</span>}
-                              visualizacao={productValue?.name}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={formClient.control}
+                    name="product_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel style={LABEL}>Produto <span style={{ color: "#E84545" }}>*</span></FormLabel>
+                        <FormControl>
+                          <ComboboxDebounce
+                            route="/products?name"
+                            queryKey="productsQueryKey"
+                            dataField="products"
+                            placeholderInputSearch="Busque por nome"
+                            placeholderUnselected="Selecione o produto"
+                            selecionado={field.value as unknown as Product[] ?? productValue as Product}
+                            setSelecionado={(value) => { const b = value as unknown as Product; field.onChange(b.id); setProductValue(b); }}
+                            selectedField={(s: Product) => s?.name}
+                            renderOption={(d) => <span key={(d as unknown as Product).id}>{typeof d === "string" ? d : (d as Product)?.name}</span>}
+                            visualizacao={productValue?.name}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={formClient.control}
-                      name="template_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel style={LABEL}>Template <span style={{ color: "#E84545" }}>*</span></FormLabel>
-                          <FormControl>
-                            <ComboboxDebounce
-                              route="/message_templates?name"
-                              queryKey="templatesQueryKey"
-                              dataField="templates"
-                              placeholderInputSearch="Busque por nome"
-                              placeholderUnselected="Selecione a template"
-                              selecionado={field.value as unknown as MessageTemplate[] ?? templateValue as MessageTemplate}
-                              setSelecionado={(value) => { const b = value as unknown as MessageTemplate; field.onChange(b.id); setTemplateValue(b); }}
-                              selectedField={(s: MessageTemplate) => s?.name}
-                              renderOption={(d) => <span key={(d as unknown as MessageTemplate).id}>{typeof d === "string" ? d : (d as MessageTemplate)?.name}</span>}
-                              visualizacao={templateValue?.name}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                  {/* Tax info — read-only, shown when product has fees configured */}
+                  {productValue && (productValue.late_fee_percent || productValue.late_interest_percent) && (
+                    <div style={{
+                      marginTop: "0.65rem",
+                      border: "1px solid #F1F5F9",
+                      borderRadius: 8,
+                      padding: "10px 12px",
+                      background: "#F8FAFC",
+                      display: "flex", gap: 16, alignItems: "center",
+                    }}>
+                      <span style={{ fontSize: 10, color: "#64748B", textTransform: "uppercase", letterSpacing: 0.6, flexShrink: 0 }}>
+                        Taxa de atraso
+                      </span>
+                      {productValue.late_fee_percent != null && (
+                        <span style={{ fontSize: 12, color: "#475569" }}>
+                          Multa: <strong style={{ color: "#0F172A" }}>{productValue.late_fee_percent}%</strong>
+                          <span style={{ fontSize: 10, color: "#64748B", marginLeft: 4 }}>(D+1)</span>
+                        </span>
                       )}
-                    />
-                  </div>
+                      {productValue.late_interest_percent != null && (
+                        <span style={{ fontSize: 12, color: "#475569" }}>
+                          Juros: <strong style={{ color: "#0F172A" }}>{productValue.late_interest_percent}%</strong>
+                          <span style={{ fontSize: 10, color: "#64748B", marginLeft: 4 }}>/mês</span>
+                        </span>
+                      )}
+                      <span style={{ fontSize: 10, color: "#64748B", marginLeft: "auto" }}>
+                        Edite em Configurações → Produtos
+                      </span>
+                    </div>
+                  )}
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginTop: "0.75rem" }}>
                     <FormField
@@ -472,7 +493,13 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                             </PopoverTrigger>
                             <PopoverContent
                               align="start"
-                              style={{ padding: 0, background: "#0D1210", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 }}
+                              style={{ 
+                                padding: 0, 
+                                background: "#FFFFFF", 
+                                border: "1px solid #E2E8F0", 
+                                borderRadius: 12,
+                                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+                              }}
                             >
                               <Calendar
                                 mode="single"
@@ -483,8 +510,8 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                               />
                               <button
                                 type="button"
-                                onClick={() => field.onChange(null)}
-                                style={{ width: "100%", padding: "0.5rem", background: "none", border: "none", borderTop: "1px solid rgba(255,255,255,0.05)", color: "#5A7A70", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                                  onClick={() => field.onChange(null)}
+                                style={{ width: "100%", padding: "0.5rem", background: "none", border: "none", borderTop: "1px solid #F1F5F9", color: "#64748B", fontSize: 12, cursor: "pointer", fontFamily: " 'Montserrat', sans-serif" }}
                               >
                                 Limpar data
                               </button>
@@ -500,7 +527,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                 {/* ── OBSERVAÇÕES ── */}
                 <div>
                   <div className="alter-section-title">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00C896" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00C896" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
                     Observações
                   </div>
 
@@ -562,9 +589,9 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                     {/* Header row */}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                        <Zap size={13} color={hasBilling ? "#00C896" : "#3A5A50"} />
-                        <span style={{ fontSize: 13, fontWeight: 600, color: hasBilling ? "#C0D5CC" : "#5A7A70", fontFamily: "'Syne', sans-serif" }}>
-                          {hasBilling ? "Régua ativa" : "Sem régua configurada"}
+                        {/* <Zap size={13} color={hasBilling ? "#00C896" : "#3A5A50"} /> */}
+                        <span style={{ fontSize: 13, fontWeight: 600, color: hasBilling ? "#C0D5CC" : "#5A7A70", fontFamily: "'Montserrat', sans-serif" }}>
+                          {hasBilling ? "Régua Ativa" : "Sem régua configurada"}
                         </span>
                       </div>
 
@@ -576,7 +603,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                             </span>
                           ) : billingStats.scheduled > 0 ? (
                             <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6366f1", fontWeight: 600 }}>
-                              <Clock size={11} /> {billingStats.scheduled} agendada{billingStats.scheduled > 1 ? "s" : ""}
+                              <Clock size={11} /> {billingStats.scheduled} agendamento{billingStats.scheduled > 1 ? "s" : ""}
                             </span>
                           ) : (
                             <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#00C896", fontWeight: 600 }}>
@@ -593,7 +620,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                               Mensal
                             </span>
                           )}
-                          <button
+                          {/* <button
                             type="button"
                             onClick={() => setBillingDialogOpen(true)}
                             style={{
@@ -604,7 +631,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                             }}
                           >
                             <Settings size={11} /> Editar
-                          </button>
+                          </button> */}
                           {billingStats.payment_link && (
                             <button
                               type="button"
@@ -623,7 +650,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                                 transition: "all 0.15s",
                               }}
                             >
-                              {copiedLink ? <><CheckCircle2 size={11} /> Copiado!</> : <><Link2 size={11} /> Link pagar</>}
+                              {copiedLink ? <><CheckCircle2 size={11} /> Copiado!</> : <><Link2 size={11} /> Copiar Link</>}
                             </button>
                           )}
                         </div>
@@ -633,11 +660,11 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                           disabled={creatingBilling}
                           onClick={handleCreateBilling}
                           style={{
-                            background: "rgba(0,200,150,0.1)", border: "1px solid rgba(0,200,150,0.25)",
+                            background: "rgba(0,200,150,0.1)", border: "1px solid rgba(0,200,150,0.2)",
                             color: "#00C896", borderRadius: 8, padding: "5px 12px",
                             fontSize: 12, fontWeight: 600, cursor: "pointer",
                             opacity: creatingBilling ? 0.6 : 1,
-                            fontFamily: "'Syne', sans-serif",
+                            fontFamily: "'Montserrat', sans-serif",
                           }}
                         >
                           {creatingBilling ? "Ativando..." : "+ Ativar régua"}
@@ -653,19 +680,19 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, gap: 4 }}>
                               <div style={{
                                 width: 30, height: 30, borderRadius: "50%",
-                                background: step.days_offset === 0 ? "rgba(0,200,150,0.15)" : "rgba(255,255,255,0.04)",
-                                border: `2px solid ${step.days_offset === 0 ? "#00C896" : "rgba(255,255,255,0.1)"}`,
+                                background: step.days_offset === 0 ? "rgba(0,200,150,0.1)" : "#F1F5F9",
+                                border: `2px solid ${step.days_offset === 0 ? "#00C896" : "#E2E8F0"}`,
                                 display: "flex", alignItems: "center", justifyContent: "center",
                               }}>
-                                <CheckCircle2 size={12} color={step.days_offset === 0 ? "#00C896" : "#3A5A50"} />
+                                <CheckCircle2 size={12} color={step.days_offset === 0 ? "#00C896" : "#94A3B8"} />
                               </div>
-                              <span style={{ fontSize: 10, fontWeight: 700, color: step.days_offset === 0 ? "#00C896" : "#5A7A70", fontFamily: "'Syne', sans-serif" }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: step.days_offset === 0 ? "#00C896" : "#64748B", fontFamily: "'Montserrat', sans-serif" }}>
                                 {step.label}
                               </span>
-                              <span style={{ fontSize: 10, color: "#3A5A50", textAlign: "center" }}>{step.desc}</span>
+                              <span style={{ fontSize: 10, color: "#64748B", textAlign: "center" }}>{step.desc}</span>
                             </div>
                             {i < DEFAULT_BILLING_STEPS.length - 1 && (
-                              <div style={{ height: 1, width: 16, background: "rgba(255,255,255,0.07)", marginBottom: 20, flexShrink: 0 }} />
+                              <div style={{ height: 1, width: 16, background: "#E2E8F0", marginBottom: 20, flexShrink: 0 }} />
                             )}
                           </div>
                         ))}
@@ -673,13 +700,13 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                     )}
 
                     {/* Canais de envio */}
-                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                      <p style={{ fontSize: 11, color: "#5A7A70", marginBottom: 8, fontWeight: 600 }}>Canais de envio:</p>
+                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #F1F5F9" }}>
+                      <p style={{ fontSize: 11, color: "#64748B", marginBottom: 8, fontWeight: 600 }}>Canais de envio:</p>
                       <div style={{ display: "flex", gap: 6 }}>
                         {([
                           { key: "whatsapp", label: "WhatsApp", color: "#25D366" },
-                          { key: "email",    label: "E-mail",   color: "#6366f1" },
-                          { key: "sms",      label: "SMS",      color: "#F5A623" },
+                          { key: "email", label: "E-mail", color: "#6366f1" },
+                          { key: "sms", label: "SMS", color: "#F5A623" },
                         ] as const).map(({ key, label, color }) => {
                           const active = preferredChannels.includes(key);
                           return (
@@ -692,9 +719,9 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                               style={{
                                 padding: "4px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
                                 cursor: "pointer", transition: "all 0.15s",
-                                border: `1px solid ${active ? color + "55" : "rgba(255,255,255,0.08)"}`,
+                                border: `1px solid ${active ? color + "55" : "#E2E8F0"}`,
                                 background: active ? color + "18" : "transparent",
-                                color: active ? color : "#3A5A50",
+                                color: active ? color : "#64748B",
                               }}
                             >
                               {label}
@@ -705,11 +732,11 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                     </div>
 
                     {/* Recorrência */}
-                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                      <p style={{ fontSize: 11, color: "#5A7A70", marginBottom: 8, fontWeight: 600 }}>Recorrência:</p>
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #F1F5F9" }}>
+                      <p style={{ fontSize: 11, color: "#64748B", marginBottom: 8, fontWeight: 600 }}>Recorrência:</p>
                       <div style={{ display: "flex", gap: 6 }}>
                         {([
-                          { value: "none",    label: "Único" },
+                          { value: "none", label: "Único" },
                           { value: "monthly", label: "Mensal" },
                         ] as const).map(({ value, label }) => {
                           const active = recurrence === value;
@@ -717,13 +744,15 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                             <button
                               key={value}
                               type="button"
-                              onClick={() => setRecurrence(value)}
+                              onClick={() => handleRecurrenceChange(value)}
+                              disabled={updateRecurrenceMutation.isPending}
                               style={{
                                 padding: "4px 14px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                                cursor: "pointer", transition: "all 0.15s",
-                                border: `1px solid ${active ? "rgba(0,200,150,0.35)" : "rgba(255,255,255,0.08)"}`,
+                                cursor: updateRecurrenceMutation.isPending ? "wait" : "pointer", transition: "all 0.15s",
+                                border: `1px solid ${active ? "rgba(0,200,150,0.35)" : "#E2E8F0"}`,
                                 background: active ? "rgba(0,200,150,0.12)" : "transparent",
-                                color: active ? "#00C896" : "#3A5A50",
+                                color: active ? "#00C896" : "#64748B",
+                                opacity: updateRecurrenceMutation.isPending ? 0.6 : 1,
                               }}
                             >
                               {label}
@@ -732,7 +761,7 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                         })}
                       </div>
                       {recurrence === "monthly" && (
-                        <p style={{ fontSize: 10, color: "#3A5A50", marginTop: 6 }}>
+                        <p style={{ fontSize: 10, color: "#94A3B8", marginTop: 6 }}>
                           Nova régua gerada automaticamente todo mês após o ciclo ser concluído.
                         </p>
                       )}
@@ -749,13 +778,13 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                       style={{
                         display: "flex", alignItems: "center", gap: 7, width: "100%",
                         background: "none", border: "none", cursor: "pointer", padding: "0.4rem 0",
-                        fontSize: 11, fontWeight: 700, color: "#3A5A50", textTransform: "uppercase",
-                        letterSpacing: 1.1, fontFamily: "'Syne', sans-serif",
-                        borderBottom: historyOpen ? "1px solid rgba(255,255,255,0.05)" : "none",
+                        fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase",
+                        letterSpacing: 1.1, fontFamily: "'Montserrat', sans-serif",
+                        borderBottom: historyOpen ? "1px solid #F1F5F9" : "none",
                         marginBottom: historyOpen ? "0.75rem" : 0,
                       }}
                     >
-                      <History size={12} color="#3A5A50" />
+                      <History size={12} color="#64748B" />
                       Histórico de cobranças
                       {historyOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                     </button>
@@ -763,12 +792,12 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                     {historyOpen && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {!cycles || cycles.length === 0 ? (
-                          <p style={{ fontSize: 12, color: "#3A5A50", textAlign: "center", padding: "1rem 0" }}>
+                          <p style={{ fontSize: 12, color: "#64748B", textAlign: "center", padding: "1rem 0" }}>
                             Nenhum ciclo encontrado ainda.
                           </p>
                         ) : cycles.map(cycle => (
                           <div key={cycle.id} style={{
-                            border: "1px solid rgba(255,255,255,0.06)",
+                            border: "1px solid #F1F5F9",
                             borderRadius: 10,
                             overflow: "hidden",
                           }}>
@@ -776,13 +805,13 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                             <div style={{
                               display: "flex", alignItems: "center", justifyContent: "space-between",
                               padding: "8px 12px",
-                              background: cycle.status === 'completed' ? "rgba(0,200,150,0.05)" : "rgba(255,255,255,0.02)",
+                              background: cycle.status === 'completed' ? "rgba(0,200,150,0.05)" : "#F8FAFC",
                             }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <span style={{ fontSize: 12, fontWeight: 700, color: "#C0D5CC", fontFamily: "'Syne', sans-serif" }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: "#0F172A", fontFamily: "'Montserrat', sans-serif" }}>
                                   {cycle.due_at}
                                 </span>
-                                <span style={{ fontSize: 10, color: "#5A7A70" }}>venc. {cycle.due_at_full}</span>
+                                <span style={{ fontSize: 10, color: "#64748B" }}>venc. {cycle.due_at_full}</span>
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                 <span style={{ fontSize: 10, color: "#00C896", fontWeight: 600 }}>
@@ -810,24 +839,24 @@ export function PopupAlterClient({ id, onSuccess }: Props) {
                                 <div key={r.id} style={{
                                   display: "flex", alignItems: "center", justifyContent: "space-between",
                                   padding: "6px 12px",
-                                  borderTop: i > 0 ? "1px solid rgba(255,255,255,0.03)" : undefined,
+                                  borderTop: i > 0 ? "1px solid #F1F5F9" : undefined,
                                 }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                     <div style={{
                                       width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                                      background: r.status === 'sent' ? "#00C896" : r.status === 'failed' ? "#E84545" : r.status === 'scheduled' ? "#6366f1" : "#3A5A50",
+                                      background: r.status === 'sent' ? "#00C896" : r.status === 'failed' ? "#E84545" : r.status === 'scheduled' ? "#6366f1" : "#94A3B8",
                                     }} />
-                                    <span style={{ fontSize: 11, color: "#C0D5CC" }}>
+                                    <span style={{ fontSize: 11, color: "#475569" }}>
                                       {r.subject ?? (r.days_offset < 0 ? `D${r.days_offset}` : r.days_offset === 0 ? 'D0' : `D+${r.days_offset}`)}
                                     </span>
                                   </div>
                                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                    {r.sent_at && <span style={{ fontSize: 10, color: "#5A7A70" }}>{r.sent_at}</span>}
-                                    {!r.sent_at && <span style={{ fontSize: 10, color: "#3A5A50" }}>{r.scheduled_at}</span>}
+                                    {r.sent_at && <span style={{ fontSize: 10, color: "#64748B" }}>{r.sent_at}</span>}
+                                    {!r.sent_at && <span style={{ fontSize: 10, color: "#94A3B8" }}>{r.scheduled_at}</span>}
                                     <span style={{
                                       fontSize: 9, fontWeight: 600, borderRadius: 100, padding: "1px 6px",
-                                      background: r.status === 'sent' ? "rgba(0,200,150,0.1)" : r.status === 'failed' ? "rgba(232,69,69,0.1)" : r.status === 'scheduled' ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.05)",
-                                      color: r.status === 'sent' ? "#00C896" : r.status === 'failed' ? "#E84545" : r.status === 'scheduled' ? "#818CF8" : "#3A5A50",
+                                      background: r.status === 'sent' ? "rgba(0,200,150,0.1)" : r.status === 'failed' ? "rgba(232,69,69,0.1)" : r.status === 'scheduled' ? "rgba(99,102,241,0.1)" : "#F1F5F9",
+                                      color: r.status === 'sent' ? "#00C896" : r.status === 'failed' ? "#E84545" : r.status === 'scheduled' ? "#818CF8" : "#64748B",
                                     }}>
                                       {r.status === 'sent' ? 'Enviado' : r.status === 'failed' ? 'Falhou' : r.status === 'scheduled' ? 'Agendado' : 'Cancelado'}
                                     </span>

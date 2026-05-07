@@ -42,6 +42,16 @@ const VerifyEmailAction: React.FC = () => {
     performVerification();
   }, [token]);
 
+  // Auto-redirect to dashboard after successful verification
+  useEffect(() => {
+    if (status === 'success') {
+      const timer = setTimeout(() => {
+        navigate('/dashboard');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [status, navigate]);
+
   return (
     <div className="min-h-screen bg-[#050807] flex items-center justify-center p-6 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-[#00C896]/10 via-transparent to-transparent">
       <motion.div
@@ -81,12 +91,11 @@ const VerifyEmailAction: React.FC = () => {
                 <h2 className="text-3xl font-extrabold text-white tracking-tight">E-mail Confirmado! </h2>
                 <p className="text-sm font-light text-[#C0D5CC] leading-relaxed px-4">{message}</p>
               </div>
-              <button
-                onClick={() => navigate('/plans')}
-                className="w-full py-5 bg-[#00C896] hover:bg-[#00E0A8] text-[#051A12] font-black uppercase tracking-wider rounded-2xl transition-all shadow-xl hover:shadow-[#00C896]/30 flex items-center justify-center gap-3 active:scale-95 group"
-              >
-                Acessar Sistema <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-              </button>
+              
+              <div className="pt-4 flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="w-8 h-8 text-[#00C896] animate-spin" />
+                <p className="text-[#7A9087] text-sm font-medium animate-pulse">Redirecionando para o sistema...</p>
+              </div>
             </motion.div>
           )}
 

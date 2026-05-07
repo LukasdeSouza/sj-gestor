@@ -1,14 +1,14 @@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MessageCircle, CheckCircle2, AlertCircle, RefreshCw, Unplug, Smartphone, RotateCcw, Timer, Wifi, WifiOff, Zap } from "lucide-react";
-import { ApiErrorQuery, fetchUseQuery } from "@/api/services/fetchUseQuery";
+import { ApiErrorQuery, fetchUseQuery, getApiUrlEnv } from "@/api/services/fetchUseQuery";
 import { handleErrorMessages } from "@/errors/handleErrorMessage";
 import DashboardLayout from "@/components/DashboardLayout";
 import { WhatsAppSchema } from "@/schemas/WhatsAppSchema";
-import { TOKEN_COOKIE_KEY } from "@/constants/auth";
 import ButtonLoading from "@/components/ButtonLoading";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { TOKEN_COOKIE_KEY } from "@/constants/auth";
 import { mascaraTelefone } from "@/utils/mask";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,11 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
-import Cookies from "js-cookie";
 import confetti from "canvas-confetti";
+import Cookies from "js-cookie";
 import z from "zod";
+
+
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -33,30 +35,54 @@ interface WhatsAppConnection {
 
 export function WhatsAppContent() {
   const queryClient = useQueryClient();
-  const [connection, setConnection]           = useState<WhatsAppConnection | null>(null);
-  const [sseSessionId, setSseSessionId]       = useState<string | null>(null);
-  const [qrCode, setQrCode]                   = useState<string | null>(null);
-  const [sseError, setSseError]               = useState<string | null>(null);
+  const [connection, setConnection] = useState<WhatsAppConnection | null>(null);
+  const [sseSessionId, setSseSessionId] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState<string | null>(null);
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
-  const [connectModalOpen, setConnectModalOpen]       = useState(false);
+  const [connectModalOpen, setConnectModalOpen] = useState(false);
   const [syncConfirmationOpen, setSyncConfirmationOpen] = useState(false);
   const [formDataToConnect, setFormDataToConnect] = useState<z.infer<typeof WhatsAppSchema.create> | null>(null);
-  const [qrSecondsLeft, setQrSecondsLeft]     = useState<number | null>(null);
+  const [qrSecondsLeft, setQrSecondsLeft] = useState<number | null>(null);
   const qrTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── queries ──────────────────────────────────────────────────────────────
 
-  const { isLoading, refetch, isFetching } = useQuery<WhatsAppConnection>({
+  const { isLoading, refetch, isFetching } = useQuery<WhatsAppConnection & { qrCode?: string }>({
     queryKey: ["connectionWhatsApp"],
     queryFn: async () => {
-      const result = await fetchUseQuery<undefined, WhatsAppConnection>({
+      const result = await fetchUseQuery<undefined, any>({
         route: "/connect",
         method: "GET",
       });
-      if (result) { setSseSessionId(result.id); setConnection(result); }
-      return result;
+      const data = result?.data || result;
+      if (data) {
+        setSseSessionId(data.id);
+        setConnection(data);
+        if (data.qrCode) {
+          setQrCode(data.qrCode);
+          startQrTimer();
+        } else if (data.is_connected) {
+          // SE CONECTOU: Limpa QR, fecha modal e avisa o usuário automaticamente
+          if (qrCode || connectModalOpen) {
+            setQrCode(null);
+            stopQrTimer();
+            setConnectModalOpen(false);
+            toast.success("WhatsApp conectado com sucesso!");
+            queryClient.invalidateQueries({ queryKey: ["connectionWhatsApp"] });
+          }
+        }
+      }
+      return data;
     },
     retry: 2,
+    // Polling a cada 3s se estivermos tentando conectar, 60s se já estiver conectado
+    refetchInterval: (query) => {
+      const data = query.state.data as any;
+      if (data && !data.is_connected) return 3_000;
+      if (data?.is_connected) return 60_000;
+      return false;
+    },
+    refetchIntervalInBackground: false,
   });
 
   // ── form ─────────────────────────────────────────────────────────────────
@@ -73,18 +99,31 @@ export function WhatsAppContent() {
     mutationFn: async (data: z.infer<typeof schema>) =>
       fetchUseQuery<typeof data, unknown>({ route: "/connect", method: "POST", data }),
     onSuccess: async (response: any) => {
-      const connectionData = response.data || response;
-      if (response?.qr) {
-        setQrCode(response.qr);
-        setConnection({
-          id: connectionData.id,
-          phone_number: connectionData.phone_number,
-          is_connected: connectionData.is_connected,
-          last_connected_at: connectionData.last_connected_at,
-        });
+      const connectionData = response.data?.connection || response.data || response;
+
+      // Caso 1: QR Code veio direto na resposta HTTP (legado / fallback)
+      if (response?.qr || response?.data?.qr) {
+        const qr = response?.qr || response?.data?.qr;
+        setQrCode(qr);
+        setConnection(connectionData);
         if (!sseSessionId) setSseSessionId(connectionData.id);
         startQrTimer();
         toast.info("Escaneie o QR Code para conectar o WhatsApp");
+        return;
+      }
+
+      // Caso 2: Backend retorna "connecting", o Polling (useQuery) cuidará do QR Code
+      if (response?.data?.status === "connecting" || response?.status === "connecting") {
+        const sessionId = connectionData?.id;
+        if (!sessionId) return;
+
+        setConnection(connectionData);
+        setSseSessionId(sessionId);
+        setConnectModalOpen(true); // Abre o modal na hora!
+        toast.info("Iniciando motor de conexão...");
+
+        // Força uma atualização imediata da query para começar o polling
+        queryClient.invalidateQueries({ queryKey: ["connectionWhatsApp"] });
       }
     },
     onError: (error: ApiErrorQuery) => {
@@ -186,80 +225,43 @@ export function WhatsAppContent() {
 
   useEffect(() => () => stopQrTimer(), []);
 
-  useEffect(() => {
-    if (!connection?.id) return;
-    setSseError(null);
-    const token = Cookies.get(TOKEN_COOKIE_KEY);
-    if (!token) { setSseError("Token não encontrado. Faça login novamente."); return; }
-
-    const connectSSE = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_PUBLIC_API_URL}/events/${connection.id}`,
-          { method: "GET", headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" } }
-        );
-        if (!response.ok) { setSseError(`Erro ao conectar: ${response.status}`); return; }
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        if (!reader) { setSseError("Erro ao ler stream do servidor."); return; }
-        let buffer = "";
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                setConnection((prev) => prev ? { ...prev, ...data } : data);
-                if (data?.is_connected) setQrCode(null);
-              } catch { /* silent */ }
-            }
-          }
-        }
-      } catch { setSseError("Erro ao conectar ao servidor. Verifique sua conexão."); }
-    };
-    connectSSE();
-  }, [sseSessionId]);
 
   // ── derived ───────────────────────────────────────────────────────────────
 
-  const isConnected   = !!connection?.is_connected;
-  const isStaleConn   = connection && !isConnected && !qrCode;
+  const isConnected = !!connection?.is_connected;
+  const isStaleConn = connection && !isConnected && !qrCode;
 
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
 
-        .wa { font-family: 'DM Sans', sans-serif; color: #F0F5F2; display: flex; flex-direction: column; gap: 1.25rem; padding: 1.75rem; }
+        .wa { font-family:  "Montserrat", sans-serif; color: #0F172A; display: flex; flex-direction: column; gap: 1.25rem; padding: 1.75rem; }
 
         /* section title */
-        .wa-section { font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; color: #C0D5CC; display: flex; align-items: center; gap: 6px; margin-bottom: 0.85rem; }
+        .wa-section { font-family: 'Montserrat', sans-serif; font-size: 0.82rem; font-weight: 700; color: #64748B; display: flex; align-items: center; gap: 6px; margin-bottom: 0.85rem; }
         .wa-section svg { width: 14px; height: 14px; color: #00C896; }
 
         /* status bar */
         .wa-status-bar {
           display: flex; align-items: center; justify-content: space-between;
-          background: #111614; border: 1px solid rgba(255,255,255,0.06);
+          background: #FFFFFF; border: 1px solid #E2E8F0;
           border-radius: 10px; padding: 0.75rem 1rem;
         }
         .wa-status-left { display: flex; align-items: center; gap: 10px; }
         .wa-badge {
           display: inline-flex; align-items: center; gap: 6px;
           border-radius: 100px; padding: 4px 12px;
-          font-size: 12px; font-weight: 700; font-family: 'Syne', sans-serif;
+          font-size: 12px; font-weight: 700; font-family: 'Montserrat', sans-serif;
         }
         .wa-badge.on  { background: rgba(0,200,150,0.1); border: 1px solid rgba(0,200,150,0.25); color: #00C896; }
         .wa-badge.off { background: rgba(232,69,69,0.1); border: 1px solid rgba(232,69,69,0.2); color: #E84545; }
         .wa-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: waDot 2s infinite; }
         @keyframes waDot { 0%,100%{opacity:1} 50%{opacity:0.35} }
-        .wa-phone-info { font-size: 0.8rem; color: #7A9087; }
-        .wa-phone-info strong { color: #C0D5CC; font-weight: 600; }
+        .wa-phone-info { font-size: 0.8rem; color: #64748B; }
+        .wa-phone-info strong { color: #0F172A; font-weight: 600; }
 
         /* alert banner */
         .wa-banner {
@@ -267,9 +269,9 @@ export function WhatsAppContent() {
           border-radius: 10px; padding: 0.85rem 1rem;
           font-size: 0.8rem; line-height: 1.6;
         }
-        .wa-banner.warn  { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #D4A020; }
-        .wa-banner.info  { background: rgba(0,200,150,0.06); border: 1px solid rgba(0,200,150,0.15); color: #7A9087; }
-        .wa-banner.alert { background: rgba(245,166,35,0.07); border: 1px solid rgba(245,166,35,0.18); color: #B8900A; }
+        .wa-banner.warn  { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #B45309; }
+        .wa-banner.info  { background: rgba(0,200,150,0.06); border: 1px solid rgba(0,200,150,0.15); color: #475569; }
+        .wa-banner.alert { background: rgba(245,166,35,0.07); border: 1px solid rgba(245,166,35,0.18); color: #92400E; }
         .wa-banner svg   { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; }
         .wa-banner strong { font-weight: 700; }
 
@@ -278,7 +280,7 @@ export function WhatsAppContent() {
 
         /* panel */
         .wa-panel {
-          background: #111614; border: 1px solid rgba(255,255,255,0.06);
+          background: #FFFFFF; border: 1px solid #E2E8F0;
           border-radius: 12px; padding: 1.25rem;
         }
 
@@ -295,9 +297,9 @@ export function WhatsAppContent() {
         }
         .wa-qr-box img { width: 110px; height: 110px; object-fit: contain; }
         .wa-qr-box.placeholder {
-          background: #111614; border: 1px dashed rgba(255,255,255,0.1);
+          background: #F8FAFC; border: 1px dashed #CBD5E1;
           flex-direction: column; gap: 6px;
-          color: #3A5A50; font-size: 11px; text-align: center;
+          color: #94A3B8; font-size: 11px; text-align: center;
         }
         .wa-qr-countdown {
           position: absolute; bottom: 4px; right: 4px;
@@ -307,36 +309,36 @@ export function WhatsAppContent() {
         .wa-qr-countdown.urgent { background: #E84545; }
 
         .wa-steps { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-        .wa-step  { display: flex; align-items: flex-start; gap: 8px; font-size: 0.78rem; color: #5A7A70; line-height: 1.55; }
+        .wa-step  { display: flex; align-items: flex-start; gap: 8px; font-size: 0.78rem; color: #64748B; line-height: 1.55; }
         .wa-step-num {
           width: 18px; height: 18px; border-radius: 50%;
           background: rgba(0,200,150,0.1); border: 1px solid rgba(0,200,150,0.2);
           display: flex; align-items: center; justify-content: center;
           font-size: 0.58rem; font-weight: 800; color: #00C896;
-          font-family: 'Syne', sans-serif; flex-shrink: 0; margin-top: 1px;
+          font-family: 'Montserrat', sans-serif; flex-shrink: 0; margin-top: 1px;
         }
 
         /* form */
-        .wa-form-label { font-size: 0.78rem; font-weight: 500; color: #7A9087; margin-bottom: 0.35rem; display: block; }
-        .wa-form-hint  { font-size: 0.7rem; color: #3A5A50; margin-top: 0.25rem; }
+        .wa-form-label { font-size: 0.78rem; font-weight: 500; color: #64748B; margin-bottom: 0.35rem; display: block; }
+        .wa-form-hint  { font-size: 0.7rem; color: #94A3B8; margin-top: 0.25rem; }
         .wa-input {
-          width: 100%; background: #0D1210 !important;
-          border: 1px solid rgba(255,255,255,0.08) !important;
-          border-radius: 8px !important; color: #F0F5F2 !important;
+          width: 100%; background: #FFFFFF !important;
+          border: 1px solid #E2E8F0 !important;
+          border-radius: 8px !important; color: #0F172A !important;
           font-size: 0.875rem !important; height: 40px !important;
-          font-family: 'DM Sans', sans-serif !important;
+          font-family:  "Montserrat", sans-serif !important;
           transition: border-color 0.2s !important;
         }
         .wa-input:focus { border-color: rgba(0,200,150,0.4) !important; box-shadow: 0 0 0 3px rgba(0,200,150,0.06) !important; }
-        .wa-input::placeholder { color: #2A4A40 !important; }
+        .wa-input::placeholder { color: #94A3B8 !important; }
         .wa-input:disabled { opacity: 0.5 !important; cursor: not-allowed !important; }
 
         /* buttons */
         .wa-btn-primary {
           display: inline-flex; align-items: center; gap: 6px;
-          background: #00C896; color: #051A12; border: none;
+          background: #00C896; color: #FFFFFF; border: none;
           border-radius: 8px; padding: 0.65rem 1.1rem;
-          font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700;
+          font-family: 'Montserrat', sans-serif; font-size: 0.82rem; font-weight: 700;
           cursor: pointer; transition: background 0.2s, transform 0.15s;
           width: 100%; justify-content: center;
         }
@@ -346,26 +348,27 @@ export function WhatsAppContent() {
           display: inline-flex; align-items: center; gap: 6px;
           background: rgba(232,69,69,0.1); color: #E84545;
           border: 1px solid rgba(232,69,69,0.25); border-radius: 8px;
-          padding: 0.6rem 1.1rem; font-family: 'Syne', sans-serif;
+          padding: 0.6rem 1.1rem; font-family: 'Montserrat', sans-serif;
           font-size: 0.82rem; font-weight: 700; cursor: pointer;
           transition: background 0.2s; width: 100%; justify-content: center;
         }
         .wa-btn-danger:hover:not(:disabled) { background: rgba(232,69,69,0.18); }
         .wa-btn-ghost {
           display: inline-flex; align-items: center; gap: 6px;
-          background: transparent; color: #5A7A70;
-          border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
-          padding: 0.55rem 1rem; font-family: 'DM Sans', sans-serif;
+          background: transparent; color: #64748B;
+          border: 1px solid #E2E8F0; border-radius: 8px;
+          padding: 0.55rem 1rem; font-family:  "Montserrat", sans-serif
+;
           font-size: 0.8rem; font-weight: 500; cursor: pointer;
           transition: border-color 0.15s, color 0.15s;
         }
-        .wa-btn-ghost:hover { border-color: rgba(0,200,150,0.2); color: #C0D5CC; }
+        .wa-btn-ghost:hover { border-color: rgba(0,200,150,0.2); color: #0F172A; }
         .wa-btn-warn {
           display: inline-flex; align-items: center; gap: 6px;
-          background: rgba(245,158,11,0.08); color: #D4A020;
+          background: rgba(245,158,11,0.08); color: #B45309;
           border: 1px solid rgba(245,158,11,0.25); border-radius: 8px;
           padding: 0.5rem 0.9rem; font-size: 0.78rem; font-weight: 600;
-          font-family: 'Syne', sans-serif; cursor: pointer;
+          font-family: 'Montserrat', sans-serif; cursor: pointer;
           transition: background 0.15s; white-space: nowrap; flex-shrink: 0;
         }
         .wa-btn-warn:hover:not(:disabled) { background: rgba(245,158,11,0.15); }
@@ -374,7 +377,7 @@ export function WhatsAppContent() {
         .wa-how { display: flex; flex-direction: column; gap: 0; }
         .wa-how-step {
           display: flex; gap: 12px; padding: 0.85rem 0;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
+          border-bottom: 1px solid #F1F5F9;
         }
         .wa-how-step:last-child { border-bottom: none; }
         .wa-how-num {
@@ -382,18 +385,18 @@ export function WhatsAppContent() {
           background: rgba(0,200,150,0.1); border: 1px solid rgba(0,200,150,0.2);
           display: flex; align-items: center; justify-content: center;
           font-size: 0.68rem; font-weight: 800; color: #00C896;
-          font-family: 'Syne', sans-serif; flex-shrink: 0; margin-top: 1px;
+          font-family: 'Montserrat', sans-serif; flex-shrink: 0; margin-top: 1px;
         }
-        .wa-how-title { font-size: 0.82rem; font-weight: 600; color: #C0D5CC; margin-bottom: 2px; }
-        .wa-how-desc  { font-size: 0.76rem; color: #4A6A60; line-height: 1.55; }
+        .wa-how-title { font-size: 0.82rem; font-weight: 600; color: #0F172A; margin-bottom: 2px; }
+        .wa-how-desc  { font-size: 0.76rem; color: #64748B; line-height: 1.55; }
 
         /* divider */
-        .wa-divider { height: 1px; background: rgba(255,255,255,0.05); }
+        .wa-divider { height: 1px; background: #F1F5F9; }
 
         /* refresh btn */
         .wa-refresh {
           background: none; border: none; cursor: pointer;
-          color: #3A5A50; padding: 4px; border-radius: 6px;
+          color: #94A3B8; padding: 4px; border-radius: 6px;
           display: inline-flex; align-items: center; transition: color 0.15s;
         }
         .wa-refresh:hover { color: #00C896; }
@@ -402,9 +405,9 @@ export function WhatsAppContent() {
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* dialog override */
-        .wa-dialog-inner { background: #0D1210 !important; border: 1px solid rgba(255,255,255,0.07) !important; border-radius: 16px !important; }
-        .wa-dialog-title { font-family: 'Syne', sans-serif !important; color: #F0F5F2 !important; font-weight: 800 !important; }
-        .wa-dialog-desc  { color: #5A7A70 !important; font-size: 0.82rem !important; }
+        .wa-dialog-inner { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-radius: 16px !important; }
+        .wa-dialog-title { font-family: 'Montserrat', sans-serif !important; color: #0F172A !important; font-weight: 800 !important; }
+        .wa-dialog-desc  { color: #64748B !important; font-size: 0.82rem !important; }
 
         /* connected state */
         .wa-connected-info {
@@ -412,11 +415,11 @@ export function WhatsAppContent() {
         }
         .wa-connected-row {
           display: flex; justify-content: space-between; align-items: center;
-          padding: 0.7rem 0.85rem; background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.05); border-radius: 9px;
+          padding: 0.7rem 0.85rem; background: #F8FAFC;
+          border: 1px solid #E2E8F0; border-radius: 9px;
         }
-        .wa-connected-label { font-size: 0.72rem; color: #4A6A60; font-weight: 500; }
-        .wa-connected-value { font-size: 0.82rem; color: #C0D5CC; font-weight: 600; }
+        .wa-connected-label { font-size: 0.72rem; color: #64748B; font-weight: 500; }
+        .wa-connected-value { font-size: 0.82rem; color: #0F172A; font-weight: 600; }
 
         @media (max-width: 700px) {
           .wa-grid { grid-template-columns: 1fr; }
@@ -479,7 +482,7 @@ export function WhatsAppContent() {
             <div className="wa-qr-area">
               <div className={`wa-qr-box${!qrCode && !isConnected ? " placeholder" : ""}`}>
                 {isPending && (
-                  <RefreshCw size={22} style={{ color: "#3A5A50", animation: "spin 1s linear infinite" }} />
+                  <RefreshCw size={22} style={{ color: "#94A3B8", animation: "spin 1s linear infinite" }} />
                 )}
                 {qrCode && !isPending && (
                   <>
@@ -496,7 +499,7 @@ export function WhatsAppContent() {
                 )}
                 {!qrCode && !isConnected && !isPending && (
                   <>
-                    <MessageCircle size={28} style={{ color: "#3A5A50" }} />
+                    <MessageCircle size={28} style={{ color: "#94A3B8" }} />
                     <span>Aguardando</span>
                   </>
                 )}
@@ -505,16 +508,16 @@ export function WhatsAppContent() {
               <div className="wa-steps">
                 {isConnected ? (
                   <>
-                    <div style={{ fontSize: "0.82rem", color: "#00C896", fontWeight: 600, fontFamily: "'Syne', sans-serif" }}>
+                    <div style={{ fontSize: "0.82rem", color: "#00C896", fontWeight: 600, fontFamily: "'Montserrat', sans-serif" }}>
                       WhatsApp vinculado com sucesso!
                     </div>
-                    <div style={{ fontSize: "0.76rem", color: "#4A6A60", lineHeight: 1.6 }}>
+                    <div style={{ fontSize: "0.76rem", color: "#64748B", lineHeight: 1.6 }}>
                       Suas cobranças serão enviadas automaticamente nos dias configurados.
                     </div>
                   </>
                 ) : qrCode ? (
                   <>
-                    <div style={{ fontSize: "0.8rem", color: "#C0D5CC", fontWeight: 600 }}>Escaneie o código</div>
+                    <div style={{ fontSize: "0.8rem", color: "#0F172A", fontWeight: 600 }}>Escaneie o código</div>
                     <div className="wa-step"><div className="wa-step-num">1</div><span>Abra o WhatsApp no celular</span></div>
                     <div className="wa-step"><div className="wa-step-num">2</div><span>Vá em Configurações → Aparelhos vinculados</span></div>
                     <div className="wa-step"><div className="wa-step-num">3</div><span>Toque em "Vincular aparelho" e escaneie</span></div>
@@ -613,14 +616,6 @@ export function WhatsAppContent() {
               </div>
             )}
 
-            {/* SSE error */}
-            {sseError && (
-              <div className="wa-banner warn">
-                <AlertCircle />
-                <span>{sseError}</span>
-              </div>
-            )}
-
             {/* Important alert */}
             <div className="wa-banner alert">
               <Smartphone />
@@ -650,12 +645,12 @@ export function WhatsAppContent() {
             </div>
 
             {/* Info banner */}
-            <div className="wa-banner info">
+            {/* <div className="wa-banner info">
               <AlertCircle />
               <span>
                 A integração usa SSE para comunicação em tempo real. O QR Code é gerado automaticamente e expira em 60 segundos.
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -663,13 +658,13 @@ export function WhatsAppContent() {
 
         {/* Disconnect confirm */}
         <Dialog open={disconnectModalOpen} onOpenChange={setDisconnectModalOpen}>
-          <DialogContent style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, maxWidth: 420 }}>
+          <DialogContent style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 16, maxWidth: 420 }}>
             <DialogHeader>
-              <DialogTitle style={{ fontFamily: "'Syne', sans-serif", color: "#F0F5F2", display: "flex", alignItems: "center", gap: 8 }}>
+              <DialogTitle style={{ fontFamily: "'Montserrat', sans-serif", color: "#0F172A", display: "flex", alignItems: "center", gap: 8 }}>
                 <WifiOff size={16} color="#E84545" /> Desconectar WhatsApp
               </DialogTitle>
-              <DialogDescription style={{ color: "#5A7A70", fontSize: "0.82rem" }}>
-                Tem certeza? Você precisará escanear o QR Code novamente para reconectar e deve aguardar pelo menos <strong style={{ color: "#C0D5CC" }}>5 minutos</strong>.
+              <DialogDescription style={{ color: "#64748B", fontSize: "0.82rem" }}>
+                Tem certeza? Você precisará escanear o QR Code novamente para reconectar e deve aguardar pelo menos <strong style={{ color: "#0F172A" }}>5 minutos</strong>.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter style={{ gap: 8 }}>
@@ -683,12 +678,12 @@ export function WhatsAppContent() {
 
         {/* Connect confirm */}
         <Dialog open={connectModalOpen} onOpenChange={setConnectModalOpen}>
-          <DialogContent style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, maxWidth: 440 }}>
+          <DialogContent style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 16, maxWidth: 440 }}>
             <DialogHeader>
-              <DialogTitle style={{ fontFamily: "'Syne', sans-serif", color: "#F0F5F2" }}>
+              <DialogTitle style={{ fontFamily: "'Montserrat', sans-serif", color: "#0F172A" }}>
                 Confirmar conexão
               </DialogTitle>
-              <DialogDescription style={{ color: "#5A7A70", fontSize: "0.82rem" }}>
+              <DialogDescription style={{ color: "#64748B", fontSize: "0.82rem" }}>
                 Verifique as informações antes de prosseguir.
               </DialogDescription>
             </DialogHeader>
@@ -719,26 +714,26 @@ export function WhatsAppContent() {
         </Dialog>
 
         {/* QR Modal */}
-        <Dialog open={!!qrCode || qrSecondsLeft === 0} onOpenChange={() => {}}>
+        <Dialog open={!!qrCode || qrSecondsLeft === 0} onOpenChange={() => { }}>
           <DialogContent
-            style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, maxWidth: 380 }}
+            style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 16, maxWidth: 380 }}
             onInteractOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >
             <DialogHeader>
-              <DialogTitle style={{ fontFamily: "'Syne', sans-serif", color: "#F0F5F2" }}>
+              <DialogTitle style={{ fontFamily: "'Montserrat', sans-serif", color: "#0F172A" }}>
                 Conectar WhatsApp
               </DialogTitle>
-              <DialogDescription style={{ color: "#5A7A70", fontSize: "0.82rem" }}>
+              <DialogDescription style={{ color: "#64748B", fontSize: "0.82rem" }}>
                 Escaneie o código com o seu WhatsApp para conectar.
               </DialogDescription>
             </DialogHeader>
 
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "0.5rem 0" }}>
               {qrSecondsLeft === 0 ? (
-                <div style={{ width: 200, height: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, background: "#111614", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 12 }}>
-                  <Timer size={32} style={{ color: "#3A5A50" }} />
-                  <p style={{ fontSize: 13, color: "#3A5A50", textAlign: "center", margin: 0 }}>QR Code expirado</p>
+                <div style={{ width: 200, height: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, background: "#F8FAFC", border: "1px dashed #CBD5E1", borderRadius: 12 }}>
+                  <Timer size={32} style={{ color: "#94A3B8" }} />
+                  <p style={{ fontSize: 13, color: "#94A3B8", textAlign: "center", margin: 0 }}>QR Code expirado</p>
                   <ButtonLoading className="wa-btn-primary" style={{ width: "auto", padding: "0.5rem 1rem", fontSize: "0.78rem" }} isLoading={isResetting} onClick={handleQrExpired}>
                     Gerar novo QR
                   </ButtonLoading>
@@ -764,7 +759,7 @@ export function WhatsAppContent() {
                     </div>
                   )}
                   <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: 13, color: "#7A9087", margin: "0 0 4px" }}>
+                    <p style={{ fontSize: 13, color: "#64748B", margin: "0 0 4px" }}>
                       Faça a leitura e aguarde a sincronização...
                     </p>
                     <p style={{ fontSize: 12, color: "#E84545", fontWeight: 700, margin: 0 }}>
@@ -787,29 +782,29 @@ export function WhatsAppContent() {
 
         {/* Sync confirm */}
         <Dialog open={syncConfirmationOpen} onOpenChange={setSyncConfirmationOpen}>
-          <DialogContent style={{ background: "#0D1210", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, maxWidth: 440 }}>
+          <DialogContent style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 16, maxWidth: 440 }}>
             <DialogHeader>
-              <DialogTitle style={{ fontFamily: "'Syne', sans-serif", color: "#F0F5F2" }}>
+              <DialogTitle style={{ fontFamily: "'Montserrat', sans-serif", color: "#0F172A" }}>
                 Confirme a sincronização
               </DialogTitle>
-              <DialogDescription style={{ color: "#5A7A70", fontSize: "0.82rem" }}>
+              <DialogDescription style={{ color: "#64748B", fontSize: "0.82rem" }}>
                 Verifique o status no seu WhatsApp antes de continuar.
               </DialogDescription>
             </DialogHeader>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "4px 0 12px" }}>
-              <p style={{ fontSize: "0.8rem", color: "#7A9087", lineHeight: 1.65 }}>
-                No celular, vá em <strong style={{ color: "#C0D5CC" }}>Aparelhos Conectados</strong>. O status deve ter mudado de{" "}
-                <span style={{ color: "#F5A623", fontWeight: 700 }}>"Sincronizando..."</span> para{" "}
+              <p style={{ fontSize: "0.8rem", color: "#64748B", lineHeight: 1.65 }}>
+                No celular, vá em <strong style={{ color: "#0F172A" }}>Aparelhos Conectados</strong>. O status deve ter mudado de{" "}
+                <span style={{ color: "#F5A623", fontWeight: 700 }}>"Conectando..."</span> para{" "}
                 <span style={{ color: "#00C896", fontWeight: 700 }}>"Ativo"</span>.
               </p>
               <div className="wa-banner warn">
                 <AlertCircle />
-                <span>Se ainda estiver "Sincronizando", <strong>aguarde!</strong> Confirmar antes pode causar falha na conexão.</span>
+                <span>Se ainda estiver "Conectando", <strong>aguarde!</strong> Confirmar antes pode causar falha na conexão.</span>
               </div>
             </div>
             <DialogFooter style={{ gap: 8, flexWrap: "wrap" }}>
               <button className="wa-btn-ghost" onClick={() => setSyncConfirmationOpen(false)}>
-                Ainda está sincronizando
+                Ainda está conectando
               </button>
               <button className="wa-btn-primary" style={{ width: "auto", padding: "0.6rem 1.1rem" }}
                 onClick={() => { setSyncConfirmationOpen(false); setQrCode(null); window.location.reload(); }}>

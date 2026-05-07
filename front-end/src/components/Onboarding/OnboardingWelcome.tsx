@@ -34,7 +34,7 @@ export function OnboardingWelcome() {
 
   useEffect(() => {
     if (pathname === "/plans") return;
-    const dismissed = sessionStorage.getItem("cobr_welcome_dismissed");
+    const dismissed = localStorage.getItem("cobr_welcome_dismissed");
     if (totalCompleted === 0 && !isTourActive && !dismissed) {
       const timer = setTimeout(() => setOpen(true), 1500);
       return () => clearTimeout(timer);
@@ -42,7 +42,7 @@ export function OnboardingWelcome() {
   }, [totalCompleted, isTourActive, pathname]);
 
   const handleClose = () => {
-    sessionStorage.setItem("cobr_welcome_dismissed", "true");
+    localStorage.setItem("cobr_welcome_dismissed", "true");
     setOpen(false);
   };
 
@@ -61,8 +61,8 @@ export function OnboardingWelcome() {
         .cobr-onb-dot { animation: cobr-onb-pulse 2s ease-in-out infinite; }
         .cobr-onb-start { transition: background 0.2s, transform 0.15s; }
         .cobr-onb-start:hover { background: #00A87E !important; transform: translateY(-1px); }
-        .cobr-onb-skip:hover  { color: #7A9087 !important; }
-        .cobr-onb-close:hover { background: rgba(255,255,255,0.08) !important; color: #C0D5CC !important; }
+        .cobr-onb-skip:hover  { color: #64748B !important; }
+        .cobr-onb-close:hover { background: #F1F5F9 !important; color: #0F172A !important; }
         .cobr-onb-step { transition: background 0.15s; }
         .cobr-onb-step:hover { background: rgba(0,200,150,0.04) !important; }
       `}</style>
@@ -93,15 +93,15 @@ export function OnboardingWelcome() {
             transition={{ type: "spring", stiffness: 320, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "#0D1210",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
               borderRadius: 22,
               maxWidth: 460,
               width: "100%",
               overflow: "hidden",
-              fontFamily: "'DM Sans', sans-serif",
-              color: "#F0F5F2",
-              boxShadow: "0 40px 80px rgba(0,0,0,0.6)",
+              fontFamily: " 'Montserrat', sans-serif",
+              color: "#0F172A",
+              boxShadow: "0 40px 80px rgba(0,0,0,0.15)",
             }}
           >
             {/* ── TOP BAR ── */}
@@ -119,7 +119,7 @@ export function OnboardingWelcome() {
                 />
                 <span style={{
                   fontSize: 10, fontWeight: 700, color: "#00C896",
-                  fontFamily: "'Syne', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   letterSpacing: 1.2, textTransform: "uppercase",
                 }}>
                   Configuração inicial
@@ -130,10 +130,10 @@ export function OnboardingWelcome() {
                 onClick={handleClose}
                 aria-label="Fechar"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.07)",
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
                   borderRadius: "50%", width: 28, height: 28,
-                  cursor: "pointer", color: "#5A7A70",
+                  cursor: "pointer", color: "#64748B",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "all 0.15s",
                 }}
@@ -148,16 +148,16 @@ export function OnboardingWelcome() {
               {/* Title */}
               <div style={{ marginBottom: "1.35rem" }}>
                 <h2 style={{
-                  fontFamily: "'Syne', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: "1.6rem", fontWeight: 800,
-                  color: "#F0F5F2", letterSpacing: -0.8,
+                  color: "#0F172A", letterSpacing: -0.8,
                   lineHeight: 1.15, margin: "0 0 0.5rem",
                 }}>
                   Bem-vindo ao<br />
                   <span style={{ color: "#00C896" }}>Cobr.</span>
                 </h2>
                 <p style={{
-                  fontSize: "0.83rem", color: "#5A7A70",
+                  fontSize: "0.83rem", color: "#64748B",
                   lineHeight: 1.65, margin: 0, fontWeight: 400,
                 }}>
                   Vamos configurar sua conta em menos de 5 minutos para você já enviar sua primeira cobrança automática.
@@ -166,8 +166,8 @@ export function OnboardingWelcome() {
 
               {/* Steps */}
               <div style={{
-                background: "#111614",
-                border: "1px solid rgba(255,255,255,0.05)",
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
                 borderRadius: 12, overflow: "hidden",
                 marginBottom: "1rem",
               }}>
@@ -179,7 +179,7 @@ export function OnboardingWelcome() {
                       display: "flex", alignItems: "center", gap: 11,
                       padding: "0.8rem 1rem",
                       borderBottom: i < STEPS.length - 1
-                        ? "1px solid rgba(255,255,255,0.05)"
+                        ? "1px solid #F1F5F9"
                         : "none",
                     }}
                   >
@@ -194,19 +194,19 @@ export function OnboardingWelcome() {
                     <div style={{ flex: 1 }}>
                       <div style={{
                         fontSize: "0.81rem", fontWeight: 600,
-                        color: "#C0D5CC", fontFamily: "'Syne', sans-serif",
+                        color: "#0F172A", fontFamily: "'Montserrat', sans-serif",
                       }}>
                         {step.title}
                       </div>
-                      <div style={{ fontSize: "0.71rem", color: "#4A6A60", marginTop: 1 }}>
+                      <div style={{ fontSize: "0.71rem", color: "#64748B", marginTop: 1 }}>
                         {step.desc}
                       </div>
                     </div>
                     <span style={{
-                      fontSize: 10, fontWeight: 800, color: "#3A5050",
-                      background: "rgba(255,255,255,0.04)",
+                      fontSize: 10, fontWeight: 800, color: "#64748B",
+                      background: "#F1F5F9",
                       borderRadius: 100, padding: "2px 8px",
-                      fontFamily: "'Syne', sans-serif",
+                      fontFamily: "'Montserrat', sans-serif",
                     }}>
                       {i + 1}
                     </span>
@@ -224,7 +224,7 @@ export function OnboardingWelcome() {
                 borderRadius: 8,
               }}>
                 <Clock size={12} color="#00C896" style={{ flexShrink: 0 }} />
-                <span style={{ fontSize: 11, color: "#4A8A70", fontWeight: 500 }}>
+                <span style={{ fontSize: 11, color: "#00A87E", fontWeight: 500 }}>
                   Tempo estimado: menos de 5 minutos
                 </span>
               </div>
@@ -236,9 +236,9 @@ export function OnboardingWelcome() {
                   onClick={handleStart}
                   style={{
                     width: "100%", padding: "0.8rem",
-                    background: "#00C896", color: "#051A12",
+                    background: "#00C896", color: "#FFFFFF",
                     border: "none", borderRadius: 10,
-                    fontFamily: "'Syne', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: "0.88rem", fontWeight: 800,
                     cursor: "pointer",
                     display: "flex", alignItems: "center",
@@ -255,9 +255,9 @@ export function OnboardingWelcome() {
                   style={{
                     width: "100%", padding: "0.65rem",
                     background: "none", border: "none",
-                    color: "#3A5A50", fontSize: "0.79rem",
+                    color: "#64748B", fontSize: "0.79rem",
                     fontWeight: 500, cursor: "pointer",
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: " 'Montserrat', sans-serif",
                     transition: "color 0.15s",
                   }}
                 >
