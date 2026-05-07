@@ -113,9 +113,9 @@ export default function NotificationCenter({ userId }: { userId: string }) {
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <button className="relative p-2 rounded-full hover:bg-black/5 transition-colors group">
-          <Bell className={`h-5 w-5 ${unreadCount > 0 ? 'text-emerald-400 animate-pulse' : 'text-muted'}`} />
+          <Bell className={`h-5 w-5 ${unreadCount > 0 ? 'text-emerald-500 animate-[pulse_2s_infinite]' : 'text-slate-400'}`} />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+            <span className="absolute top-2 right-2 flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
@@ -123,40 +123,51 @@ export default function NotificationCenter({ userId }: { userId: string }) {
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="z-[10000] w-80 p-0 shadow-2xl overflow-hidden rounded-xl" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-        <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "var(--border)", background: "#fff" }}>
-          <h3 className="text-sm font-bold text-emerald-500 font-syne">Atividades Recentes</h3>
+      <DropdownMenuContent 
+        align="end" 
+        className="z-[10000] w-80 p-0 shadow-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white"
+        style={{ fontFamily: "'Montserrat', sans-serif" }}
+      >
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
+          <h3 className="text-[13px] font-800 text-slate-900 letter-spacing-[-0.3px]">Atividades Recentes</h3>
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllAsRead}
-              className="text-[10px] uppercase tracking-wider font-bold transition-colors"
-              style={{ color: "var(--text2)" }}
+              title="Marcar todas como lidas"
+              className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-all"
             >
-              <EraserIcon size={16} className="hover:text-black transition-colors" />
-              {/* Limpar tudo */}
+              <EraserIcon size={15} />
             </button>
           )}
         </div>
 
-        <div className="max-h-[350px] overflow-y-auto py-1 scrollbar-hide">
+        <div className="max-h-[380px] overflow-y-auto py-1 scrollbar-hide bg-slate-50/30">
           {notifications.length === 0 ? (
-            <div className="p-8 text-center text-xs" style={{ color: "var(--text2)" }}>
-              Nenhuma atividade recente encontrada.
+            <div className="p-10 text-center">
+              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Bell size={18} className="text-slate-300" />
+              </div>
+              <p className="text-[11px] font-500 text-slate-400">Nenhuma atividade recente.</p>
             </div>
           ) : (
             notifications.map((n) => (
               <DropdownMenuItem
                 key={n.id}
                 onSelect={(e) => { e.preventDefault(); handleMarkAsRead(n.id); }}
-                className={`p-4 flex gap-3 cursor-pointer outline-none transition-colors border-l-2 rounded-sm ${n.is_read ? 'border-transparent opacity-100 hover:bg-black/5 bg-white' : 'border-emerald-500 bg-emerald-500/5'}`}
+                className={`p-4 flex gap-3 cursor-pointer outline-none transition-all border-b border-slate-50 last:border-0 ${n.is_read ? 'opacity-70 grayscale-[0.5] hover:bg-white bg-transparent' : 'bg-white hover:bg-slate-50'}`}
               >
-                <div className="mt-1 flex-shrink-0">
+                <div className={`mt-0.5 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${n.is_read ? 'bg-slate-100' : 'bg-emerald-50'}`}>
                   {getIcon(n.type)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold mb-0.5 leading-tight" style={{ color: "var(--text1)" }}>{n.title}</div>
-                  <div className="text-[11px] line-clamp-2 leading-normal mb-1" style={{ color: "var(--text2)" }}>{n.message}</div>
-                  <div className="text-[9px] uppercase tracking-wide font-bold" style={{ color: "var(--text2)", opacity: 0.8 }}>
+                  <div className={`text-[12px] font-700 leading-tight mb-1 ${n.is_read ? 'text-slate-600' : 'text-slate-900'}`}>
+                    {n.title}
+                  </div>
+                  <div className="text-[11px] line-clamp-2 leading-relaxed text-slate-500 mb-2">
+                    {n.message}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[9px] font-700 uppercase tracking-wider text-slate-400">
+                    <div className={`w-1.5 h-1.5 rounded-full ${n.is_read ? 'bg-slate-200' : 'bg-emerald-500'}`} />
                     {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: ptBR })}
                   </div>
                 </div>
@@ -164,16 +175,6 @@ export default function NotificationCenter({ userId }: { userId: string }) {
             ))
           )}
         </div>
-
-        {/* <DropdownMenuSeparator style={{ backgroundColor: "var(--border)" }} /> */}
-        {/* <div className="p-2" style={{ background: "rgba(0,0,0,0.01)" }}>
-          <button className="w-full p-2 text-[11px] font-bold text-center transition-colors" style={{ color: "var(--text2)" }}
-            onMouseEnter={e => e.currentTarget.style.color = "var(--text1)"}
-            onMouseLeave={e => e.currentTarget.style.color = "var(--text2)"}
-          >
-            Ver histórico completo
-          </button>
-        </div> */}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, LogOut, Menu, X,
   Wallet, Settings, User as UserIcon, HelpCircle,
-  Receipt, ChevronDown, FileText, Scan
+  Receipt, ChevronDown, FileText, Scan, History
 } from "lucide-react";
 import { ImportWizard } from "./Client/ImportWizard";
 import {
@@ -57,6 +57,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       ? [{ icon: Wallet, label: "Pagamentos", path: "/payments" }]
       : []),
     { icon: Wallet, label: "Meios de Pagamento", path: "/meios-pagamento" },
+    { icon: History, label: "Auditoria", path: "/audit-logs" },
     { icon: HelpCircle, label: "Ajuda", path: "/help" },
   ];
 

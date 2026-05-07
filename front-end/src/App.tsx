@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import Account from "./pages/Account";
 import PixKeys from "./pages/PixKeys";
 import Clients from "./pages/Clients";
+import AuditLogs from "./pages/AuditLogs";
 import Payments from "./pages/Payments";
 import Users from "./pages/Users";
 import Index from "./pages/Index";
@@ -96,6 +97,7 @@ const App = () => (
             <Route path="/assinatura/pendente" element={<SubscriptionPending />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
+            <Route path="/audit-logs" element={<AuditLogs />} />
             <Route path="/products" element={<Products />} />
             <Route path="/meios-pagamento" element={<PixKeys />} />
             <Route path="/templates" element={<Templates />} />

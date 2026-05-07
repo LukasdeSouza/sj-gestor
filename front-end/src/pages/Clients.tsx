@@ -23,7 +23,7 @@ import { Link } from "react-router-dom";
 import Cookies from "js-cookie";
 import {
   Trash2, Search, CheckCircle2, Clock, X, InfoIcon,
-  Plus, AlertCircle, Send, Zap, Phone,
+  Plus, AlertCircle, Send, Zap, Phone, History,
   CreditCard, ChevronRight, Users, Activity, MessageCircle,
 } from "lucide-react";
 
@@ -397,6 +397,109 @@ function ClientModal({
   );
 }
 
+// ─── AUDIT MODAL ─────────────────────────────────────────────────────────────
+
+type CommunicationLog = {
+  id: string;
+  channel: string;
+  recipient: string;
+  message: string;
+  status: string;
+  error?: string | null;
+  sent_at: string;
+};
+
+function AuditModal({ client, open, onClose }: { client: Client | null; open: boolean; onClose: () => void }) {
+  const { data: logs, isLoading } = useQuery<CommunicationLog[]>({
+    queryKey: ["communicationLogs", client?.id],
+    queryFn: async () => fetchUseQuery<undefined, CommunicationLog[]>({
+      route: `/clients/${client?.id}/communication-logs`,
+      method: "GET",
+    }),
+    enabled: open && !!client?.id,
+    refetchOnWindowFocus: false,
+  });
+
+  if (!client) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent style={{ maxWidth: 520, padding: 0, borderRadius: 20, background: "#FFFFFF", border: "1px solid #E2E8F0" }}>
+        <DialogHeader style={{ padding: "20px 24px", borderBottom: "1px solid #F1F5F9" }}>
+          <DialogTitle style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, fontFamily: "'Montserrat', sans-serif" }}>
+            <History size={18} color="#6366f1" /> Histórico de Disparos: {client.name}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div style={{ padding: "20px 24px", maxHeight: "60vh", overflowY: "auto" }}>
+          {isLoading ? (
+            <div style={{ textAlign: "center", padding: 20 }}>Carregando histórico...</div>
+          ) : !logs || logs.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 20px", color: "#64748B" }}>
+              <Clock size={32} style={{ margin: "0 auto 12px", opacity: 0.3 }} />
+              <p style={{ fontSize: 14 }}>Nenhum disparo registrado para este cliente.</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {logs.map((log, idx) => (
+                <div key={log.id} style={{ display: "flex", gap: 14, position: "relative" }}>
+                  {/* Linha da timeline */}
+                  {idx < logs.length - 1 && (
+                    <div style={{ position: "absolute", left: 15, top: 30, bottom: -16, width: 1, background: "#E2E8F0" }} />
+                  )}
+                  
+                  {/* Ícone do Canal */}
+                  <div style={{
+                    width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                    background: log.status === 'sent' ? "rgba(0,200,150,0.1)" : "rgba(232,69,69,0.1)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: `1px solid ${log.status === 'sent' ? "rgba(0,200,150,0.2)" : "rgba(232,69,69,0.2)"}`,
+                    zIndex: 1
+                  }}>
+                    {log.channel === 'whatsapp' ? <MessageCircle size={14} color={log.status === 'sent' ? "#00C896" : "#E84545"} /> : <Send size={14} color={log.status === 'sent' ? "#00C896" : "#E84545"} />}
+                  </div>
+
+                  {/* Conteúdo */}
+                  <div style={{ flex: 1, paddingBottom: 4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
+                        {log.channel === 'whatsapp' ? 'WhatsApp' : 'E-mail'} 
+                        <span style={{ 
+                          fontSize: 10, fontWeight: 700, marginLeft: 8, padding: "2px 8px", borderRadius: 100,
+                          background: log.status === 'sent' ? "rgba(0,200,150,0.1)" : "rgba(232,69,69,0.1)",
+                          color: log.status === 'sent' ? "#00C896" : "#E84545"
+                        }}>
+                          {log.status === 'sent' ? 'ENVIADO' : 'FALHOU'}
+                        </span>
+                      </span>
+                      <span style={{ fontSize: 11, color: "#94A3B8" }}>{formatDateTime(log.sent_at)}</span>
+                    </div>
+                    <div style={{ 
+                      fontSize: 12, color: "#64748B", background: "#F8FAFC", 
+                      padding: "8px 12px", borderRadius: 8, border: "1px solid #F1F5F9" 
+                    }}>
+                      {log.message}
+                      {log.error && (
+                        <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px dashed #E2E8F0", color: "#E84545", fontWeight: 600 }}>
+                          Motivo: {log.error}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={{ padding: "16px 24px", background: "#F8FAFC", borderTop: "1px solid #F1F5F9", borderRadius: "0 0 20px 20px", textAlign: "right" }}>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function Clients() {
@@ -411,6 +514,8 @@ export default function Clients() {
   const [showOverdue, setShowOverdue] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [selectedAuditClient, setSelectedAuditClient] = useState<Client | null>(null);
 
   const hasActiveFilters = !!sortOrder || !!dueDateOrder || showOverdue || !!searchTerm;
 
@@ -847,6 +952,13 @@ export default function Clients() {
                     {/* Ações */}
                     <TableCell style={{ textAlign: "right", paddingRight: 20 }} onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center" }}>
+                        <button 
+                          style={{ ...btnDel, borderColor: "rgba(99, 102, 241, 0.2)", color: "#6366f1" }} 
+                          title="Histórico de disparos"
+                          onClick={() => { setSelectedAuditClient(client); setAuditOpen(true); }}
+                        >
+                          <History size={13} />
+                        </button>
                         <button style={btnView} onClick={() => { setSelectedClient(client); setViewOpen(true); }}>
                           detalhes <ChevronRight size={11} />
                         </button>
@@ -888,6 +1000,13 @@ export default function Clients() {
         onEditSuccess={() => refetch()}
         onDeletePayment={mutateDeletePayment}
         isDeletingPayment={isloadingmutateDeletePayment}
+      />
+
+      {/* ── AUDIT MODAL ── */}
+      <AuditModal
+        client={selectedAuditClient}
+        open={auditOpen}
+        onClose={() => setAuditOpen(false)}
       />
 
       {/* ── DELETE CONFIRM ── */}
